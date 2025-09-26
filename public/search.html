@@ -804,6 +804,7 @@
   <script src="/baremux/index.js"></script>
   <script src="/scram/scramjet.all.js"></script>
   <script src="config.js"></script>
+  <script src="/epoxy/index.mjs"></script>
 </head>
 
 <body>
@@ -811,6 +812,7 @@
   <script>
     const { ScramjetController } = $scramjetLoadController();
     const scramjet = new ScramjetController({
+      prefix: "/scramjet/",
       files: {
         wasm: "/scram/scramjet.wasm.wasm",
         all: "/scram/scramjet.all.js",
@@ -842,9 +844,37 @@
       history: JSON.parse(localStorage.getItem("browserHistory") || "[]"),
       zoomLevel: 1,
     };
+    async function waitForTransport() {
+      let attempts = 0;
+      const maxAttempts = 10;
 
-    connection.setTransport(store.transport, [{ wisp: store.wispurl }]);
+      while (attempts < maxAttempts) {
+        try {
+          await connection.setTransport("/epoxy/index.mjs", [{ wisp: store.wispurl }]);
+          return;
+        } catch (e) {
+          try {
+            await connection.setTransport("/baremux/index.mjs", [store.bareurl]);
+            return;
+          } catch (e2) {
+            try {
+              await connection.setTransport("/libcurl/index.mjs", [{ wisp: store.wispurl }]);
+              return;
+            } catch (e3) {
+              attempts++;
+              if (attempts >= maxAttempts) {
+                console.error("Failed to set any transport after", maxAttempts, "attempts");
+                throw new Error("No bare clients available");
+              }
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+          }
+        }
+      }
+    }
 
+    // start trying to set a transport (runs async)
+    waitForTransport();
     let tabs = [];
     let activeTabId = 1;
     let nextTabId = 2;
@@ -1163,7 +1193,35 @@
       modal.showModal();
       toggleMenu();
     }
+    function fixProxy() {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        // Unregister all service workers
+        const unregisterPromises = registrations.map(reg =>
+          reg.unregister().then(success => {
+            console.log(`Service Worker unregistered: ${success}`);
+          })
+        );
 
+        // After all are unregistered, delete the database
+        Promise.all(unregisterPromises).then(() => {
+          const dbName = '$scramjet';
+          const request = indexedDB.deleteDatabase(dbName);
+
+          request.onsuccess = () => {
+            console.log(`Deleted IndexedDB: ${dbName}`);
+          };
+          request.onerror = () => {
+            console.error(`Failed to delete IndexedDB: ${dbName}`);
+          };
+          request.onblocked = () => {
+            console.warn(`Delete blocked for IndexedDB: ${dbName}`);
+          };
+
+          localStorage.setItem('bare-mux-path', '/baremux/worker.js');
+          // window.location.reload();
+        });
+      });
+    }
     class Search {
       constructor(scramjet, store) {
         this.scramjet = scramjet;
@@ -1417,9 +1475,7 @@
                 <input id="homepage_input" value="${store.homepage}" spellcheck="false">
               </div>
               <div class="flex buttons">
-                <button onclick="connection.setTransport('/epoxy/index.mjs', [{ wisp: store.wispurl }])">Use Epoxy</button>
-                <button style="display:none;" onclick="connection.setTransport('/baremod/index.mjs', [store.bareurl])">Use Bare Server 3</button>
-                <button style="display:none;" onclick="connection.setTransport('/libcurl/index.mjs', [{ wisp: store.wispurl }])">Use libcurl.js</button>
+                <button onclick="fixProxy();">Fix Proxy</button>
               </div>
               <div class="flex buttons centered">
                 <button onclick="closeConfig()">x</button>

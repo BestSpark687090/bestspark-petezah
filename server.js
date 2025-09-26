@@ -18,8 +18,11 @@ import { signupHandler } from "./server/api/signup.js";
 import { signinHandler } from "./server/api/signin.js";
 import cors from "cors";
 import fetch from "node-fetch";
+import fs from 'fs';
 
-dotenv.config({ path: `.env.${process.env.NODE_ENV || "production"}` });
+dotenv.config();
+const envFile = `.env.${process.env.NODE_ENV || 'production'}`;
+if (fs.existsSync(envFile)) {dotenv.config({ path: envFile });}
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const { SUPABASE_URL, SUPABASE_KEY, SUPABASE_SERVICE_ROLE_KEY } = process.env;
@@ -40,6 +43,20 @@ app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUniniti
 app.use(express.static(publicPath));
 app.use(express.static("public"));
 app.use("/scram/", express.static(scramjetPath));
+// Also serve common scramjet asset names at the site root for legacy references
+// (this avoids copying files into the repo root and keeps a single source)
+app.get('/scramjet.all.js', (req, res) => {
+  return res.sendFile(path.join(scramjetPath, 'scramjet.all.js'));
+});
+app.get('/scramjet.sync.js', (req, res) => {
+  return res.sendFile(path.join(scramjetPath, 'scramjet.sync.js'));
+});
+app.get('/scramjet.wasm.wasm', (req, res) => {
+  return res.sendFile(path.join(scramjetPath, 'scramjet.wasm.wasm'));
+});
+app.get('/scramjet.all.js.map', (req, res) => {
+  return res.sendFile(path.join(scramjetPath, 'scramjet.all.js.map'));
+});
 app.use("/baremux/", express.static(baremuxPath));
 app.use("/epoxy/", express.static(epoxyPath));
 app.get("/results/:query", async (req, res) => {

@@ -6,7 +6,7 @@
   "license": "AGPL-3.0-only",
   "type": "module",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "dependencies": {
     "@tomphttp/bare-server-node": "^2.0.3",
@@ -29,6 +29,6 @@
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {
-    "node": "^18.20.4"
+    "node": "^22.19.0"
   }
 }

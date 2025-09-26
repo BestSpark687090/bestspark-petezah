@@ -179,10 +179,8 @@ fabric.properties
 # MacOS
 .DS_Store
 
-# Lockfiles
-pnpm-lock.yaml
+# Lock files
+package-lock.json
 *.lock
+!pnpm-lock.yaml
 
-# Env files
-.env
-.env
