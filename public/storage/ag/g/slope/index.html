@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <script>
   if (window.parent !== window.self) window.parent.postMessage("bonk", "*");
   window.addEventListener("DOMContentLoaded", function () {
@@ -9,9 +9,7 @@
 </script>
 <html lang="en-us">
   <head>
-
     <script src="/js/all.js"></script>
-
 
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
@@ -38,26 +36,45 @@
             default:
               prefix = split[0];
           }
-          return new (Function.prototype.bind.call(window.rWS, null, (split[1].match(/\//g) || []).length === 0 ? (split[1].includes("?") ? prefix + split[1].replace("?", "/?") : prefix + split[1] + "/") : prefix + split[1], options))();
+          return new (Function.prototype.bind.call(
+            window.rWS,
+            null,
+            (split[1].match(/\//g) || []).length === 0
+              ? split[1].includes("?")
+                ? prefix + split[1].replace("?", "/?")
+                : prefix + split[1] + "/"
+              : prefix + split[1],
+            options,
+          ))();
         } else {
           return new window.rWS(url, options);
         }
       };
       var origOpen = XMLHttpRequest.prototype.open;
       XMLHttpRequest.prototype.open = function (...args) {
-        if (!args[1].includes("arc.io")) args[1] = /^http/.test(args[1]) ? "https://onebigstatic-tmm.tbt.mx/static/" + args[1] : args[1];
+        if (!args[1].includes("arc.io"))
+          args[1] = /^http/.test(args[1])
+            ? "https://onebigstatic-tmm.tbt.mx/static/" + args[1]
+            : args[1];
         origOpen.apply(this, args);
       };
-      var gameInstance = UnityLoader.instantiate("gameContainer", "Build/slope_27Sept.json", {
-        onProgress: UnityProgress,
-        Module: {
-          onRuntimeInitialized: function () {
-            UnityProgress(gameInstance, "complete");
+      var gameInstance = UnityLoader.instantiate(
+        "gameContainer",
+        "Build/slope_27Sept.json",
+        {
+          onProgress: UnityProgress,
+          Module: {
+            onRuntimeInitialized: function () {
+              UnityProgress(gameInstance, "complete");
+            },
           },
         },
-      });
+      );
     </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-98DP5VKS42"></script>
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-98DP5VKS42"
+    ></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
@@ -71,7 +88,7 @@
   </head>
   <body>
     <div class="webgl-content">
-      <div id="gameContainer" style="width: 100vw; height: 100vh;"></div>
+      <div id="gameContainer" style="width: 100vw; height: 100vh"></div>
     </div>
   </body>
 </html>

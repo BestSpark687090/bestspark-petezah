@@ -9,10 +9,13 @@ Good luck, have fun, and give space a hug for me.
 ## This game is only for learning purposes and not intended to be redistributed!
 
 # [PLAY SPACE HUGGERS!](https://www.newgrounds.com/portal/view/819609)
+
 # [OFFICIAL JS13K BUILD](https://js13kgames.com/entries/space-huggers)
+
 # [VIDEO DEMO](https://www.youtube.com/watch?v=6VXrnk18Z4s)
 
 # How To Play
+
 - Use WASD or D-Pad - Move, jump, and climb
 - Z or Left click - Shoot - Most things will break, some will burn
 - X or Middle click - Roll - brief invulnerability, does damage, gives a boost, puts out fire
@@ -25,6 +28,7 @@ Good luck, have fun, and give space a hug for me.
 - There is no end, but for a challenge, try beating the first 5 levels
 
 # Gameplay Tips
+
 - Roll to put out fire!
 - Rolling also does melee damage to enemies
 - Keep your distance from the specialists (white), they roll and flip often!
@@ -34,6 +38,7 @@ Good luck, have fun, and give space a hug for me.
 - You can press R to restart the game
 
 # Game Features
+
 - Run and gun / roguelike hybrid gameplay
 - 2-4 player jump in local co-op mode
 - Procedural level generation of great variety and complexity
@@ -51,6 +56,7 @@ Good luck, have fun, and give space a hug for me.
 - Up to 4 player co-op with 4 gamepads!
 
 # Engine Features
+
 - Custom game engine written during the compo is separate from game code
 - Super fast rendering system for up to 50,000 objects at 60 fps
 - Physics engine for axis aligned bounding box rigid body dynamics
@@ -62,6 +68,7 @@ Good luck, have fun, and give space a hug for me.
 - Debug visualization system not in JS13K build. (press ~ to enter debug mode)
 
 # Enemy Types
+
 - Recruit (Green) - A bit shorter, more hesitant, takes only 1 hit
 - Soldier (Blue) - Average height and ability, takes 2 hits
 - Captain (Red) - Can climb walls and jumps more often, takes 3 hits
@@ -70,6 +77,7 @@ Good luck, have fun, and give space a hug for me.
 - Small chance of a heavy weapons variation that has double health and fires full auto
 
 # Object Types
+
 - Plastic Crate (Brown) - Burns easily and breaks when fully burnt
 - Metal Crate & Barrel (Gray) - Is hard to destroy, can't burn
 - Water Barrel (Blue) - Puts out fires and pushes away objects
@@ -79,6 +87,7 @@ Good luck, have fun, and give space a hug for me.
 - Lava Rock (Glowing Red & Orange) - Anything that touches it is lit on fire
 
 # Tools Used
+
 - [Roadroller](https://github.com/lifthrasiir/roadroller)
 - [Google Closure Compiler](https://github.com/google/closure-compiler)
 - [UglifyJS](https://github.com/mishoo/UglifyJS)
@@ -88,6 +97,7 @@ Good luck, have fun, and give space a hug for me.
 - [ZzFX](https://github.com/KilledByAPixel/ZzFX)
 
 # How to build the 13k Zip
+
 - Run engine\build\setupBuild.bat to install the necessary tools via npm
 - You will need: google-closure-compiler, uglify, roadroller, imagemin-cli, and advzip
 - Run engine\build\build.bat, to build app.zip which is the final result

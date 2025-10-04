@@ -187,3 +187,6 @@ package-lock.json
 # secrets
 .env
 *.env.*
+
+# Eslint cache
+.eslintcache

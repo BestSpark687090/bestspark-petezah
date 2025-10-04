@@ -73,9 +73,9 @@ If you would like to use one of the following buttons to deploy
 > [!IMPORTANT]
 > You can get more links in our [Discord Server](https://discord.gg/cYjHFDguxS)
 
-## Wildcard (replace the * with anything you want, for GoGuardian  using the keyword "math" is recommended. )
+## Wildcard (replace the \* with anything you want, for GoGuardian using the keyword "math" is recommended. )
 
-- https://*.supergisfire.com.cdn.cloudflare.net/
+- https://\*.supergisfire.com.cdn.cloudflare.net/
 
 Lightspeed:
 https://supergisfire.com.cdn.cloudflare.net/

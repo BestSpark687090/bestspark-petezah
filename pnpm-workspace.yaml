@@ -1,5 +1,5 @@
 onlyBuiltDependencies:
-  - '@mercuryworkshop/scramjet'
+  - "@mercuryworkshop/scramjet"
   - bufferutil
   - node
   - sharp

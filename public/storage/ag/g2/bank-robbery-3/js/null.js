@@ -1,1 +1,1 @@
-console.log("NULL.JS")
+console.log("NULL.JS");

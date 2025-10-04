@@ -1,4 +1,3 @@
-
 "use strict";
 let destination = "";
 
@@ -13,7 +12,7 @@ registerSW()
   .then(() => {
     window.open(
       __uv$config.prefix + __uv$config.encodeUrl(destination),
-      "_self"
+      "_self",
     );
   })
   .catch((err) => {

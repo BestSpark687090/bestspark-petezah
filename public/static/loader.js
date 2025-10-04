@@ -1,20 +1,20 @@
 function submitSearch(event) {
-	event.preventDefault();
-	const query = document.getElementById("uv-address").value.trim();
-	let embedUrl = "";
+  event.preventDefault();
+  const query = document.getElementById("uv-address").value.trim();
+  let embedUrl = "";
 
-	if (query) {
-		const isValidUrl =
-			/^(https?:\/\/)?([\w\d-]+\.)+[\w\d]{2,}([\/\w\d-]*)*(\?[^\s]*)?(#[^\s]*)?$/i.test(
-				query,
-			);
+  if (query) {
+    const isValidUrl =
+      /^(https?:\/\/)?([\w\d-]+\.)+[\w\d]{2,}([\/\w\d-]*)*(\?[^\s]*)?(#[^\s]*)?$/i.test(
+        query,
+      );
 
-		if (isValidUrl) {
-			embedUrl = `/embed.html#https://${encodeURIComponent(query)}`;
-		} else {
-			embedUrl = `/embed.html#https://www.google.com/search?q=${encodeURIComponent(query)}`;
-		}
+    if (isValidUrl) {
+      embedUrl = `/embed.html#https://${encodeURIComponent(query)}`;
+    } else {
+      embedUrl = `/embed.html#https://www.google.com/search?q=${encodeURIComponent(query)}`;
+    }
 
-		window.location.href = `/prox.html?embedUrl=${encodeURIComponent(embedUrl)}`;
-	}
+    window.location.href = `/prox.html?embedUrl=${encodeURIComponent(embedUrl)}`;
+  }
 }

@@ -10,7 +10,13 @@ function poki_init_raw() {
 ///~
 function poki_script_closure_raw(self, other, script, custom) {
   return function (result) {
-    window.gml_Script_gmcallback_poki_closure(self, other, script, result, custom);
+    window.gml_Script_gmcallback_poki_closure(
+      self,
+      other,
+      script,
+      result,
+      custom,
+    );
   };
 }
 
@@ -71,7 +77,17 @@ function poki_loadbar(ctx, width, height, total, current, image) {
 
   function getv(s) {
     if (window.gml_Script_gmcallback_poki_loadbar) {
-      return window.gml_Script_gmcallback_poki_loadbar(inst, null, s, current, total, width, height, image ? image.width : 0, image ? image.height : 0);
+      return window.gml_Script_gmcallback_poki_loadbar(
+        inst,
+        null,
+        s,
+        current,
+        total,
+        width,
+        height,
+        image ? image.width : 0,
+        image ? image.height : 0,
+      );
     } else return undefined;
   }
   function getf(s, d) {
@@ -111,7 +127,17 @@ function poki_loadbar(ctx, width, height, total, current, image) {
     if (!rect) rect = [0, 0, image.width, image.height];
     totalHeight = rect[3] + barOffset + barHeight;
     var image_y = (height - totalHeight) >> 1;
-    ctx.drawImage(image, rect[0], rect[1], rect[2], rect[3], (width - rect[2]) >> 1, image_y, rect[2], rect[3]);
+    ctx.drawImage(
+      image,
+      rect[0],
+      rect[1],
+      rect[2],
+      rect[3],
+      (width - rect[2]) >> 1,
+      image_y,
+      rect[2],
+      rect[3],
+    );
     barTop = image_y + rect[3] + barOffset;
   } else barTop = (height - barHeight) >> 1;
   // bar border:
@@ -137,5 +163,8 @@ function poki_get_team_raw() {
 }
 
 function poki_set_team_raw(team) {
-  return window.parent.postMessage({ type: "RetroBowl_teamSwitch", content: { team } }, "*");
+  return window.parent.postMessage(
+    { type: "RetroBowl_teamSwitch", content: { team } },
+    "*",
+  );
 }

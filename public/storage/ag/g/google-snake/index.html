@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <!-- 
 Saved from url=(0043)https://www.google.com/fbx?fbx=snake_arcade
 it turns out chrome's save page feature just works with no modifications lol (must be run on a web server) but I made some improvements
@@ -10,14 +10,19 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
 <html>
   <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
 
-  gtag('config', 'G-TFZ72L5FPQ');
-</script>
+      gtag("config", "G-TFZ72L5FPQ");
+    </script>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Google Snake | 3kh0</title>
@@ -29,7 +34,7 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
         window.addEventListener = function (a, c, d) {
           "unload" !== a && b(a, c, d);
         };
-      }.call(this));
+      }).call(this);
       (function () {
         window.google = { kEI: "jzq8YbyzD9uq0PEPs_OpgAQ" };
         google.sn = "web";
@@ -40,20 +45,47 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
         var h,
           k = [];
         function l(a) {
-          for (var b; a && (!a.getAttribute || !(b = a.getAttribute("eid"))); ) a = a.parentNode;
+          for (var b; a && (!a.getAttribute || !(b = a.getAttribute("eid"))); )
+            a = a.parentNode;
           return b || h;
         }
         function m(a) {
-          for (var b = null; a && (!a.getAttribute || !(b = a.getAttribute("leid"))); ) a = a.parentNode;
+          for (
+            var b = null;
+            a && (!a.getAttribute || !(b = a.getAttribute("leid")));
+
+          )
+            a = a.parentNode;
           return b;
         }
         function n(a, b, c, d, g) {
           var e = "";
-          c || -1 !== b.search("&ei=") || ((e = "&ei=" + l(d)), -1 === b.search("&lei=") && (d = m(d)) && (e += "&lei=" + d));
+          c ||
+            -1 !== b.search("&ei=") ||
+            ((e = "&ei=" + l(d)),
+            -1 === b.search("&lei=") && (d = m(d)) && (e += "&lei=" + d));
           d = "";
-          !c && f._cshid && -1 === b.search("&cshid=") && "slh" !== a && (d = "&cshid=" + f._cshid);
-          c = c || "/" + (g || "gen_204") + "?atyp=i&ct=" + a + "&cad=" + b + e + "&zx=" + Date.now() + d;
-          /^http:/i.test(c) && "https:" === window.location.protocol && (google.ml && google.ml(Error("a"), !1, { src: c, glmm: 1 }), (c = ""));
+          !c &&
+            f._cshid &&
+            -1 === b.search("&cshid=") &&
+            "slh" !== a &&
+            (d = "&cshid=" + f._cshid);
+          c =
+            c ||
+            "/" +
+              (g || "gen_204") +
+              "?atyp=i&ct=" +
+              a +
+              "&cad=" +
+              b +
+              e +
+              "&zx=" +
+              Date.now() +
+              d;
+          /^http:/i.test(c) &&
+            "https:" === window.location.protocol &&
+            (google.ml && google.ml(Error("a"), !1, { src: c, glmm: 1 }),
+            (c = ""));
           return c;
         }
         h = google.kEI;
@@ -67,14 +99,17 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             a = new Image();
             var e = k.length;
             k[e] = a;
-            a.onerror = a.onload = a.onabort = function () {
-              delete k[e];
-            };
+            a.onerror =
+              a.onload =
+              a.onabort =
+                function () {
+                  delete k[e];
+                };
             a.src = c;
           }
         };
         google.logUrl = n;
-      }.call(this));
+      }).call(this);
       (function () {
         google.y = {};
         google.sy = [];
@@ -103,7 +138,7 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
         };
         google.bx = !1;
         google.lx = function () {};
-      }.call(this));
+      }).call(this);
       google.f = {};
       (function () {
         document.documentElement.addEventListener(
@@ -116,14 +151,18 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             } else a = !1;
             a && (b.preventDefault(), b.stopPropagation());
           },
-          !0
+          !0,
         );
         document.documentElement.addEventListener(
           "click",
           function (b) {
             var a;
             a: {
-              for (a = b.target; a && a !== document.documentElement; a = a.parentElement)
+              for (
+                a = b.target;
+                a && a !== document.documentElement;
+                a = a.parentElement
+              )
                 if ("A" === a.tagName) {
                   a = "1" === a.getAttribute("data-nohref");
                   break a;
@@ -132,9 +171,9 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             }
             a && b.preventDefault();
           },
-          !0
+          !0,
         );
-      }.call(this));
+      }).call(this);
       (function () {
         google.hs = { h: true, sie: false };
       })();
@@ -148,10 +187,13 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           b.length ? b.push(a) : a();
         };
         function c() {
-          for (var a = b.shift(); a; ) a(), (a = b.shift());
+          for (var a = b.shift(); a; ) (a(), (a = b.shift()));
         }
-        window.addEventListener ? (document.addEventListener("DOMContentLoaded", c, !1), window.addEventListener("load", c, !1)) : window.attachEvent && window.attachEvent("onload", c);
-      }.call(this));
+        window.addEventListener
+          ? (document.addEventListener("DOMContentLoaded", c, !1),
+            window.addEventListener("load", c, !1))
+          : window.attachEvent && window.attachEvent("onload", c);
+      }).call(this);
       (function () {
         var b = [];
         google.jsc = {
@@ -164,7 +206,7 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             google.jsc.mm.length || (google.jsc.mm = a);
           },
         };
-      }.call(this));
+      }).call(this);
       (function () {
         var e = this || self;
 
@@ -172,7 +214,8 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
         function w(a, b) {
           if (null === b) return !1;
           if ("contains" in a && 1 == b.nodeType) return a.contains(b);
-          if ("compareDocumentPosition" in a) return a == b || !!(a.compareDocumentPosition(b) & 16);
+          if ("compareDocumentPosition" in a)
+            return a == b || !!(a.compareDocumentPosition(b) & 16);
           for (; b && a != b; ) b = b.parentNode;
           return b == a;
         }
@@ -182,7 +225,9 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
               return b.call(a, d);
             };
           },
-          z = "undefined" != typeof navigator && /Macintosh/.test(navigator.userAgent),
+          z =
+            "undefined" != typeof navigator &&
+            /Macintosh/.test(navigator.userAgent),
           A = function () {
             this._mouseEventsPrevented = !0;
           };
@@ -194,7 +239,9 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             for (var b = 0; b < a.h.length; ++b) {
               var d = a.g,
                 c = a.h[b];
-              d.removeEventListener ? d.removeEventListener(c.eventType, c.o, c.capture) : d.detachEvent && d.detachEvent("on" + c.eventType, c.o);
+              d.removeEventListener
+                ? d.removeEventListener(c.eventType, c.o, c.capture)
+                : d.detachEvent && d.detachEvent("on" + c.eventType, c.o);
             }
             a.h = [];
           };
@@ -212,7 +259,9 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           };
         I.prototype.i = function () {
           var a = this.g;
-          this.g && this.g != this.h ? (this.g = this.g.__owner || this.g.parentNode) : (this.g = null);
+          this.g && this.g != this.h
+            ? (this.g = this.g.__owner || this.g.parentNode)
+            : (this.g = null);
           return a;
         };
         var L = function () {
@@ -226,7 +275,10 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           if (this.g != this.j.length) {
             var a = this.j[this.g];
             this.g++;
-            a != this.h && a && a.__owner && ((this.l = !0), K(a.__owner, this.h));
+            a != this.h &&
+              a &&
+              a.__owner &&
+              ((this.l = !0), K(a.__owner, this.h));
             return a;
           }
           return null;
@@ -243,7 +295,9 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             N(this, "_custom");
           },
           R = function (a) {
-            return String.prototype.trim ? a.trim() : a.replace(/^\s+/, "").replace(/\s+$/, "");
+            return String.prototype.trim
+              ? a.trim()
+              : a.replace(/^\s+/, "").replace(/\s+$/, "");
           },
           ha = function (a, b) {
             return function l(c, g) {
@@ -255,7 +309,14 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
                 k = k._type;
               }
               var m = k;
-              "click" == m && ((z && c.metaKey) || (!z && c.ctrlKey) || 2 == c.which || (null == c.which && 4 == c.button) || c.shiftKey) ? (m = "clickmod") : "keydown" == m && !c.a11ysc && (m = "maybe_click");
+              "click" == m &&
+              ((z && c.metaKey) ||
+                (!z && c.ctrlKey) ||
+                2 == c.which ||
+                (null == c.which && 4 == c.button) ||
+                c.shiftKey)
+                ? (m = "clickmod")
+                : "keydown" == m && !c.a11ysc && (m = "maybe_click");
               var u = c.srcElement || c.target;
               k = S(m, c, u, "", null);
               if (c.path) {
@@ -280,7 +341,11 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
                     n = f[y];
                     if (!n) {
                       n = {};
-                      for (var B = y.split(ba), ca = B ? B.length : 0, C = 0; C < ca; C++) {
+                      for (
+                        var B = y.split(ba), ca = B ? B.length : 0, C = 0;
+                        C < ca;
+                        C++
+                      ) {
                         var v = B[C];
                         if (v) {
                           var D = v.indexOf(":"),
@@ -293,32 +358,85 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
                       f[y] = n;
                     }
                     r.__jsaction = n;
-                  } else (n = fa), (r.__jsaction = n);
+                  } else ((n = fa), (r.__jsaction = n));
                 }
-                "maybe_click" == q && n.click ? ((p = q), (q = "click")) : "clickkey" == q ? (q = "click") : "click" != q || n.click || (q = "clickonly");
-                p = H._cfc && n.click ? H._cfc(r, aa, n, q, p) : { eventType: p ? p : q, action: n[q] || "", event: null, ignore: !1 };
-                k = S(p.eventType, p.event || c, u, p.action || "", h, k.timeStamp);
+                "maybe_click" == q && n.click
+                  ? ((p = q), (q = "click"))
+                  : "clickkey" == q
+                    ? (q = "click")
+                    : "click" != q || n.click || (q = "clickonly");
+                p =
+                  H._cfc && n.click
+                    ? H._cfc(r, aa, n, q, p)
+                    : {
+                        eventType: p ? p : q,
+                        action: n[q] || "",
+                        event: null,
+                        ignore: !1,
+                      };
+                k = S(
+                  p.eventType,
+                  p.event || c,
+                  u,
+                  p.action || "",
+                  h,
+                  k.timeStamp,
+                );
                 if (p.ignore || p.action) break;
               }
-              k && "touchend" == k.eventType && (k.event._preventMouseEvents = A);
+              k &&
+                "touchend" == k.eventType &&
+                (k.event._preventMouseEvents = A);
               if (p && p.action) {
                 if ("mouseenter" == m || "mouseleave" == m)
-                  if (((u = c.relatedTarget), !(("mouseover" == c.type && "mouseenter" == m) || ("mouseout" == c.type && "mouseleave" == m)) || (u && (u === h || w(h, u))))) (k.action = ""), (k.actionElement = null);
+                  if (
+                    ((u = c.relatedTarget),
+                    !(
+                      ("mouseover" == c.type && "mouseenter" == m) ||
+                      ("mouseout" == c.type && "mouseleave" == m)
+                    ) ||
+                      (u && (u === h || w(h, u))))
+                  )
+                    ((k.action = ""), (k.actionElement = null));
                   else {
                     m = {};
-                    for (var t in c) "function" !== typeof c[t] && "srcElement" !== t && "target" !== t && (m[t] = c[t]);
-                    m.type = "mouseover" == c.type ? "mouseenter" : "mouseleave";
+                    for (var t in c)
+                      "function" !== typeof c[t] &&
+                        "srcElement" !== t &&
+                        "target" !== t &&
+                        (m[t] = c[t]);
+                    m.type =
+                      "mouseover" == c.type ? "mouseenter" : "mouseleave";
                     m.target = m.srcElement = h;
                     m.bubbles = !1;
                     k.event = m;
                     k.targetElement = h;
                   }
-              } else (k.action = ""), (k.actionElement = null);
+              } else ((k.action = ""), (k.actionElement = null));
               h = k;
-              a.i && !h.event.a11ysgd && ((t = S(h.eventType, h.event, h.targetElement, h.action, h.actionElement, h.timeStamp)), "clickonly" == t.eventType && (t.eventType = "click"), a.i(t, !0));
+              a.i &&
+                !h.event.a11ysgd &&
+                ((t = S(
+                  h.eventType,
+                  h.event,
+                  h.targetElement,
+                  h.action,
+                  h.actionElement,
+                  h.timeStamp,
+                )),
+                "clickonly" == t.eventType && (t.eventType = "click"),
+                a.i(t, !0));
               if (h.actionElement || "maybe_click" == h.eventType) {
                 if (a.i) {
-                  if ((!h.actionElement || "A" != h.actionElement.tagName || ("click" != h.eventType && "clickmod" != h.eventType) || (c.preventDefault ? c.preventDefault() : (c.returnValue = !1)), (c = a.i(h)) && g)) {
+                  if (
+                    (!h.actionElement ||
+                      "A" != h.actionElement.tagName ||
+                      ("click" != h.eventType && "clickmod" != h.eventType) ||
+                      (c.preventDefault
+                        ? c.preventDefault()
+                        : (c.returnValue = !1)),
+                    (c = a.i(h)) && g)
+                  ) {
                     l.call(this, c, !1);
                     return;
                   }
@@ -338,18 +456,34 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             };
           },
           S = function (a, b, d, c, g, l) {
-            return { eventType: a, event: b, targetElement: d, action: c, actionElement: g, timeStamp: l || Date.now() };
+            return {
+              eventType: a,
+              event: b,
+              targetElement: d,
+              action: c,
+              actionElement: g,
+              timeStamp: l || Date.now(),
+            };
           },
           ia = function (a, b) {
             return function (d) {
               var c = a,
                 g = b,
                 l = !1;
-              "mouseenter" == c ? (c = "mouseover") : "mouseleave" == c && (c = "mouseout");
+              "mouseenter" == c
+                ? (c = "mouseover")
+                : "mouseleave" == c && (c = "mouseout");
               if (d.addEventListener) {
-                if ("focus" == c || "blur" == c || "error" == c || "load" == c) l = !0;
+                if ("focus" == c || "blur" == c || "error" == c || "load" == c)
+                  l = !0;
                 d.addEventListener(c, g, l);
-              } else d.attachEvent && ("focus" == c ? (c = "focusin") : "blur" == c && (c = "focusout"), (g = x(d, g)), d.attachEvent("on" + c, g));
+              } else
+                d.attachEvent &&
+                  ("focus" == c
+                    ? (c = "focusin")
+                    : "blur" == c && (c = "focusout"),
+                  (g = x(d, g)),
+                  d.attachEvent("on" + c, g));
               return { eventType: c, o: g, capture: l };
             };
           },
@@ -379,18 +513,23 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
                 }
               b = !1;
             }
-            if (b) return a.h.push(d), d;
+            if (b) return (a.h.push(d), d);
             U(a, d);
             a.g.push(d);
             V(a);
             return d;
           },
           V = function (a) {
-            for (var b = a.h.concat(a.g), d = [], c = [], g = 0; g < a.g.length; ++g) {
+            for (
+              var b = a.h.concat(a.g), d = [], c = [], g = 0;
+              g < a.g.length;
+              ++g
+            ) {
               var l = a.g[g];
               X(l, b) ? (d.push(l), G(l)) : c.push(l);
             }
-            for (g = 0; g < a.h.length; ++g) (l = a.h[g]), X(l, b) ? d.push(l) : (c.push(l), U(a, l));
+            for (g = 0; g < a.h.length; ++g)
+              ((l = a.h[g]), X(l, b) ? d.push(l) : (c.push(l), U(a, l)));
             a.g = c;
             a.h = d;
           },
@@ -404,14 +543,17 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             a.j && (0 < a.j.length && b(a.j), (a.j = null));
           },
           X = function (a, b) {
-            for (var d = 0; d < b.length; ++d) if (b[d].g != a.g && T(b[d].g, a.g)) return !0;
+            for (var d = 0; d < b.length; ++d)
+              if (b[d].g != a.g && T(b[d].g, a.g)) return !0;
             return !1;
           },
           T = function (a, b) {
             for (; a != b && b.parentNode; ) b = b.parentNode;
             return a == b;
           },
-          ja = "undefined" != typeof navigator && /iPhone|iPad|iPod/.test(navigator.userAgent),
+          ja =
+            "undefined" != typeof navigator &&
+            /iPhone|iPad|iPod/.test(navigator.userAgent),
           ba = /\s*;\s*/,
           da = "click",
           fa = {};
@@ -480,11 +622,15 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             },
           };
         })(Z);
-      }.call(this));
+      }).call(this);
     </script>
     <script>
       (function () {
-        google.xjs = { ck: "xjs.s.SnTovAF5zEc.L.W.O", cs: "ACT90oHgLMCtKKNDZxn3f3SRJ9lFKuOTsw", excm: [] };
+        google.xjs = {
+          ck: "xjs.s.SnTovAF5zEc.L.W.O",
+          cs: "ACT90oHgLMCtKKNDZxn3f3SRJ9lFKuOTsw",
+          excm: [],
+        };
       })();
     </script>
     <script>
@@ -521,12 +667,19 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
         google.ml = function (a, b, d, m, c) {
           c = void 0 === c ? 2 : c;
           b && (q = a && a.message);
-          if (google.dl) return google.dl(a, c, d), null;
+          if (google.dl) return (google.dl(a, c, d), null);
           if (0 > u) {
             window.console && console.error(a, d);
             if (-2 === u) throw a;
             b = !1;
-          } else b = !a || !a.message || "Error loading script" === a.message || (p >= k && !m) ? !1 : !0;
+          } else
+            b =
+              !a ||
+              !a.message ||
+              "Error loading script" === a.message ||
+              (p >= k && !m)
+                ? !1
+                : !0;
           if (!b) return null;
           p++;
           d = d || {};
@@ -534,14 +687,27 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           c = encodeURIComponent;
           b = "/gen_204?atyp=i&ei=" + c(google.kEI);
           google.kEXPI && (b += "&jexpid=" + c(google.kEXPI));
-          b += "&srcpg=" + c(google.sn) + "&jsr=" + c(r.jsr) + "&bver=" + c(r.bv) + ("&jsel=" + e);
+          b +=
+            "&srcpg=" +
+            c(google.sn) +
+            "&jsr=" +
+            c(r.jsr) +
+            "&bver=" +
+            c(r.bv) +
+            ("&jsel=" + e);
           e = a.lineNumber;
           void 0 !== e && (b += "&line=" + e);
           var n = a.fileName;
           n &&
             ((b += "&script=" + c(n)),
-            e && n === "https://binbashbanana.github.io/gfiles/gfiles/html5/snake/inframe.html" && ((e = document.documentElement.outerHTML.split("\n")[e]), (b += "&cad=" + c(e ? e.substring(0, 300) : "No script found."))));
-          for (var t in d) (b += "&"), (b += c(t)), (b += "="), (b += c(d[t]));
+            e &&
+              n ===
+                "https://binbashbanana.github.io/gfiles/gfiles/html5/snake/inframe.html" &&
+              ((e = document.documentElement.outerHTML.split("\n")[e]),
+              (b +=
+                "&cad=" + c(e ? e.substring(0, 300) : "No script found."))));
+          for (var t in d)
+            ((b += "&"), (b += c(t)), (b += "="), (b += c(d[t])));
           b = b + "&emsg=" + c(a.name + ": " + a.message);
           b = b + "&jsst=" + c(a.stack || "N/A");
           12288 <= b.length && (b = b.substr(0, 12288));
@@ -554,7 +720,16 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             ((a = c instanceof Error ? c : Error(a)),
             void 0 === d || "lineNumber" in a || (a.lineNumber = d),
             void 0 === b || "fileName" in a || (a.fileName = b),
-            google.ml(a, !1, void 0, !1, "SyntaxError" === a.name || "SyntaxError" === a.message.substring(0, 11) ? 2 : 0));
+            google.ml(
+              a,
+              !1,
+              void 0,
+              !1,
+              "SyntaxError" === a.name ||
+                "SyntaxError" === a.message.substring(0, 11)
+                ? 2
+                : 0,
+            ));
           q = null;
           l && p >= k && (window.onerror = null);
         };
@@ -621,7 +796,13 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
     jsaction="YUC7He:.CLIENT;IVKTfe:.CLIENT;KsNBn:.CLIENT;sbTXNb:.CLIENT;xjhTIf:.CLIENT;O2vyse:.CLIENT;Ez7VMc:.CLIENT;qqf0n:.CLIENT;me3ike:.CLIENT;IrNywb:.CLIENT;Z94jBf:.CLIENT;A8708b:.CLIENT;YcfJ:.CLIENT;VM8bg:.CLIENT;hWT9Jb:.CLIENT;WCulWe:.CLIENT;NTJodf:.CLIENT;szjOR:.CLIENT;PY1zjf:.CLIENT;wnJTPd:.CLIENT;JL9QDc:.CLIENT;kWlxhc:.CLIENT;qGMTIf:.CLIENT;aeBrn:.CLIENT"
   >
     <link href="assets/css.css" rel="stylesheet" />
-    <div jscontroller="pKhWu" class="EjCLSb yZz3de" data-si="1" jsaction="rcuQ6b: npT2md;" data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQtOUBCAE">
+    <div
+      jscontroller="pKhWu"
+      class="EjCLSb yZz3de"
+      data-si="1"
+      jsaction="rcuQ6b: npT2md;"
+      data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQtOUBCAE"
+    >
       <style>
         .EjCLSb {
           width: 600px;
@@ -697,7 +878,8 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           top: 8px;
           display: inline-block;
         }
-        @media only screen and (max-width: 285px), only screen and (orientation: landscape) and (max-height: 285px) {
+        @media only screen and (max-width: 285px),
+          only screen and (orientation: landscape) and (max-height: 285px) {
         }
         .MNu4v {
           position: absolute;
@@ -787,12 +969,17 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           text-align: center;
           position: relative;
         }
-        @media only screen and (max-width: 315px), only screen and (orientation: landscape) and (max-height: 315px) {
+        @media only screen and (max-width: 315px),
+          only screen and (orientation: landscape) and (max-height: 315px) {
         }
-        @media only screen and (max-width: 215px), only screen and (orientation: landscape) and (max-height: 215px) {
+        @media only screen and (max-width: 215px),
+          only screen and (orientation: landscape) and (max-height: 215px) {
         }
         .Vhx6Nd {
-          font: 400 28px Roboto, Arial, sans-serif;
+          font:
+            400 28px Roboto,
+            Arial,
+            sans-serif;
           color: #fff;
         }
         .wUt0xf {
@@ -826,7 +1013,10 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           height: 30px;
         }
         .Uxkl7b h2 {
-          font: 400 20px Roboto, Arial, sans-serif;
+          font:
+            400 20px Roboto,
+            Arial,
+            sans-serif;
           color: #fff;
           padding: 0;
           margin: 0;
@@ -982,7 +1172,9 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           height: auto;
           transform: scale(0.65);
           opacity: 0.65;
-          -webkit-transition: transform 0.25s, opacity 0.25s;
+          -webkit-transition:
+            transform 0.25s,
+            opacity 0.25s;
           -webkit-user-drag: none;
           -webkit-user-select: none;
           -moz-user-select: none;
@@ -1034,12 +1226,31 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
       </style>
       <div jsname="P0FCKc" class="sEOCsb">
         <div class="MNu4v">
-          <div class="TO4uAe wSwbef"><img /><img jsname="lh7ff" class="XUtzXd" src="assets/apple_00.png" alt="" /></div>
+          <div class="TO4uAe wSwbef">
+            <img /><img
+              jsname="lh7ff"
+              class="XUtzXd"
+              src="assets/apple_00.png"
+              alt=""
+            />
+          </div>
           <div jsname="A0kWCf" class="HIonyd">0</div>
-          <div class="TO4uAe wSwbef"><img jsname="UEI8qf" class="XUtzXd" src="assets/trophy_00.png" alt="" style="visibility: hidden;" /></div>
-          <div jsname="E5ziSe" class="HIonyd" style="visibility: hidden;">0</div>
+          <div class="TO4uAe wSwbef">
+            <img
+              jsname="UEI8qf"
+              class="XUtzXd"
+              src="assets/trophy_00.png"
+              alt=""
+              style="visibility: hidden"
+            />
+          </div>
+          <div jsname="E5ziSe" class="HIonyd" style="visibility: hidden">0</div>
         </div>
-        <div jsname="Fh1nkd" class="A2vT0 LaTyvd" data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQ9Z4HCAI">
+        <div
+          jsname="Fh1nkd"
+          class="A2vT0 LaTyvd"
+          data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQ9Z4HCAI"
+        >
           <div jsname="yddQF" class="Jc72He gmwAbc">00:00:000</div>
           <div class="Jc72He rc48Qb">
             <div jsname="DIdRlc" class="DiITId">25</div>
@@ -1047,36 +1258,112 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
           </div>
         </div>
         <div class="fkOrwb">
-          <img jsname="p57eQc" class="MR2r3b zn2TBb LaTyvd" src="assets/not_interested_white_24dp.png" alt="End game" role="button" tabindex="0" jsaction="nPcntd" />
-          <img jsname="N7ntOd" class="oGdex JWsmhb" src="assets/volume_up_white_24dp.png" alt="Mute" role="button" tabindex="0" jsaction="DGXxE" />
+          <img
+            jsname="p57eQc"
+            class="MR2r3b zn2TBb LaTyvd"
+            src="assets/not_interested_white_24dp.png"
+            alt="End game"
+            role="button"
+            tabindex="0"
+            jsaction="nPcntd"
+          />
+          <img
+            jsname="N7ntOd"
+            class="oGdex JWsmhb"
+            src="assets/volume_up_white_24dp.png"
+            alt="Mute"
+            role="button"
+            tabindex="0"
+            jsaction="DGXxE"
+          />
         </div>
       </div>
-      <div jsname="JI3Aqc" class="jNB0Ic"><canvas jsname="UzWXSb" class="cer0Bd" width="600" height="530"></canvas></div>
-      <div jsname="Yfvsbd" class="zsInrf" data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQpcwCCAM">
+      <div jsname="JI3Aqc" class="jNB0Ic">
+        <canvas
+          jsname="UzWXSb"
+          class="cer0Bd"
+          width="600"
+          height="530"
+        ></canvas>
+      </div>
+      <div
+        jsname="Yfvsbd"
+        class="zsInrf"
+        data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQpcwCCAM"
+      >
         <div class="bZUgDf">
           <div jsname="Rs1rF" class="T7SB3d">
-            <canvas jsname="kAVrAc" class="jfYnYe" width="300" height="330"></canvas>
+            <canvas
+              jsname="kAVrAc"
+              class="jfYnYe"
+              width="300"
+              height="330"
+            ></canvas>
             <div class="bF4Gmf">
               <div jsname="lFrxS" class="UJhXPd wSwbef EWyEF">
                 <div jsname="piGvM" class="t2dAWb LaTyvd">
-                  <img class="XUtzXd XshoDd zJZv3d ChZJuf" src="assets/apple_00.png" alt="" />
-                  <img class="XUtzXd XshoDd zJZv3d IuIJoc" src="assets/apple_00.png" alt="" />
-                  <img class="XUtzXd XshoDd dQS3r lXuhd" src="assets/apple_00.png" alt="" />
-                  <img class="XUtzXd XshoDd dQS3r OKLjFb" src="assets/apple_00.png" alt="" />
+                  <img
+                    class="XUtzXd XshoDd zJZv3d ChZJuf"
+                    src="assets/apple_00.png"
+                    alt=""
+                  />
+                  <img
+                    class="XUtzXd XshoDd zJZv3d IuIJoc"
+                    src="assets/apple_00.png"
+                    alt=""
+                  />
+                  <img
+                    class="XUtzXd XshoDd dQS3r lXuhd"
+                    src="assets/apple_00.png"
+                    alt=""
+                  />
+                  <img
+                    class="XUtzXd XshoDd dQS3r OKLjFb"
+                    src="assets/apple_00.png"
+                    alt=""
+                  />
                 </div>
-                <img jsname="h6Ousc" class="XUtzXd" src="assets/apple_00.png" alt="" />
+                <img
+                  jsname="h6Ousc"
+                  class="XUtzXd"
+                  src="assets/apple_00.png"
+                  alt=""
+                />
               </div>
               <div jsname="LOtDEe" class="Vhx6Nd">0</div>
             </div>
             <div class="bF4Gmf">
-              <div class="UJhXPd wSwbef"><img jsname="LpoWPe" class="XUtzXd" src="assets/trophy_00.png" alt="" /></div>
+              <div class="UJhXPd wSwbef">
+                <img
+                  jsname="LpoWPe"
+                  class="XUtzXd"
+                  src="assets/trophy_00.png"
+                  alt=""
+                />
+              </div>
               <div jsname="Vp6PHf" class="Vhx6Nd">0</div>
             </div>
           </div>
           <div jsname="akczce" class="T7SB3d LaTyvd">
             <div class="zFl3vb">
-              <img class="p17HVe" src="assets/gm_arrow_back_white_24dp.png" alt="" role="button" tabindex="0" jsaction="AFvrle" />
-              <img jsname="oUUYK" class="GZWhGc LaTyvd" src="assets/gm_settings_white_24dp.png" alt="" role="button" tabindex="0" jsaction="siBdCd" data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQnOsHCAQ" />
+              <img
+                class="p17HVe"
+                src="assets/gm_arrow_back_white_24dp.png"
+                alt=""
+                role="button"
+                tabindex="0"
+                jsaction="AFvrle"
+              />
+              <img
+                jsname="oUUYK"
+                class="GZWhGc LaTyvd"
+                src="assets/gm_settings_white_24dp.png"
+                alt=""
+                role="button"
+                tabindex="0"
+                jsaction="siBdCd"
+                data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQnOsHCAQ"
+              />
             </div>
             <div jsname="wXSCdb" class="sXu3u">
               <div jsaction="mousedown:NB8Tmd;touchstart:wGlzEb" class="e1XC2b">
@@ -1105,7 +1392,9 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
                     width: 47px;
                     height: 47px;
                     transform: scale(0.8);
-                    -webkit-transition: transform 0.25s, opacity 0.25s;
+                    -webkit-transition:
+                      transform 0.25s,
+                      opacity 0.25s;
                     -webkit-user-select: none;
                     -moz-user-select: none;
                     -ms-user-select: none;
@@ -1113,103 +1402,312 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
                   }
                 </style>
                 <div class="iLZj5e qfPtwe" id="apple">
-                  <img class="DqMRee" src="assets/apple_00.png" alt="" /><img class="DqMRee" src="assets/apple_01.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_02.png" alt="" /><img class="DqMRee" src="assets/apple_03.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_04.png" alt="" /><img class="DqMRee" src="assets/apple_05.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_06.png" alt="" /><img class="DqMRee" src="assets/apple_07.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_08.png" alt="" /><img class="DqMRee" src="assets/apple_09.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_10.png" alt="" /><img class="DqMRee" src="assets/apple_11.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_12.png" alt="" /><img class="DqMRee" src="assets/apple_13.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_14.png" alt="" /><img class="DqMRee" src="assets/apple_15.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_16.png" alt="" /><img class="DqMRee" src="assets/apple_17.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_18.png" alt="" /><img class="DqMRee" src="assets/apple_19.png" alt="" />
-                  <img class="DqMRee" src="assets/apple_20.png" alt="" /><img class="DqMRee" src="assets/apple_21.png" alt="" />
+                  <img class="DqMRee" src="assets/apple_00.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_01.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_02.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_03.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_04.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_05.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_06.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_07.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_08.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_09.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_10.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_11.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_12.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_13.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_14.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_15.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_16.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_17.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_18.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_19.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/apple_20.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/apple_21.png"
+                    alt=""
+                  />
                 </div>
               </div>
               <div jsaction="mousedown:NB8Tmd;touchstart:wGlzEb" class="e1XC2b">
                 <div class="iLZj5e" id="trophy">
-                  <img class="DqMRee" src="assets/trophy_00.png" alt="" /><img class="DqMRee" src="assets/trophy_01.png" alt="" />
-                  <img class="DqMRee" src="assets/trophy_02.png" alt="" /><img class="DqMRee" src="assets/trophy_03.png" alt="" />
-                  <img class="DqMRee" src="assets/trophy_04.png" alt="" /><img class="DqMRee" src="assets/trophy_05.png" alt="" />
-                  <img class="DqMRee" src="assets/trophy_06.png" alt="" /><img class="DqMRee" src="assets/trophy_07.png" alt="" />
-                  <img class="DqMRee" src="assets/trophy_08.png" alt="" /><img class="DqMRee" src="assets/trophy_09.png" alt="" />
-                  <img class="DqMRee" src="assets/trophy_10.png" alt="" /><img class="DqMRee" src="assets/trophy_11.png" alt="" />
+                  <img class="DqMRee" src="assets/trophy_00.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/trophy_01.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/trophy_02.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/trophy_03.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/trophy_04.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/trophy_05.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/trophy_06.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/trophy_07.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/trophy_08.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/trophy_09.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/trophy_10.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/trophy_11.png"
+                    alt=""
+                  />
                   <img class="DqMRee" src="assets/trophy_12.png" alt="" />
                 </div>
               </div>
               <div jsaction="mousedown:NB8Tmd;touchstart:wGlzEb" class="e1XC2b">
                 <div class="iLZj5e" id="count">
-                  <img class="DqMRee" src="assets/count_00.png" alt="" /><img class="DqMRee" src="assets/count_01.png" alt="" />
+                  <img class="DqMRee" src="assets/count_00.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/count_01.png"
+                    alt=""
+                  />
                   <img class="DqMRee" src="assets/count_02.png" alt="" />
                 </div>
               </div>
               <div jsaction="mousedown:NB8Tmd;touchstart:wGlzEb" class="e1XC2b">
                 <div class="iLZj5e" id="speed">
-                  <img class="DqMRee" src="assets/speed_00.png" alt="" /><img class="DqMRee" src="assets/speed_01.png" alt="" />
+                  <img class="DqMRee" src="assets/speed_00.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/speed_01.png"
+                    alt=""
+                  />
                   <img class="DqMRee" src="assets/speed_02.png" alt="" />
                 </div>
               </div>
               <div jsaction="mousedown:NB8Tmd;touchstart:wGlzEb" class="e1XC2b">
                 <div class="iLZj5e" id="size">
-                  <img class="DqMRee" src="assets/size_00.png" alt="" /><img class="DqMRee" src="assets/size_01.png" alt="" />
+                  <img class="DqMRee" src="assets/size_00.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/size_01.png"
+                    alt=""
+                  />
                   <img class="DqMRee" src="assets/size_02.png" alt="" />
                 </div>
               </div>
               <div jsaction="mousedown:NB8Tmd;touchstart:wGlzEb" class="e1XC2b">
                 <div class="iLZj5e" id="color">
-                  <img class="DqMRee" src="assets/color_00.png" alt="" /><img class="DqMRee" src="assets/color_01.png" alt="" />
-                  <img class="DqMRee" src="assets/color_02.png" alt="" /><img class="DqMRee" src="assets/color_03.png" alt="" />
-                  <img class="DqMRee" src="assets/color_04.png" alt="" /><img class="DqMRee" src="assets/color_05.png" alt="" />
-                  <img class="DqMRee" src="assets/color_06.png" alt="" /><img class="DqMRee" src="assets/color_07.png" alt="" />
-                  <img class="DqMRee" src="assets/color_08.png" alt="" /><img class="DqMRee" src="assets/color_09.png" alt="" />
-                  <img class="DqMRee" src="assets/color_10.png" alt="" /><img class="DqMRee" src="assets/color_11.png" alt="" />
-                  <img class="DqMRee" src="assets/color_12.png" alt="" /><img class="DqMRee" src="assets/color_13.png" alt="" />
-                  <img class="DqMRee" src="assets/color_14.png" alt="" /><img class="DqMRee" src="assets/color_15.png" alt="" />
-                  <img class="DqMRee" src="assets/color_16.png" alt="" /><img class="DqMRee" src="assets/color_17.png" alt="" />
+                  <img class="DqMRee" src="assets/color_00.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_01.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_02.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_03.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_04.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_05.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_06.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_07.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_08.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_09.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_10.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_11.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_12.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_13.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_14.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_15.png"
+                    alt=""
+                  />
+                  <img class="DqMRee" src="assets/color_16.png" alt="" /><img
+                    class="DqMRee"
+                    src="assets/color_17.png"
+                    alt=""
+                  />
                   <img class="DqMRee" src="assets/color_18.png" alt="" />
                 </div>
               </div>
             </div>
           </div>
           <div jsname="VODc4e" class="T7SB3d LaTyvd">
-            <div class="zFl3vb"><img class="p17HVe" src="assets/gm_arrow_back_white_24dp.png" alt="" role="button" tabindex="0" jsaction="rxqFXd" /></div>
+            <div class="zFl3vb">
+              <img
+                class="p17HVe"
+                src="assets/gm_arrow_back_white_24dp.png"
+                alt=""
+                role="button"
+                tabindex="0"
+                jsaction="rxqFXd"
+              />
+            </div>
             <div class="S4H6uf">
               <div class="PWIidc">
                 <div>
-                  <div class="vuOknd lH9Ipd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc FMN3L" src="assets/random.png" alt="" /></div>
+                  <div
+                    class="vuOknd lH9Ipd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc FMN3L" src="assets/random.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_01.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_01.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_02.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_02.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_03.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_03.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_04.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_04.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_05.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_05.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_06.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_06.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_07.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_07.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_08.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_08.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_09.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_09.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_10.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_10.png" alt="" />
+                  </div>
                 </div>
                 <div>
-                  <div class="vuOknd" role="button" tabindex="0" jsaction="oAxMnf"><img class="DEvgAc" src="assets/trophy_11.png" alt="" /></div>
+                  <div
+                    class="vuOknd"
+                    role="button"
+                    tabindex="0"
+                    jsaction="oAxMnf"
+                  >
+                    <img class="DEvgAc" src="assets/trophy_11.png" alt="" />
+                  </div>
                 </div>
                 <div><div class="vuOknd oBBKec"></div></div>
                 <div><div class="vuOknd oBBKec"></div></div>
@@ -1219,21 +1717,62 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
             </div>
           </div>
           <div class="wUt0xf">
-            <div jsname="NSjDf" class="FL0z2d Uxkl7b" role="button" tabindex="0" jsaction="JrrOHc" data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQo8wCCAU">
+            <div
+              jsname="NSjDf"
+              class="FL0z2d Uxkl7b"
+              role="button"
+              tabindex="0"
+              jsaction="JrrOHc"
+              data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQo8wCCAU"
+            >
               <img src="assets/gm_play_arrow_white_24dp.png" alt="" />
               <h2>Play</h2>
             </div>
-            <div jsname="iyH4Cb" class="FL0z2d iIs7Af" role="button" tabindex="0" jsaction="rxqFXd" data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQqc0GCAY"><img src="assets/gm_settings_white_24dp.png" alt="Settings" /></div>
-            <div jsname="qycu7d" class="FL0z2d iIs7Af LaTyvd" role="button" tabindex="0" jsaction="Km979c" data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQ7r0FCAc"><img src="assets/gm_ifl_white_24dp.png" alt="Shuffle" /></div>
+            <div
+              jsname="iyH4Cb"
+              class="FL0z2d iIs7Af"
+              role="button"
+              tabindex="0"
+              jsaction="rxqFXd"
+              data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQqc0GCAY"
+            >
+              <img src="assets/gm_settings_white_24dp.png" alt="Settings" />
+            </div>
+            <div
+              jsname="qycu7d"
+              class="FL0z2d iIs7Af LaTyvd"
+              role="button"
+              tabindex="0"
+              jsaction="Km979c"
+              data-ved="0ahUKEwj8trGkpur0AhVbFTQIHbN5CkAQ7r0FCAc"
+            >
+              <img src="assets/gm_ifl_white_24dp.png" alt="Shuffle" />
+            </div>
           </div>
         </div>
       </div>
       <div jsname="IoE5Ec" class="ahZmw"><div class="rNjvu"></div></div>
-      <div jsname="y7GBZ" class="RlTRxe" style="visibility: hidden;"></div>
+      <div jsname="y7GBZ" class="RlTRxe" style="visibility: hidden"></div>
     </div>
     <script>
       (function () {
-        google.jl = { attn: false, blt: "none", chnk: 0, dw: false, dwu: true, emtn: 0, end: 0, ine: false, lls: "viewport", pdt: 0, rep: 0, snet: true, strt: 0, ubm: false, uwp: true };
+        google.jl = {
+          attn: false,
+          blt: "none",
+          chnk: 0,
+          dw: false,
+          dwu: true,
+          emtn: 0,
+          end: 0,
+          ine: false,
+          lls: "viewport",
+          pdt: 0,
+          rep: 0,
+          snet: true,
+          strt: 0,
+          ubm: false,
+          uwp: true,
+        };
       })();
       (function () {
         var pmc =
@@ -1241,14 +1780,32 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
         google.pmc = JSON.parse(pmc);
       })();
       (function () {
-        var r = ["sb_wiz", "aa", "abd", "async", "bgd", "dvl", "foot", "kyn", "lli", "mu", "pHXghd", "sf", "sonic", "spch", "tl", "tt"];
+        var r = [
+          "sb_wiz",
+          "aa",
+          "abd",
+          "async",
+          "bgd",
+          "dvl",
+          "foot",
+          "kyn",
+          "lli",
+          "mu",
+          "pHXghd",
+          "sf",
+          "sonic",
+          "spch",
+          "tl",
+          "tt",
+        ];
         google.plm(r);
       })();
       (function () {
         var m = [];
         var a = m;
         window.W_jd = window.W_jd || {};
-        for (var b = 0; b < a.length; b += 2) window.W_jd[a[b]] = JSON.parse(a[b + 1]);
+        for (var b = 0; b < a.length; b += 2)
+          window.W_jd[a[b]] = JSON.parse(a[b + 1]);
       })();
       (function () {
         google.llirm = "400px";
@@ -1259,14 +1816,21 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
       window.jsl.dh = function (d, e, c) {
         try {
           var f = document.getElementById(d);
-          if (f) (f.innerHTML = e), c && c();
+          if (f) ((f.innerHTML = e), c && c());
           else {
-            var a = { id: d, script: String(!!c), milestone: String(google.jslm || 0) };
+            var a = {
+              id: d,
+              script: String(!!c),
+              milestone: String(google.jslm || 0),
+            };
             google.jsla && (a.async = google.jsla);
             var g = document.createElement("div");
             g.innerHTML = e;
             var b = g.children[0];
-            b && ((a.tag = b.tagName), (a["class"] = String(b.className || null)), (a.name = String(b.getAttribute("jsname"))));
+            b &&
+              ((a.tag = b.tagName),
+              (a["class"] = String(b.className || null)),
+              (a.name = String(b.getAttribute("jsname"))));
             google.ml(Error("Missing ID."), !1, a);
           }
         } catch (h) {
@@ -1281,7 +1845,8 @@ This is made for 3kh0.github.io and 3kh0.github.io only!
         (function () {
           (function () {
             google.csct = {};
-            google.csct.ps = "AOvVaw1wh_avrehBpxhni0yBcFVU\x26ust\x3d1639812111277074";
+            google.csct.ps =
+              "AOvVaw1wh_avrehBpxhni0yBcFVU\x26ust\x3d1639812111277074";
           })();
         })();
         (function () {

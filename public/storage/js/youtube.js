@@ -1,7 +1,7 @@
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
 async function replacePlayer() {
-  document.querySelector( 'video' ).pause();
+  document.querySelector("video").pause();
   //remove current youtube player
   document.getElementById("player").onLoad =
     "await sleep(3000) document.getElementById('player').innerHTML = ''";
@@ -13,10 +13,7 @@ async function replacePlayer() {
       "User-Agent": "firefox lmao",
       Accept: "application/json",
     },
-    body:
-      '{"url": "' +
-      location.href +
-      '","filenameStyle":"pretty"}',
+    body: '{"url": "' + location.href + '","filenameStyle":"pretty"}',
   };
   console.log(options.body);
   console.log("[Ghost.service] Requesting player from Ghost Api!");
@@ -27,7 +24,7 @@ async function replacePlayer() {
       console.log(data);
       const ccurl = data.url.replace(
         "http://152.53.80.20:9000/",
-        "https://immortal2willlose.xyz/api/dl/v1/"
+        "https://immortal2willlose.xyz/api/dl/v1/",
       );
       document.getElementById("player").innerHTML =
         "<video controls width='100%' style='border-radius: 10px;' id='ghost_player' autoplay><source src='" +
@@ -38,9 +35,11 @@ async function replacePlayer() {
     .catch((err) => console.error(err));
 }
 
-if(localStorage.getItem("youtube_alert") === null) {
-  alert("janky youtube bypass by the ghost network team, if no video appears, refresh")
-  localStorage.setItem("youtube_alert", "true")
+if (localStorage.getItem("youtube_alert") === null) {
+  alert(
+    "janky youtube bypass by the ghost network team, if no video appears, refresh",
+  );
+  localStorage.setItem("youtube_alert", "true");
 }
 //keep checking the player to avoid youtube going schizo
 setInterval(async function () {

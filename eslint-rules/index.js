@@ -1,5 +1,5 @@
-module.exports = {
+export default {
   rules: {
-    'sort-labels': require('./rules/sort-json.js')
-  }
+    "sort-labels": (await import("./rules/sort-json.js")).default,
+  },
 };

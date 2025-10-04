@@ -1,24 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-us">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Stick Slasher</title><link rel="canonical" href="https://1player.games/stick-slasher/"/>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Stick Slasher</title>
+    <link rel="canonical" href="https://1player.games/stick-slasher/" />
 
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="stylesheet" href="style.css">
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=800 height=600></canvas>
+      <canvas id="unity-canvas" width="800" height="600"></canvas>
       <div id="unity-loading-bar">
         <div id="unity-logo"></div>
         <div id="unity-progress-bar-empty">
           <div id="unity-progress-bar-full"></div>
         </div>
       </div>
-      <div id="unity-warning"> </div>
-
+      <div id="unity-warning"></div>
     </div>
     <script>
       var container = document.querySelector("#unity-container");
@@ -34,16 +34,14 @@
       // Modify or remove this function to customize the visually presented
       // way that non-critical warnings and error messages are presented to the
       // user.
-      function unityShowBanner(msg, type) {
-     
-      }
+      function unityShowBanner(msg, type) {}
 
       var buildUrl = "Build";
-      var loaderUrl ="stickhtml.loader.js";
+      var loaderUrl = "stickhtml.loader.js";
       var config = {
-        dataUrl:"stickhtml.data",
-        frameworkUrl:"stickhtml.framework.js",
-        codeUrl:"stickhtml.wasm",
+        dataUrl: "stickhtml.data",
+        frameworkUrl: "stickhtml.framework.js",
+        codeUrl: "stickhtml.wasm",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
         productName: "Jam",
@@ -63,7 +61,7 @@
         // Avoid draining fillrate performance on mobile devices,
         // and default/override low DPI mode on mobile browsers.
         config.devicePixelRatio = 1;
-        unityShowBanner('WebGL builds are not supported on mobile devices.');
+        unityShowBanner("WebGL builds are not supported on mobile devices.");
       } else {
         canvas.style.width = "800px";
         canvas.style.height = "600px";
@@ -75,12 +73,13 @@
       script.onload = () => {
         createUnityInstance(canvas, config, (progress) => {
           progressBarFull.style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-   
-        }).catch((message) => {
-          alert(message);
-        });
+        })
+          .then((unityInstance) => {
+            loadingBar.style.display = "none";
+          })
+          .catch((message) => {
+            alert(message);
+          });
       };
       document.body.appendChild(script);
     </script>

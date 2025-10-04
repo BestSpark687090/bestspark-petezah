@@ -39,8 +39,11 @@
     "@eslint/json": "^0.13.2",
     "@eslint/markdown": "^7.3.0",
     "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-jsonc": "^2.20.1",
+    "eslint-plugin-prettier": "^5.5.4",
     "globals": "^16.4.0",
+    "jsonc-eslint-parser": "^2.4.1",
     "node": "^22.19.0",
     "prettier": "3.6.2"
   }

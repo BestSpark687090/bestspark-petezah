@@ -1,18 +1,23 @@
 <html>
-    <head>
-        <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <head>
+    <!-- Google tag (gtag.js) -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
 
-  gtag('config', 'G-TFZ72L5FPQ');
-</script>
+      gtag("config", "G-TFZ72L5FPQ");
+    </script>
 
-      <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Duck Life 2 | Seraph</title>
-    <link rel="shortcut icon" href="../../images/ico.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="../../images/ico.ico" type="image/x-icon" />
     <script src="../../storage/js/cloak.js"></script>
 
     <style>
@@ -27,13 +32,13 @@
     <script src="/js/main.js"></script>
     <script>
       function loadLocalRuffle() {
-          var script = document.createElement('script');
-          script.src = '../../storage/ruffle/ruffle.js';
-          document.body.appendChild(script);
+        var script = document.createElement("script");
+        script.src = "../../storage/ruffle/ruffle.js";
+        document.body.appendChild(script);
       }
 
-      var cdnScript = document.createElement('script');
-      cdnScript.src = 'https://unpkg.com/@ruffle-rs/ruffle';
+      var cdnScript = document.createElement("script");
+      cdnScript.src = "https://unpkg.com/@ruffle-rs/ruffle";
       cdnScript.onerror = loadLocalRuffle;
       document.body.appendChild(cdnScript);
     </script>

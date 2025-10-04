@@ -1,15 +1,20 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en-us">
   <head>
     <!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
 
-  gtag('config', 'G-TFZ72L5FPQ');
-</script>
+      gtag("config", "G-TFZ72L5FPQ");
+    </script>
     <meta charset="utf-8" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Drive Mad | 3kh0</title>
@@ -17,7 +22,10 @@
     <script src="/js/main.js"></script>
     <meta name="description" content="" />
     <meta name="google" content="notranslate" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
     <link rel="stylesheet" href="webapp/fancade.css" />
     <link rel="icon" href="webapp/cover.jpg" />
   </head>
@@ -40,7 +48,14 @@
             </div>
           </div>
         </div>
-        <div id="progress_or_play"><progress id="progress" class="loading" value="0" max="100"></progress></div>
+        <div id="progress_or_play">
+          <progress
+            id="progress"
+            class="loading"
+            value="0"
+            max="100"
+          ></progress>
+        </div>
         <p class="description"></p>
       </div>
       <canvas class="emscripten" id="canvas" tabindex="-1"></canvas>

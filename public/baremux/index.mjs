@@ -18,13 +18,13 @@ async function c() {
       const t = await (function (e) {
         let t = new MessageChannel();
         return new Promise((r) => {
-          e.postMessage({ type: "getPort", port: t.port2 }, [t.port2]),
+          (e.postMessage({ type: "getPort", port: t.port2 }, [t.port2]),
             (t.port1.onmessage = (e) => {
               r(e.data);
-            });
+            }));
         });
       })(e);
-      return await i(t), t;
+      return (await i(t), t);
     }),
     t = Promise.race([
       Promise.any(e),
@@ -35,14 +35,14 @@ async function c() {
   } catch (e) {
     if (e instanceof AggregateError)
       throw (
-        (console.error(
-          "bare-mux: failed to get a bare-mux SharedWorker MessagePort as all clients returned an invalid MessagePort."
+        console.error(
+          "bare-mux: failed to get a bare-mux SharedWorker MessagePort as all clients returned an invalid MessagePort.",
         ),
-        new Error("All clients returned an invalid MessagePort."))
+        new Error("All clients returned an invalid MessagePort.")
       );
     return (
       console.warn(
-        "bare-mux: failed to get a bare-mux SharedWorker MessagePort within 1s, retrying"
+        "bare-mux: failed to get a bare-mux SharedWorker MessagePort within 1s, retrying",
       ),
       await c()
     );
@@ -51,12 +51,15 @@ async function c() {
 function i(e) {
   const t = new MessageChannel(),
     r = new Promise((e, r) => {
-      (t.port1.onmessage = (t) => {
+      ((t.port1.onmessage = (t) => {
         "pong" === t.data.type && e();
       }),
-        setTimeout(r, 1500);
+        setTimeout(r, 1500));
     });
-  return o.call(e, { message: { type: "ping" }, port: t.port2 }, [t.port2]), r;
+  return (
+    o.call(e, { message: { type: "ping" }, port: t.port2 }, [t.port2]),
+    r
+  );
 }
 function l(e, t) {
   const a = new r(e, "bare-mux-worker");
@@ -79,33 +82,33 @@ function d() {
       t = new ReadableStream();
     let r;
     try {
-      o.call(e.port1, t, [t]), (r = !0);
+      (o.call(e.port1, t, [t]), (r = !0));
     } catch (e) {
       r = !1;
     }
-    return (h = r), r;
+    return ((h = r), r);
   }
   return h;
 }
 class p {
   constructor(e) {
-    (this.channel = new BroadcastChannel("bare-mux")),
+    ((this.channel = new BroadcastChannel("bare-mux")),
       e instanceof MessagePort || e instanceof Promise
         ? (this.port = e)
-        : this.createChannel(e, !0);
+        : this.createChannel(e, !0));
   }
   createChannel(e, t) {
     if (self.clients)
-      (this.port = c()),
+      ((this.port = c()),
         (this.channel.onmessage = (e) => {
           "refreshPort" === e.data.type && (this.port = c());
-        });
+        }));
     else if (e && SharedWorker) {
       if (!e.startsWith("/") && !e.includes("://"))
         throw new Error("Invalid URL. Must be absolute or start at the root.");
-      (this.port = l(e, t)),
+      ((this.port = l(e, t)),
         console.debug("bare-mux: setting localStorage bare-mux-path to", e),
-        (a["bare-mux-path"] = e);
+        (a["bare-mux-path"] = e));
     } else {
       if (!SharedWorker)
         throw new Error("Unable to get a channel to the SharedWorker.");
@@ -113,7 +116,7 @@ class p {
         const e = a["bare-mux-path"];
         if ((console.debug("bare-mux: got localStorage bare-mux-path:", e), !e))
           throw new Error(
-            "Unable to get bare-mux workerPath from localStorage."
+            "Unable to get bare-mux workerPath from localStorage.",
           );
         this.port = l(e, t);
       }
@@ -126,7 +129,7 @@ class p {
     } catch {
       return (
         console.warn(
-          "bare-mux: Failed to get a ping response from the worker within 1.5s. Assuming port is dead."
+          "bare-mux: Failed to get a ping response from the worker within 1.5s. Assuming port is dead.",
         ),
         this.createChannel(),
         await this.sendMessage(e, t)
@@ -140,18 +143,18 @@ class p {
           "error" === a.type ? t(a.error) : e(a);
         };
       });
-    return o.call(this.port, { message: e, port: r.port2 }, a), await s;
+    return (o.call(this.port, { message: e, port: r.port2 }, a), await s);
   }
 }
 class w extends EventTarget {
   constructor(e, t = [], r, a) {
-    super(),
+    (super(),
       (this.protocols = t),
       (this.readyState = n.CONNECTING),
       (this.url = e.toString()),
-      (this.protocols = t);
+      (this.protocols = t));
     const s = (e) => {
-        (this.protocols = e), (this.readyState = n.OPEN);
+        ((this.protocols = e), (this.readyState = n.OPEN));
         const t = new Event("open");
         this.dispatchEvent(t);
       },
@@ -169,15 +172,15 @@ class w extends EventTarget {
         const e = new Event("error");
         this.dispatchEvent(e);
       };
-    (this.channel = new MessageChannel()),
+    ((this.channel = new MessageChannel()),
       (this.channel.port1.onmessage = (e) => {
         "open" === e.data.type
           ? s(e.data.args[0])
           : "message" === e.data.type
-          ? o(e.data.args[0])
-          : "close" === e.data.type
-          ? c(e.data.args[0], e.data.args[1])
-          : "error" === e.data.type && i();
+            ? o(e.data.args[0])
+            : "close" === e.data.type
+              ? c(e.data.args[0], e.data.args[1])
+              : "error" === e.data.type && i();
       }),
       r.sendMessage(
         {
@@ -189,36 +192,37 @@ class w extends EventTarget {
             channel: this.channel.port2,
           },
         },
-        [this.channel.port2]
-      );
+        [this.channel.port2],
+      ));
   }
   send(...e) {
     if (this.readyState === n.CONNECTING)
       throw new DOMException(
-        "Failed to execute 'send' on 'WebSocket': Still in CONNECTING state."
+        "Failed to execute 'send' on 'WebSocket': Still in CONNECTING state.",
       );
     let t = e[0];
-    t.buffer && (t = t.buffer.slice(t.byteOffset, t.byteOffset + t.byteLength)),
+    (t.buffer &&
+      (t = t.buffer.slice(t.byteOffset, t.byteOffset + t.byteLength)),
       o.call(
         this.channel.port1,
         { type: "data", data: t },
-        t instanceof ArrayBuffer ? [t] : []
-      );
+        t instanceof ArrayBuffer ? [t] : [],
+      ));
   }
   close(e, t) {
     o.call(this.channel.port1, { type: "close", closeCode: e, closeReason: t });
   }
 }
 function u(e, t, r) {
-  console.error(`error while processing '${r}': `, t),
-    e.postMessage({ type: "error", error: t });
+  (console.error(`error while processing '${r}': `, t),
+    e.postMessage({ type: "error", error: t }));
 }
 function g(e) {
   for (let t = 0; t < e.length; t++) {
     const r = e[t];
     if (
       !"!#$%&'*+-.0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`abcdefghijklmnopqrstuvwxyz|~".includes(
-        r
+        r,
       )
     )
       return !1;
@@ -239,31 +243,31 @@ class m {
     await this.setManualTransport(
       `\n\t\t\tconst { default: BareTransport } = await import("${e}");\n\t\t\treturn [BareTransport, "${e}"];\n\t\t`,
       t,
-      r
+      r,
     );
   }
   async setManualTransport(e, t, r) {
     if ("bare-mux-remote" === e) throw new Error("Use setRemoteTransport.");
     await this.worker.sendMessage(
       { type: "set", client: { function: e, args: t } },
-      r
+      r,
     );
   }
   async setRemoteTransport(e, t) {
     const r = new MessageChannel();
-    (r.port1.onmessage = async (t) => {
+    ((r.port1.onmessage = async (t) => {
       const r = t.data.port,
         a = t.data.message;
       if ("fetch" === a.type)
         try {
-          e.ready || (await e.init()),
+          (e.ready || (await e.init()),
             await (async function (e, t, r) {
               const a = await r.request(
                 new URL(e.fetch.remote),
                 e.fetch.method,
                 e.fetch.body,
                 e.fetch.headers,
-                null
+                null,
               );
               if (!d() && a.body instanceof ReadableStream) {
                 const e = new Response(a.body);
@@ -272,13 +276,13 @@ class m {
               a.body instanceof ReadableStream || a.body instanceof ArrayBuffer
                 ? o.call(t, { type: "fetch", fetch: a }, [a.body])
                 : o.call(t, { type: "fetch", fetch: a });
-            })(a, r, e);
+            })(a, r, e));
         } catch (e) {
           u(r, e, "fetch");
         }
       else if ("websocket" === a.type)
         try {
-          e.ready || (await e.init()),
+          (e.ready || (await e.init()),
             await (async function (e, t, r) {
               const [a, s] = r.connect(
                 new URL(e.websocket.url),
@@ -292,7 +296,7 @@ class m {
                     ? o.call(
                         e.websocket.channel,
                         { type: "message", args: [t] },
-                        [t]
+                        [t],
                       )
                     : o.call(e.websocket.channel, {
                         type: "message",
@@ -304,16 +308,16 @@ class m {
                 },
                 (t) => {
                   o.call(e.websocket.channel, { type: "error", args: [t] });
-                }
+                },
               );
-              (e.websocket.channel.onmessage = (e) => {
+              ((e.websocket.channel.onmessage = (e) => {
                 "data" === e.data.type
                   ? a(e.data.data)
                   : "close" === e.data.type &&
                     s(e.data.closeCode, e.data.closeReason);
               }),
-                o.call(t, { type: "websocket" });
-            })(a, r, e);
+                o.call(t, { type: "websocket" }));
+            })(a, r, e));
         } catch (e) {
           u(r, e, "websocket");
         }
@@ -323,8 +327,8 @@ class m {
           type: "set",
           client: { function: "bare-mux-remote", args: [r.port2, t] },
         },
-        [r.port2]
-      );
+        [r.port2],
+      ));
   }
   getInnerPort() {
     return this.worker.port;
@@ -339,18 +343,18 @@ class k {
       e = new URL(e);
     } catch (t) {
       throw new DOMException(
-        `Faiiled to construct 'WebSocket': The URL '${e}' is invalid.`
+        `Faiiled to construct 'WebSocket': The URL '${e}' is invalid.`,
       );
     }
     if (!f.includes(e.protocol))
       throw new DOMException(
-        `Failed to construct 'WebSocket': The URL's scheme must be either 'ws' or 'wss'. '${e.protocol}' is not allowed.`
+        `Failed to construct 'WebSocket': The URL's scheme must be either 'ws' or 'wss'. '${e.protocol}' is not allowed.`,
       );
-    Array.isArray(t) || (t = [t]), (t = t.map(String));
+    (Array.isArray(t) || (t = [t]), (t = t.map(String)));
     for (const e of t)
       if (!g(e))
         throw new DOMException(
-          `Failed to construct 'WebSocket': The subprotocol '${e}' is invalid.`
+          `Failed to construct 'WebSocket': The subprotocol '${e}' is invalid.`,
         );
     a = a || {};
     return new w(e, t, this.worker, a);
@@ -365,7 +369,9 @@ class k {
       const e = await t(c),
         r = new Response(e.body, e);
       return (
-        (r.rawHeaders = Object.fromEntries(e.headers)), (r.rawResponse = e), r
+        (r.rawHeaders = Object.fromEntries(e.headers)),
+        (r.rawResponse = e),
+        r
       );
     }
     for (let e = 0; ; e++) {
@@ -380,7 +386,7 @@ class k {
                 body: n || void 0,
               },
             },
-            n ? [n] : []
+            n ? [n] : [],
           )
         ).fetch,
         s = new Response(y.includes(t.status) ? void 0 : t.body, {
@@ -388,7 +394,7 @@ class k {
           status: t.status,
           statusText: t.statusText,
         });
-      (s.rawHeaders = t.headers), (s.finalURL = c.toString());
+      ((s.rawHeaders = t.headers), (s.finalURL = c.toString()));
       const i = r?.redirect || a.redirect;
       if (!b.includes(s.status)) return s;
       switch (i) {
