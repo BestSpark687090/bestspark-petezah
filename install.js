@@ -50,7 +50,7 @@ function installRustTools() {
     );
     run("source $HOME/.cargo/env");
   }
-  const WBG = "wasm-bindgen 0.2.100"
+  const WBG = "wasm-bindgen 0.2.100";
   const WBGtest = execSync(`${cmd} -V`, { stdio: "ignore", shell: true });
   if (WBG === WBGtest) {
     console.log("Installing wasm-bindgen-cli...");

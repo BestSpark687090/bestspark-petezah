@@ -119,8 +119,8 @@ app.use(
 );
 app.use((req, res, next) => {
   res.set({
-    'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Embedder-Policy': 'require-corp'
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Embedder-Policy": "require-corp",
   });
   next();
 });
@@ -382,7 +382,7 @@ function generateXml(domain, urls) {
   xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
   xml += `        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"\n`;
   xml += `        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n`;
-  urls.forEach(u => {
+  urls.forEach((u) => {
     const priority = computePriority(u.commitCount, maxCommits).toFixed(2);
     const changefreq = computeChangefreq(u.lastmod);
     xml += `  <url>\n`;
@@ -409,18 +409,22 @@ function generateXml(domain, urls) {
 // --- JSON generator ---
 function generateJson(domain, urls) {
   const maxCommits = urls.reduce((max, u) => Math.max(max, u.commitCount), 0);
-  return urls.map(u => ({
+  return urls.map((u) => ({
     loc: domain + u.loc,
     lastmod: u.lastmod,
     changefreq: computeChangefreq(u.lastmod),
     priority: computePriority(u.commitCount, maxCommits),
-    type: IMAGE_EXTENSIONS.includes(u.ext) ? "image" : VIDEO_EXTENSIONS.includes(u.ext) ? "video" : "page"
+    type: IMAGE_EXTENSIONS.includes(u.ext)
+      ? "image"
+      : VIDEO_EXTENSIONS.includes(u.ext)
+        ? "video"
+        : "page",
   }));
 }
 
 // --- TXT generator ---
 function generateTxt(domain, urls) {
-  return urls.map(u => domain + u.loc).join("\n");
+  return urls.map((u) => domain + u.loc).join("\n");
 }
 
 // --- Routes ---

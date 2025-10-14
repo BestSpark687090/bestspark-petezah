@@ -137,7 +137,11 @@ async function buildSubmodules() {
     }
 
     const wrapped = wrapCommandForWSL(buildcommand, subdir);
-    await exec(wrapped, { shell: true, env: { ...process.env, RELEASE: "1" }, stdio: "inherit" });
+    await exec(wrapped, {
+      shell: true,
+      env: { ...process.env, RELEASE: "1" },
+      stdio: "inherit",
+    });
   }
 }
 
@@ -242,7 +246,15 @@ async function processInputVectors() {
   });
 }
 const HTML_EXT = ".html";
-const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".avif"];
+const IMAGE_EXTENSIONS = [
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".gif",
+  ".webp",
+  ".svg",
+  ".avif",
+];
 const VIDEO_EXTENSIONS = [".mp4", ".webm", ".mov"];
 
 function getGitLastMod(filePath) {
@@ -289,11 +301,14 @@ function crawl(dir, baseUrl = "") {
           : baseUrl + "/" + file;
       const lastmod = getGitLastMod(filePath) || stat.mtime.toISOString();
       const commitCount = getGitCommitCount(filePath);
-      const maxCommits = results.reduce((max, u) => Math.max(max, u.commitCount), 0);
-      const urls = results.map(u => ({
+      const maxCommits = results.reduce(
+        (max, u) => Math.max(max, u.commitCount),
+        0,
+      );
+      const urls = results.map((u) => ({
         ...u,
         priority: computePriority(u.commitCount, maxCommits),
-        changefreq: computeChangefreq(u.lastmod)
+        changefreq: computeChangefreq(u.lastmod),
       }));
       results.push({
         loc: urlPath.replace(/\/+/g, "/"),
