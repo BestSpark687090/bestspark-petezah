@@ -4,22 +4,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>New Tab</title>
     <link rel="stylesheet" type="text/css" href="/storage/css/themes2.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&family=Outfit:wght@100..900&display=swap");
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&family=Outfit:wght@100..900&display=swap');
 
       body {
         color: #fff;
         background-color: #0a1d37;
         font-family:
-          "Inter",
+          'Inter',
           system-ui,
           -apple-system,
           BlinkMacSystemFont,
@@ -61,22 +55,14 @@
           50% 50%,
           50% 50%;
         animation: fadeIn 2s ease;
-        mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          rgba(255, 255, 255, 0) 40%,
-          transparent 70%
-        );
-        -webkit-mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          white 40%,
-          transparent 70%
-        );
+        mask-image: radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0) 40%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at 100% 0%, white 40%, transparent 70%);
         pointer-events: none;
         z-index: -1;
       }
 
       .god-rays::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-image: var(--stripes), var(--rays);
@@ -131,7 +117,7 @@
         border: 2px solid #1e2a47;
         background-color: #141414;
         border-radius: 30px;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         outline: none;
         margin: 0;
         color: #fff;
@@ -179,7 +165,7 @@
         right: 10px;
         font-size: 18px;
         color: white;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         background-color: rgba(0, 0, 0, 0.5);
         padding: 5px 10px;
         border-radius: 10px;
@@ -225,7 +211,7 @@
         letter-spacing: 0.5px;
       }
 
-      .popup input[type="text"] {
+      .popup input[type='text'] {
         margin: 10px 0;
         width: 100%;
         background: rgba(255, 255, 255, 0.05);
@@ -234,24 +220,24 @@
         padding: 12px 15px;
         border-radius: 10px;
         transition: all 0.3s ease;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
       }
 
-      .popup input[type="text"]:focus {
+      .popup input[type='text']:focus {
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.1);
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         outline: none;
       }
 
-      .popup input[type="file"] {
+      .popup input[type='file'] {
         margin: 15px 0;
         color: #fff;
         width: 100%;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
       }
 
-      .popup input[type="file"]::-webkit-file-upload-button {
+      .popup input[type='file']::-webkit-file-upload-button {
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 8px 15px;
@@ -261,7 +247,7 @@
         transition: all 0.3s ease;
       }
 
-      .popup input[type="file"]::-webkit-file-upload-button:hover {
+      .popup input[type='file']::-webkit-file-upload-button:hover {
         background: rgba(255, 255, 255, 0.2);
         border-color: rgba(255, 255, 255, 0.4);
       }
@@ -281,7 +267,7 @@
         color: #fff;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         font-weight: 500;
       }
 
@@ -334,20 +320,9 @@
 
     <div id="search-container">
       <form id="uv-form">
-        <input
-          id="uv-search-engine"
-          value="https://duckduckgo.com/?q=%s"
-          type="hidden"
-        />
-        <input
-          id="uv-address"
-          type="text"
-          class="search-bar-home url-input"
-          placeholder="Search or enter a URL"
-        />
-        <button type="submit" class="search-button">
-          SEARCH <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
+        <input id="uv-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
+        <input id="uv-address" type="text" class="search-bar-home url-input" placeholder="Search or enter a URL" />
+        <button type="submit" class="search-button">SEARCH <i class="fa-solid fa-magnifying-glass"></i></button>
       </form>
       <div class="desc left-margin">
         <p id="uv-error"></p>
@@ -355,24 +330,11 @@
       </div>
     </div>
 
-    <div
-      class="pinned-icons"
-      style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-      "
-    >
+    <div class="pinned-icons" style="display: flex; justify-content: center; align-items: center; gap: 15px">
       <a href="/embed.html#https://tiktok.com" style="display: inline-block">
         <img
           src="/storage/ag/a/tiktok/IMG_5335.png"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
@@ -380,12 +342,7 @@
       <a href="/embed.html#https://twitch.tv" style="display: inline-block">
         <img
           src="/storage/ag/a/twitch/IMG_5336.png"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
@@ -393,12 +350,7 @@
       <a href="/embed.html#https://google.com" style="display: inline-block">
         <img
           src="/storage/ag/a/google/IMG_5324.webp"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
@@ -406,12 +358,7 @@
       <a href="/embed.html#https://now.gg" style="display: inline-block">
         <img
           src="/storage/ag/a/nowgg/IMG_5325.png"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
@@ -424,11 +371,7 @@
     <!-- Popup for adding new pin -->
     <div id="add-pin-popup" class="popup">
       <h3>Add New Pin</h3>
-      <input
-        type="text"
-        id="pin-url"
-        placeholder="Enter URL (https:// required)"
-      />
+      <input type="text" id="pin-url" placeholder="Enter URL (https:// required)" />
       <input type="file" id="pin-image" accept="image/*" />
       <div class="popup-buttons">
         <button id="cancel-btn">Cancel</button>
@@ -447,51 +390,48 @@
 
     <script>
       const phrases = [
-        "PeteZah best unblocked games site!",
-        "https://petezahgames.com",
-        "Credits to Brunys and Voucan for proxy help",
-        "just had a major update ¯\\_(ツ)_/¯",
-        "Roblox should? now work my fellow pizzas",
-        "PeteZah-Next coming soon!",
-        "IVE EDGED TO Pete Zah -idkiguess",
+        'PeteZah best unblocked games site!',
+        'https://petezahgames.com',
+        'Credits to Brunys and Voucan for proxy help',
+        'just had a major update ¯\\_(ツ)_/¯',
+        'Roblox should? now work my fellow pizzas',
+        'PeteZah-Next coming soon!',
+        'IVE EDGED TO Pete Zah -idkiguess',
         "Don't forget to join our Discord server!",
-        "Source: trust me bro",
+        'Source: trust me bro'
       ];
 
-      const paragraph = document.getElementById("dynamicParagraph");
+      const paragraph = document.getElementById('dynamicParagraph');
 
       function changeText() {
-        const randomPhrase =
-          phrases[Math.floor(Math.random() * phrases.length)];
+        const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
         paragraph.textContent = randomPhrase;
       }
 
-      paragraph.addEventListener("click", changeText);
+      paragraph.addEventListener('click', changeText);
       window.onload = changeText;
 
       function updateTime() {
-        const timeElement = document.getElementById("time");
+        const timeElement = document.getElementById('time');
         const now = new Date();
-        const hours = now.getHours().toString().padStart(2, "0");
-        const minutes = now.getMinutes().toString().padStart(2, "0");
-        const seconds = now.getSeconds().toString().padStart(2, "0");
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
         timeElement.textContent = `${hours}:${minutes}:${seconds}`;
       }
 
       setInterval(updateTime, 1000);
 
       // Updated add pin functionality
-      const addPinBtn = document.getElementById("add-pin-btn");
-      const popup = document.getElementById("add-pin-popup");
-      const addBtn = document.getElementById("add-btn");
-      const cancelBtn = document.getElementById("cancel-btn");
-      const pinnedIcons = document.querySelector(".pinned-icons");
+      const addPinBtn = document.getElementById('add-pin-btn');
+      const popup = document.getElementById('add-pin-popup');
+      const addBtn = document.getElementById('add-btn');
+      const cancelBtn = document.getElementById('cancel-btn');
+      const pinnedIcons = document.querySelector('.pinned-icons');
 
       // Load saved pins from localStorage on page load
       function loadSavedPins() {
-        const savedPins = JSON.parse(
-          localStorage.getItem("pinnedBookmarks") || "[]",
-        );
+        const savedPins = JSON.parse(localStorage.getItem('pinnedBookmarks') || '[]');
         savedPins.forEach((pin) => {
           createPinElement(pin.url, pin.image);
         });
@@ -499,21 +439,21 @@
 
       // Create pin element
       function createPinElement(url, imageData) {
-        const newPin = document.createElement("a");
+        const newPin = document.createElement('a');
         newPin.href = `/embed.html#${url}`;
-        newPin.style.display = "inline-block";
+        newPin.style.display = 'inline-block';
 
-        const img = document.createElement("img");
+        const img = document.createElement('img');
         img.src = imageData;
-        img.style.width = "30px";
-        img.style.height = "30px";
-        img.style.borderRadius = "50%";
-        img.style.transition = "transform 0.3s";
+        img.style.width = '30px';
+        img.style.height = '30px';
+        img.style.borderRadius = '50%';
+        img.style.transition = 'transform 0.3s';
         img.onmouseover = function () {
-          this.style.transform = "scale(1.2)";
+          this.style.transform = 'scale(1.2)';
         };
         img.onmouseout = function () {
-          this.style.transform = "scale(1)";
+          this.style.transform = 'scale(1)';
         };
 
         newPin.appendChild(img);
@@ -522,30 +462,28 @@
 
       // Save pin to localStorage
       function savePin(url, imageData) {
-        const savedPins = JSON.parse(
-          localStorage.getItem("pinnedBookmarks") || "[]",
-        );
+        const savedPins = JSON.parse(localStorage.getItem('pinnedBookmarks') || '[]');
         savedPins.push({ url, image: imageData });
-        localStorage.setItem("pinnedBookmarks", JSON.stringify(savedPins));
+        localStorage.setItem('pinnedBookmarks', JSON.stringify(savedPins));
       }
 
-      addPinBtn.addEventListener("click", function (e) {
+      addPinBtn.addEventListener('click', function (e) {
         e.preventDefault();
-        popup.style.display = "block";
+        popup.style.display = 'block';
       });
 
-      addBtn.addEventListener("click", function (e) {
+      addBtn.addEventListener('click', function (e) {
         e.preventDefault();
-        const urlInput = document.getElementById("pin-url").value;
-        const imageInput = document.getElementById("pin-image").files[0];
+        const urlInput = document.getElementById('pin-url').value;
+        const imageInput = document.getElementById('pin-image').files[0];
 
-        if (!urlInput.startsWith("https://")) {
-          alert("URL must start with https://");
+        if (!urlInput.startsWith('https://')) {
+          alert('URL must start with https://');
           return;
         }
 
         if (!imageInput) {
-          alert("Please select an image");
+          alert('Please select an image');
           return;
         }
 
@@ -554,72 +492,63 @@
           const imageData = e.target.result;
           createPinElement(urlInput, imageData);
           savePin(urlInput, imageData);
-          popup.style.display = "none";
-          document.getElementById("pin-url").value = "";
-          document.getElementById("pin-image").value = "";
+          popup.style.display = 'none';
+          document.getElementById('pin-url').value = '';
+          document.getElementById('pin-image').value = '';
         };
         reader.readAsDataURL(imageInput);
       });
 
-      cancelBtn.addEventListener("click", function (e) {
+      cancelBtn.addEventListener('click', function (e) {
         e.preventDefault();
-        popup.style.display = "none";
-        document.getElementById("pin-url").value = "";
-        document.getElementById("pin-image").value = "";
+        popup.style.display = 'none';
+        document.getElementById('pin-url').value = '';
+        document.getElementById('pin-image').value = '';
       });
 
       // Load pins when page loads
-      window.addEventListener("load", loadSavedPins);
+      window.addEventListener('load', loadSavedPins);
 
       // Search bar functionality
-      document
-        .getElementById("uv-form")
-        .addEventListener("submit", function (event) {
-          event.preventDefault();
-          const url = document.getElementById("uv-address").value;
-          const isAUrl = url.includes(".");
+      document.getElementById('uv-form').addEventListener('submit', function (event) {
+        event.preventDefault();
+        const url = document.getElementById('uv-address').value;
+        const isAUrl = url.includes('.');
 
-          if (isAUrl) {
-            let formattedUrl = url;
-            if (!url.startsWith("http://") && !url.startsWith("https://")) {
-              formattedUrl = "https://" + url;
-            }
-
-            window.navigator.serviceWorker
-              .register("/petezah/sw.js", {
-                scope: __uv$config.prefix,
-              })
-              .then(() => {
-                window.location.href =
-                  __uv$config.prefix + __uv$config.encodeUrl(formattedUrl);
-              });
-          } else {
-            const searchUrl =
-              "https://duckduckgo.com/?q=" + encodeURIComponent(url);
-            window.navigator.serviceWorker
-              .register("/petezah/sw.js", {
-                scope: __uv$config.prefix,
-              })
-              .then(() => {
-                window.location.href =
-                  __uv$config.prefix + __uv$config.encodeUrl(searchUrl);
-              });
+        if (isAUrl) {
+          let formattedUrl = url;
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            formattedUrl = 'https://' + url;
           }
-        });
 
-      document
-        .getElementById("uv-address")
-        .addEventListener("focus", function () {
-          if (this.value && this.value.indexOf(".") !== -1) {
-            this.value = "https://" + this.value;
-          }
-        });
+          window.navigator.serviceWorker
+            .register('/petezah/sw.js', {
+              scope: __uv$config.prefix
+            })
+            .then(() => {
+              window.location.href = __uv$config.prefix + __uv$config.encodeUrl(formattedUrl);
+            });
+        } else {
+          const searchUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(url);
+          window.navigator.serviceWorker
+            .register('/petezah/sw.js', {
+              scope: __uv$config.prefix
+            })
+            .then(() => {
+              window.location.href = __uv$config.prefix + __uv$config.encodeUrl(searchUrl);
+            });
+        }
+      });
 
-      document
-        .getElementById("uv-address")
-        .addEventListener("blur", function () {
-          this.value = this.value.replace(/^https?:\/\//, "");
-        });
+      document.getElementById('uv-address').addEventListener('focus', function () {
+        if (this.value && this.value.indexOf('.') !== -1) {
+          this.value = 'https://' + this.value;
+        }
+      });
+
+      document.getElementById('uv-address').addEventListener('blur', function () {
+        this.value = this.value.replace(/^https?:\/\//, '');
+      });
     </script>
     <script src="/storage/js/settings.js"></script>
   </body>

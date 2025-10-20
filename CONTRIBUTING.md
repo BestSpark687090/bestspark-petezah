@@ -2,8 +2,9 @@
 
 # Contributing to PeteZahGames
 
-Thanks for your interest in contributing!
-This document outlines the conventions and rules for working in this repository. Please follow these guidelines to keep changes safe, consistent, and easy to review.
+Thanks for your interest in contributing! This document outlines the conventions
+and rules for working in this repository. Please follow these guidelines to keep
+changes safe, consistent, and easy to review.
 
 ---
 
@@ -11,32 +12,36 @@ This document outlines the conventions and rules for working in this repository.
 
 Use clear prefixes in your commit messages to describe the type of change:
 
-- **Add:** for new features, routes, or pages
-  _Example: `Add: new /api/profile endpoint`_
+- **Add:** for new features, routes, or pages _Example:
+  `Add: new /api/profile endpoint`_
 
-- **Fix:** for bug fixes or patches
-  _Example: `Fix: session token not persisting in /api/signin`_
+- **Fix:** for bug fixes or patches _Example:
+  `Fix: session token not persisting in /api/signin`_
 
 - **Update:** for dependency bumps, config changes, or non-breaking improvements
   _Example: `Update: pnpm-lock.yaml with latest @mercuryworkshop packages`_
 
-- **Docs:** for documentation-only changes
-  _Example: `Docs: expand README with deployment notes`_
+- **Docs:** for documentation-only changes _Example:
+  `Docs: expand README with deployment notes`_
 
-- **Chore:** for maintenance tasks (linting, formatting, CI/CD tweaks)
-  _Example: `Chore: add .gitpod.yml for dev environments`_
+- **Chore:** for maintenance tasks (linting, formatting, CI/CD tweaks) _Example:
+  `Chore: add .gitpod.yml for dev environments`_
 
-Keep messages short but descriptive. Use the imperative mood (“Add”, not “Added”).
+Keep messages short but descriptive. Use the imperative mood (“Add”, not
+“Added”).
 
 ---
 
 ## Development Workflow
 
 0. **Open in your IDE**
-   - First you will want to open your IDE, if you can not get to an IDE right now use on of the following buttons
+   - First you will want to open your IDE, if you can not get to an IDE right
+     now use on of the following buttons
      <a href="https://codespaces.new/PeteZah-Games/petezahgames"><img src="https://github.com/codespaces/badge.svg" height="32" alt="Open in GitHub Codespaces"><a href="https://gitpod.io/#https://github.com/PeteZah-Games/petezahgames"><img src="https://gitpod.io/button/open-in-gitpod.svg" height="32" alt="Open in Gitpod"></a><a href="https://app.codeanywhere.com/#https://github.com/PeteZah-Games/petezahgames"><img src="https://codeanywhere.com/img/open-in-codeanywhere-btn.svg" height="32" alt="Open in Codenywhere"></a>
 
-   - Next if you haven't already install Node.js and pnpm by going to [the node.js download page](https://nodejs.org/en/download) and having an option be to install pnpm
+   - Next if you haven't already install Node.js and pnpm by going to
+     [the node.js download page](https://nodejs.org/en/download) and having an
+     option be to install pnpm
 
 1. **Install dependencies**
 
@@ -62,9 +67,12 @@ Keep messages short but descriptive. Use the imperative mood (“Add”, not “
 ## Project Conventions
 
 - **Static-first**: UI changes should go in `public/` (HTML, CSS, JS).
-- **API routes**: Add new handlers under `server/api/` and wire them in `server.js`.
-- **Proxy logic**: If you touch `/bare/`, `/scram/`, or service worker code (`public/sw.js`), update both server and client sides together.
-- **Auth/session**: Preserve `req.session.user` and `req.session.access_token` semantics.
+- **API routes**: Add new handlers under `server/api/` and wire them in
+  `server.js`.
+- **Proxy logic**: If you touch `/bare/`, `/scram/`, or service worker code
+  (`public/sw.js`), update both server and client sides together.
+- **Auth/session**: Preserve `req.session.user` and `req.session.access_token`
+  semantics.
 
 ---
 
@@ -72,8 +80,10 @@ Keep messages short but descriptive. Use the imperative mood (“Add”, not “
 
 - Keep edits **small and scoped**. Avoid sweeping refactors.
 - Test locally before opening a PR.
-- Do not assume a `build` script exists — the app runs directly with `node server.js`.
-- Respect deployment templates (`Dockerfile`, `railway.manifest.json`, `render.yaml`, etc.).
+- Do not assume a `build` script exists — the app runs directly with
+  `node server.js`.
+- Respect deployment templates (`Dockerfile`, `railway.manifest.json`,
+  `render.yaml`, etc.).
 
 ---
 
@@ -94,4 +104,5 @@ Keep messages short but descriptive. Use the imperative mood (“Add”, not “
 
 ---
 
-By following these conventions, you help keep PeteZahGames stable, secure, and fun to work on. Thanks for contributing!
+By following these conventions, you help keep PeteZahGames stable, secure, and
+fun to work on. Thanks for contributing!

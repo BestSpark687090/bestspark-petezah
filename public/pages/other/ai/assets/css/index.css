@@ -20,8 +20,8 @@
   --color-pattern-dot: #1c2a45;
   --color-pattern-bg: #050914;
   --color-pattern-dot-edge: #ffffff10;
-  --font-family-primary: "Poppins", sans-serif;
-  --font-family-code: "Courier New", monospace;
+  --font-family-primary: 'Poppins', sans-serif;
+  --font-family-code: 'Courier New', monospace;
   --dot-size: 1px;
   --dot-space: 22px;
 }
@@ -29,10 +29,7 @@
 body {
   font-family: var(--font-family-primary);
   background-color: #0a1d37;
-  background-image: radial-gradient(
-    var(--color-pattern-dot) var(--dot-size),
-    transparent 0
-  );
+  background-image: radial-gradient(var(--color-pattern-dot) var(--dot-size), transparent 0);
   background-size: var(--dot-space) var(--dot-space);
   margin: 0;
   padding: 0;
@@ -70,22 +67,14 @@ body {
     50% 50%,
     50% 50%;
   animation: fadeIn 2s ease;
-  mask-image: radial-gradient(
-    ellipse at 100% 0%,
-    rgba(255, 255, 255, 0) 40%,
-    transparent 70%
-  );
-  -webkit-mask-image: radial-gradient(
-    ellipse at 100% 0%,
-    white 40%,
-    transparent 70%
-  );
+  mask-image: radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0) 40%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 100% 0%, white 40%, transparent 70%);
   pointer-events: none;
   z-index: -1;
 }
 
 .god-rays::after {
-  content: "";
+  content: '';
   position: absolute;
   inset: 0;
   background-image: var(--stripes), var(--rays);
@@ -245,7 +234,7 @@ body {
   padding: 15px;
 }
 
-.chat-input input[type="text"] {
+.chat-input input[type='text'] {
   flex: 1;
   padding: 15px;
   background-color: var(--color-secondary-bg);
@@ -259,12 +248,12 @@ body {
   font-size: 15px;
 }
 
-.chat-input input[type="text"]:focus,
-.chat-input input[type="text"]:hover {
+.chat-input input[type='text']:focus,
+.chat-input input[type='text']:hover {
   border: 1px dashed var(--color-light);
 }
 
-.chat-input input[type="text"]::placeholder {
+.chat-input input[type='text']::placeholder {
   color: var(--color-focus);
   font-size: 15px;
 }
@@ -335,8 +324,8 @@ body {
 }
 
 .selector-selected::after {
-  content: "\f107";
-  font-family: "Font Awesome 6 Free", "Font Awesome 6 Solid";
+  content: '\f107';
+  font-family: 'Font Awesome 6 Free', 'Font Awesome 6 Solid';
   font-weight: 900;
   font-size: 0.8em;
   transition: transform 0.3s ease;
@@ -561,7 +550,7 @@ pre {
     max-width: 90%;
   }
 
-  .chat-input input[type="text"] {
+  .chat-input input[type='text'] {
     padding: 10px;
     font-size: 14px;
   }
@@ -605,7 +594,7 @@ pre {
     padding: 6px 10px;
   }
 
-  .chat-input input[type="text"] {
+  .chat-input input[type='text'] {
     padding: 8px;
     font-size: 12px;
   }
@@ -673,7 +662,7 @@ pre {
 }
 
 body::before {
-  content: "";
+  content: '';
   position: fixed;
   top: 0;
   left: 0;

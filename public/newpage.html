@@ -3,27 +3,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pete Proxy</title>
-    <link
-      rel="icon"
-      type="icon/x-icon"
-      href="storage/images/logo-png-removebg-preview.png"
-    />
+    <link rel="icon" type="icon/x-icon" href="storage/images/logo-png-removebg-preview.png" />
     <link rel="stylesheet" type="text/css" href="/storage/css/themes2.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <style>
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&family=Outfit:wght@100..900&display=swap");
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&family=Outfit:wght@100..900&display=swap');
       body {
         color: #fff;
         background-color: #0a1d37;
         font-family:
-          "Inter",
+          'Inter',
           system-ui,
           -apple-system,
           BlinkMacSystemFont,
@@ -64,21 +54,13 @@
           50% 50%,
           50% 50%;
         animation: fadeIn 2s ease;
-        mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          rgba(255, 255, 255, 0) 40%,
-          transparent 70%
-        );
-        -webkit-mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          white 40%,
-          transparent 70%
-        );
+        mask-image: radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0) 40%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at 100% 0%, white 40%, transparent 70%);
         pointer-events: none;
         z-index: -1;
       }
       .god-rays::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-image: var(--stripes), var(--rays);
@@ -126,7 +108,7 @@
         border: 2px solid #1e2a47;
         background-color: #141414;
         border-radius: 30px;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         outline: none;
         margin: 0;
         color: #fff;
@@ -168,7 +150,7 @@
         right: 10px;
         font-size: 18px;
         color: white;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         background-color: rgba(0, 0, 0, 0.5);
         padding: 5px 10px;
         border-radius: 10px;
@@ -209,7 +191,7 @@
         color: #fff;
         letter-spacing: 0.5px;
       }
-      .popup input[type="text"] {
+      .popup input[type='text'] {
         margin: 10px 0;
         width: 100%;
         background: rgba(255, 255, 255, 0.05);
@@ -218,21 +200,21 @@
         padding: 12px 15px;
         border-radius: 10px;
         transition: all 0.3s ease;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
       }
-      .popup input[type="text"]:focus {
+      .popup input[type='text']:focus {
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.1);
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         outline: none;
       }
-      .popup input[type="file"] {
+      .popup input[type='file'] {
         margin: 15px 0;
         color: #fff;
         width: 100%;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
       }
-      .popup input[type="file"]::-webkit-file-upload-button {
+      .popup input[type='file']::-webkit-file-upload-button {
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 8px 15px;
@@ -241,7 +223,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
       }
-      .popup input[type="file"]::-webkit-file-upload-button:hover {
+      .popup input[type='file']::-webkit-file-upload-button:hover {
         background: rgba(255, 255, 255砨, 0.2);
         border-color: rgba(255, 255, 255, 0.4);
       }
@@ -259,7 +241,7 @@
         color: #fff;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         font-weight: 500;
       }
       .popup button:hover {
@@ -295,12 +277,12 @@
         color: #0a1d37;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       }
-      @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&family=Outfit:wght@100..900&display=swap");
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&family=Outfit:wght@100..900&display=swap');
       body {
         color: #fff;
         background-color: #0a1d37;
         font-family:
-          "Inter",
+          'Inter',
           system-ui,
           -apple-system,
           BlinkMacSystemFont,
@@ -341,21 +323,13 @@
           50% 50%,
           50% 50%;
         animation: fadeIn 2s ease;
-        mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          rgba(255, 255, 255, 0) 40%,
-          transparent 70%
-        );
-        -webkit-mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          white 40%,
-          transparent 70%
-        );
+        mask-image: radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0) 40%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at 100% 0%, white 40%, transparent 70%);
         pointer-events: none;
         z-index: -1;
       }
       .god-rays::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-image: var(--stripes), var(--rays);
@@ -403,7 +377,7 @@
         border: 2px solid #1e2a47;
         background-color: #141414;
         border-radius: 30px;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         outline: none;
         margin: 0;
         color: #fff;
@@ -445,7 +419,7 @@
         right: 10px;
         font-size: 18px;
         color: white;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         background-color: rgba(0, 0, 0, 0.5);
         padding: 5px 10px;
         border-radius: 10px;
@@ -486,7 +460,7 @@
         color: #fff;
         letter-spacing: 0.5px;
       }
-      .popup input[type="text"] {
+      .popup input[type='text'] {
         margin: 10px 0;
         width: 100%;
         background: rgba(255, 255, 255, 0.05);
@@ -495,21 +469,21 @@
         padding: 12px 15px;
         border-radius: 10px;
         transition: all 0.3s ease;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
       }
-      .popup input[type="text"]:focus {
+      .popup input[type='text']:focus {
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.1);
         box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
         outline: none;
       }
-      .popup input[type="file"] {
+      .popup input[type='file'] {
         margin: 15px 0;
         color: #fff;
         width: 100%;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
       }
-      .popup input[type="file"]::-webkit-file-upload-button {
+      .popup input[type='file']::-webkit-file-upload-button {
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
         padding: 8px 15px;
@@ -518,7 +492,7 @@
         cursor: pointer;
         transition: all 0.3s ease;
       }
-      .popup input[type="file"]::-webkit-file-upload-button:hover {
+      .popup input[type='file']::-webkit-file-upload-button:hover {
         background: rgba(255, 255, 255砨, 0.2);
         border-color: rgba(255, 255, 255, 0.4);
       }
@@ -536,7 +510,7 @@
         color: #fff;
         cursor: pointer;
         transition: all 0.3s ease;
-        font-family: "Outfit", sans-serif;
+        font-family: 'Outfit', sans-serif;
         font-weight: 500;
       }
       .popup button:hover {
@@ -581,47 +555,20 @@
     <p id="dynamicParagraph">(TEXT)</p>
     <div id="search-container">
       <form id="uv-form">
-        <input
-          id="scram-search-engine"
-          value="https://duckduckgo.com/?q=%s"
-          type="hidden"
-        />
-        <input
-          id="uv-address"
-          type="text"
-          class="search-bar-home url-input"
-          placeholder="Search or enter a URL"
-        />
-        <button type="submit" class="search-button">
-          SEARCH <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
+        <input id="scram-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
+        <input id="uv-address" type="text" class="search-bar-home url-input" placeholder="Search or enter a URL" />
+        <button type="submit" class="search-button">SEARCH <i class="fa-solid fa-magnifying-glass"></i></button>
       </form>
       <div class="desc left-margin">
         <p id="uv-error"></p>
         <pre id="uv-error-code"></pre>
       </div>
     </div>
-    <div
-      class="pinned-icons"
-      style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 15px;
-      "
-    >
-      <a
-        href="/scramjet/https%3A%2F%2Ftiktok.com"
-        style="display: inline-block"
-      >
+    <div class="pinned-icons" style="display: flex; justify-content: center; align-items: center; gap: 15px">
+      <a href="/scramjet/https%3A%2F%2Ftiktok.com" style="display: inline-block">
         <img
           src="/storage/ag/a/tiktok/IMG_5335.png"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
@@ -629,28 +576,15 @@
       <a href="/scramjet/https%3A%2F%2Ftwitch.tv" style="display: inline-block">
         <img
           src="/storage/ag/a/twitch/IMG_5336.png"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
       </a>
-      <a
-        href="/scramjet/https%3A%2F%2Fgoogle.com"
-        style="display: inline-block"
-      >
+      <a href="/scramjet/https%3A%2F%2Fgoogle.com" style="display: inline-block">
         <img
           src="/storage/ag/a/google/IMG_5324.webp"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
@@ -658,12 +592,7 @@
       <a href="/scramjet/https%3A%2F%2Fnow.gg" style="display: inline-block">
         <img
           src="/storage/ag/a/nowgg/IMG_5325.png"
-          style="
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            transition: transform 0.3s;
-          "
+          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
           onmouseover="this.style.transform='scale(1.2)'"
           onmouseout="this.style.transform='scale(1)'"
         />
@@ -674,11 +603,7 @@
     </div>
     <div id="add-pin-popup" class="popup">
       <h3>Add New Pin</h3>
-      <input
-        type="text"
-        id="pin-url"
-        placeholder="Enter URL (https:// required)"
-      />
+      <input type="text" id="pin-url" placeholder="Enter URL (https:// required)" />
       <input type="file" id="pin-image" accept="image/*" />
       <div class="popup-buttons">
         <button id="cancel-btn">Cancel</button>
@@ -692,22 +617,20 @@
       (function () {
         const rewrite = (url) => {
           try {
-            if (typeof url === "string") {
+            if (typeof url === 'string') {
               const u = new URL(url, location.origin);
-              if (u.pathname === "/scramjet.all.js")
-                return "/scram/scramjet.all.js";
+              if (u.pathname === '/scramjet.all.js') return '/scram/scramjet.all.js';
             }
           } catch (e) {}
-          if (url === "/scramjet.all.js") return "/scram/scramjet.all.js";
+          if (url === '/scramjet.all.js') return '/scram/scramjet.all.js';
           return url;
         };
 
         const _fetch = window.fetch;
         window.fetch = function (input, init) {
           try {
-            if (typeof input === "string") input = rewrite(input);
-            else if (input && input.url)
-              input = new Request(rewrite(input.url), input);
+            if (typeof input === 'string') input = rewrite(input);
+            else if (input && input.url) input = new Request(rewrite(input.url), input);
           } catch (e) {}
           return _fetch.call(this, input, init);
         };
@@ -715,8 +638,7 @@
         const _append = Element.prototype.appendChild;
         Element.prototype.appendChild = function (node) {
           try {
-            if (node && node.tagName === "SCRIPT" && node.src)
-              node.src = rewrite(node.src);
+            if (node && node.tagName === 'SCRIPT' && node.src) node.src = rewrite(node.src);
           } catch (e) {}
           return _append.call(this, node);
         };

@@ -3,26 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <!-- Google tag (gtag.js) -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"
-    ></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TFZ72L5FPQ"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
       }
-      gtag("js", new Date());
+      gtag('js', new Date());
 
-      gtag("config", "G-TFZ72L5FPQ");
+      gtag('config', 'G-TFZ72L5FPQ');
     </script>
     <title>EmulatorJS Demo</title>
-    <link
-      rel="icon"
-      href="docs/favicon.ico"
-      sizes="16x16 32x32 48x48 64x64"
-      type="image/vnd.microsoft.icon"
-    />
+    <link rel="icon" href="docs/favicon.ico" sizes="16x16 32x32 48x48 64x64" type="image/vnd.microsoft.icon" />
     <meta name="viewport" content="width = device-width, initial-scale = 1" />
     <style>
       body,
@@ -136,85 +128,80 @@
       let enableThreads = false;
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
-      if (urlParams.get("debug") == 1) {
+      if (urlParams.get('debug') == 1) {
         enableDebug = true;
-        console.log("Debug is enabled");
+        console.log('Debug is enabled');
       } else {
-        console.log("Debug is disabled");
+        console.log('Debug is disabled');
       }
 
-      if (urlParams.get("threads") == 1) {
+      if (urlParams.get('threads') == 1) {
         if (window.SharedArrayBuffer) {
           enableThreads = true;
-          console.log("Threads are enabled");
+          console.log('Threads are enabled');
         } else {
           console.warn(
-            "Threads are disabled as SharedArrayBuffer is not available. Threads requires two headers to be set when sending you html page. See https://stackoverflow.com/a/68630724",
+            'Threads are disabled as SharedArrayBuffer is not available. Threads requires two headers to be set when sending you html page. See https://stackoverflow.com/a/68630724'
           );
-          console.log("Threads are disabled");
+          console.log('Threads are disabled');
         }
       } else {
-        console.log("Threads are disabled");
+        console.log('Threads are disabled');
       }
 
       input.onchange = async () => {
         const url = input.files[0];
-        const parts = input.files[0].name.split(".");
+        const parts = input.files[0].name.split('.');
 
         const core = await (async (ext) => {
-          if (["fds", "nes", "unif", "unf"].includes(ext)) return "nes";
+          if (['fds', 'nes', 'unif', 'unf'].includes(ext)) return 'nes';
 
-          if (
-            ["smc", "fig", "sfc", "gd3", "gd7", "dx2", "bsx", "swc"].includes(
-              ext,
-            )
-          )
-            return "snes";
+          if (['smc', 'fig', 'sfc', 'gd3', 'gd7', 'dx2', 'bsx', 'swc'].includes(ext)) return 'snes';
 
-          if (["z64", "n64"].includes(ext)) return "n64";
+          if (['z64', 'n64'].includes(ext)) return 'n64';
 
-          if (["pce"].includes(ext)) return "pce";
+          if (['pce'].includes(ext)) return 'pce';
 
-          if (["ngp", "ngc"].includes(ext)) return "ngp";
+          if (['ngp', 'ngc'].includes(ext)) return 'ngp';
 
-          if (["ws", "wsc"].includes(ext)) return "ws";
+          if (['ws', 'wsc'].includes(ext)) return 'ws';
 
-          if (["col", "cv"].includes(ext)) return "coleco";
+          if (['col', 'cv'].includes(ext)) return 'coleco';
 
-          if (["d64"].includes(ext)) return "vice_x64sc";
+          if (['d64'].includes(ext)) return 'vice_x64sc';
 
-          if (["nds", "gba", "gb", "z64", "n64"].includes(ext)) return ext;
+          if (['nds', 'gba', 'gb', 'z64', 'n64'].includes(ext)) return ext;
 
           return await new Promise((resolve) => {
             var coreValues = {
-              "Nintendo 64": "n64",
-              "Nintendo Game Boy": "gb",
-              "Nintendo Game Boy Advance": "gba",
-              "Nintendo DS": "nds",
-              "Nintendo Entertainment System": "nes",
-              "Super Nintendo Entertainment System": "snes",
-              PlayStation: "psx",
-              "Virtual Boy": "vb",
-              "Sega Mega Drive": "segaMD",
-              "Sega Master System": "segaMS",
-              "Sega CD": "segaCD",
-              "Atari Lynx": "lynx",
-              "Sega 32X": "sega32x",
-              "Atari Jaguar": "jaguar",
-              "Sega Game Gear": "segaGG",
-              "Sega Saturn": "segaSaturn",
-              "Atari 7800": "atari7800",
-              "Atari 2600": "atari2600",
-              "NEC TurboGrafx-16/SuperGrafx/PC Engine": "pce",
-              "NEC PC-FX": "pcfx",
-              "SNK NeoGeo Pocket (Color)": "ngp",
-              "Bandai WonderSwan (Color)": "ws",
-              ColecoVision: "coleco",
-              "Commodore 64": "vice_x64sc",
-              "Commodore 128": "vice_x128",
-              "Commodore VIC20": "vice_xvic",
-              "Commodore Plus/4": "vice_xplus4",
-              "Commodore PET": "vice_xpet",
+              'Nintendo 64': 'n64',
+              'Nintendo Game Boy': 'gb',
+              'Nintendo Game Boy Advance': 'gba',
+              'Nintendo DS': 'nds',
+              'Nintendo Entertainment System': 'nes',
+              'Super Nintendo Entertainment System': 'snes',
+              'PlayStation': 'psx',
+              'Virtual Boy': 'vb',
+              'Sega Mega Drive': 'segaMD',
+              'Sega Master System': 'segaMS',
+              'Sega CD': 'segaCD',
+              'Atari Lynx': 'lynx',
+              'Sega 32X': 'sega32x',
+              'Atari Jaguar': 'jaguar',
+              'Sega Game Gear': 'segaGG',
+              'Sega Saturn': 'segaSaturn',
+              'Atari 7800': 'atari7800',
+              'Atari 2600': 'atari2600',
+              'NEC TurboGrafx-16/SuperGrafx/PC Engine': 'pce',
+              'NEC PC-FX': 'pcfx',
+              'SNK NeoGeo Pocket (Color)': 'ngp',
+              'Bandai WonderSwan (Color)': 'ws',
+              'ColecoVision': 'coleco',
+              'Commodore 64': 'vice_x64sc',
+              'Commodore 128': 'vice_x128',
+              'Commodore VIC20': 'vice_xvic',
+              'Commodore Plus/4': 'vice_xplus4',
+              'Commodore PET': 'vice_xpet'
             };
 
             const cores = Object.keys(coreValues)
@@ -224,11 +211,11 @@
                 return obj;
               }, {});
 
-            const button = document.createElement("button");
-            const select = document.createElement("select");
+            const button = document.createElement('button');
+            const select = document.createElement('select');
 
             for (const type in cores) {
-              const option = document.createElement("option");
+              const option = document.createElement('option');
 
               option.value = cores[type];
               option.textContent = type;
@@ -236,43 +223,43 @@
             }
 
             button.onclick = () => resolve(select[select.selectedIndex].value);
-            button.textContent = "Load game";
-            box.innerHTML = "";
+            button.textContent = 'Load game';
+            box.innerHTML = '';
 
             box.appendChild(select);
             box.appendChild(button);
           });
         })(parts.pop());
 
-        const div = document.createElement("div");
-        const sub = document.createElement("div");
-        const script = document.createElement("script");
+        const div = document.createElement('div');
+        const sub = document.createElement('div');
+        const script = document.createElement('script');
 
-        sub.id = "game";
-        div.id = "display";
+        sub.id = 'game';
+        div.id = 'display';
 
-        const top = document.getElementById("top");
+        const top = document.getElementById('top');
         top.remove();
         box.remove();
         div.appendChild(sub);
         document.body.appendChild(div);
 
-        window.EJS_player = "#game";
+        window.EJS_player = '#game';
         window.EJS_gameName = parts.shift();
-        window.EJS_biosUrl = "";
+        window.EJS_biosUrl = '';
         window.EJS_gameUrl = url;
         window.EJS_core = core;
-        window.EJS_pathtodata = "data/";
+        window.EJS_pathtodata = 'data/';
         window.EJS_startOnLoaded = true;
         window.EJS_DEBUG_XX = enableDebug;
         window.EJS_disableDatabases = true;
         window.EJS_threads = enableThreads;
 
-        script.src = "data/loader.js";
+        script.src = 'data/loader.js';
         document.body.appendChild(script);
       };
-      box.ondragover = () => box.setAttribute("drag", true);
-      box.ondragleave = () => box.removeAttribute("drag");
+      box.ondragover = () => box.setAttribute('drag', true);
+      box.ondragleave = () => box.removeAttribute('drag');
     </script>
   </body>
 </html>

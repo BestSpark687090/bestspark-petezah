@@ -1,24 +1,40 @@
 {
+  // Editor Behavior
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always"
   },
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "json",
-    "jsonc",
-    "markdown",
-    "css"
-  ],
-  "eslint.useFlatConfig": true,
-  "prettier.requireConfig": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "editor.trimAutoWhitespace": true,
+  "editor.renderWhitespace": "boundary",
+  "editor.renderControlCharacters": true,
+  "editor.guides.indentation": true,
+  "editor.cursorSmoothCaretAnimation": "on",
+
+  // File Handling
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimTrailingWhitespace": true,
-  "editor.tabSize": 2,
-  "editor.detectIndentation": false,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.autoSave": "onWindowChange",
+
+  // ESLint
+  "eslint.enable": true,
+  "eslint.validate": ["javascript", "typescript", "json", "jsonc", "markdown", "css", "html", "yaml"],
+  "eslint.useFlatConfig": true,
+  "eslint.codeActionsOnSave.rules": ["@typescript-eslint/no-unused-vars", "no-console"],
+
+  // Prettier
+  "prettier.requireConfig": true,
+  "prettier.useEditorConfig": true,
+  "prettier.printWidth": 100,
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "all",
+  "prettier.arrowParens": "always",
+
+  // Deno
+  "deno.enable": true,
   "deno.enablePaths": ["supabase/functions"],
   "deno.lint": true,
   "deno.unstable": [
@@ -34,9 +50,39 @@
     "ffi",
     "fs",
     "http",
-    "net"
+    "net",
+    "cache",
+    "flash",
+    "metrics",
+    "websocket-stream"
   ],
+  "deno.suggest.imports.hosts": {
+    "https://deno.land": true,
+    "https://cdn.nest.land": true,
+    "https://x.nest.land": true,
+    "https://esm.sh": true
+  },
+
+  // TypeScript
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "typescript.suggest.enabled": true,
+
+  // Experimental
+  "workbench.experimental.editor.experimentalStickyScroll": true,
+  "terminal.integrated.experimentalUseTitleEvent": true,
+  "debug.javascript.usePreview": true,
+  "extensions.experimental.affinity": {
+    "denoland.vscode-deno": 1,
+    "esbenp.prettier-vscode": 2
+  },
+  // File assolciations
+  "files.associations": {
+    "*.env": "dotenv",
+    "example.env": "dotenv",
+    "*.toml": "toml"
   }
 }

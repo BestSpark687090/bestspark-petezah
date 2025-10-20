@@ -64,16 +64,16 @@ body.theme-glacial-frost {
 /* Apply Theme Variables */
 .tab,
 button,
-input[type="file"]::-webkit-file-upload-button,
-input[type="file"]::file-selector-button {
+input[type='file']::-webkit-file-upload-button,
+input[type='file']::file-selector-button {
   background: var(--primary-gradient);
 }
 
 .tab:hover,
 .tab.active,
 button:hover,
-input[type="file"]::-webkit-file-upload-button:hover,
-input[type="file"]::file-selector-button:hover {
+input[type='file']::-webkit-file-upload-button:hover,
+input[type='file']::file-selector-button:hover {
   background: var(--hover-gradient);
 }
 

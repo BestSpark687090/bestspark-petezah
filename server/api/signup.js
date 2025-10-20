@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 export async function signupHandler(req, res) {
   const { SUPABASE_URL, SUPABASE_KEY } = process.env;
@@ -7,10 +7,10 @@ export async function signupHandler(req, res) {
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
-      password,
+      password
     });
     if (error) throw error;
-    res.status(201).json({ user: data.user, message: "Signup successful" });
+    res.status(201).json({ user: data.user, message: 'Signup successful' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

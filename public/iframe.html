@@ -3,18 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-SHE360M0YP"
-    ></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SHE360M0YP"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
       }
-      gtag("js", new Date());
+      gtag('js', new Date());
 
-      gtag("config", "G-SHE360M0YP");
+      gtag('config', 'G-SHE360M0YP');
     </script>
     <script
       async
@@ -23,40 +20,18 @@
     ></script>
 
     <title>PeteZah | Iframe</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="/storage/images/favicon-96x96.png"
-      sizes="96x96"
-    />
+    <link rel="icon" type="image/png" href="/storage/images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/storage/images/favicon.svg" />
     <link rel="shortcut icon" href="/storage/images/favicon.ico" />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/storage/images/apple-touch-icon.png"
-    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/storage/images/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="PeteZah" />
     <link rel="manifest" href="/storage/images/site.webmanifest" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
     <meta name="description" content="Pete Zah, game on" />
-    <meta
-      name="keywords"
-      content="Proxy, Unblocker, Pete Zah Unblocker, Pete Zah Games, Pete Zah"
-    />
+    <meta name="keywords" content="Proxy, Unblocker, Pete Zah Unblocker, Pete Zah Games, Pete Zah" />
 
     <style>
       body {
@@ -67,7 +42,7 @@
         margin: 0;
         background-color: #0a1d37;
         color: white;
-        font-family: "Poppins", sans-serif;
+        font-family: 'Poppins', sans-serif;
         padding: 0;
         overflow: hidden;
       }
@@ -100,22 +75,14 @@
           50% 50%,
           50% 50%;
         animation: fadeIn 2s ease;
-        mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          rgba(255, 255, 255, 0) 40%,
-          transparent 70%
-        );
-        -webkit-mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          white 40%,
-          transparent 70%
-        );
+        mask-image: radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0) 40%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at 100% 0%, white 40%, transparent 70%);
         pointer-events: none;
         z-index: -1;
       }
 
       .god-rays::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-image: var(--stripes), var(--rays);
@@ -187,18 +154,10 @@
 
     <div class="container-iframe header-text">
       <div class="iframe-container">
-        <iframe
-          sandbox="allow-scripts allow-pointer-lock allow-forms allow-same-origin allow-downloads"
-          id="myIframe"
-          src=""
-        ></iframe>
+        <iframe sandbox="allow-scripts allow-pointer-lock allow-forms allow-same-origin allow-downloads" id="myIframe" src=""></iframe>
       </div>
       <div class="controls">
-        <i
-          style="margin-left: 15px"
-          class="fas fa-expand icon"
-          onclick="toggleFullscreen()"
-        ></i>
+        <i style="margin-left: 15px" class="fas fa-expand icon" onclick="toggleFullscreen()"></i>
         <i class="fas fa-sync icon" onclick="refreshIframe()"></i>
         <i class="fa-solid fa-comment icon" id="whysofeinious-button"></i>
         <i class="fa-solid fa-pager icon" id="openIframeSource"></i>
@@ -226,7 +185,7 @@
     <script>
       const queryString = window.location.search;
       const urlParams = new URLSearchParams(queryString);
-      let url = urlParams.get("url");
+      let url = urlParams.get('url');
 
       // If the URL contains a fragment, it might be in window.location.hash
       // Reconstruct the full URL if needed
@@ -234,23 +193,23 @@
         url = url + window.location.hash;
       }
 
-      const iframe = document.getElementById("myIframe");
+      const iframe = document.getElementById('myIframe');
 
       if (url) {
         iframe.src = url;
-        localStorage.setItem("iframeUrl", url);
-        history.replaceState(null, "", window.location.pathname);
+        localStorage.setItem('iframeUrl', url);
+        history.replaceState(null, '', window.location.pathname);
       } else {
-        const savedUrl = localStorage.getItem("iframeUrl");
+        const savedUrl = localStorage.getItem('iframeUrl');
         if (savedUrl) {
           iframe.src = savedUrl;
         } else {
-          console.error("No URL parameter provided and no saved URL found.");
+          console.error('No URL parameter provided and no saved URL found.');
         }
       }
 
       function toggleFullscreen() {
-        const iframe = document.getElementById("myIframe");
+        const iframe = document.getElementById('myIframe');
         if (iframe.requestFullscreen) {
           iframe.requestFullscreen();
         } else if (iframe.mozRequestFullScreen) {
@@ -263,36 +222,32 @@
       }
 
       function refreshIframe() {
-        const iframe = document.getElementById("myIframe");
+        const iframe = document.getElementById('myIframe');
         iframe.src = iframe.src;
       }
 
-      document
-        .getElementById("whysofeinious-button")
-        .addEventListener("click", function () {
-          const script = document.createElement("script");
-          script.src = "https://cdn.jsdelivr.net/npm/@widgetbot/crate@3";
-          script.async = true;
-          script.defer = true;
-          document.body.appendChild(script);
+      document.getElementById('whysofeinious-button').addEventListener('click', function () {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@widgetbot/crate@3';
+        script.async = true;
+        script.defer = true;
+        document.body.appendChild(script);
 
-          script.onload = function () {
-            new Crate({
-              server: "1337108365591187640",
-              channel: "1345454451904745673",
-            });
-          };
-        });
+        script.onload = function () {
+          new Crate({
+            server: '1337108365591187640',
+            channel: '1345454451904745673'
+          });
+        };
+      });
 
-      document
-        .getElementById("openIframeSource")
-        .addEventListener("click", function () {
-          var iframeSrc = document.getElementById("myIframe").src;
-          var link = document.createElement("a");
-          link.href = iframeSrc;
-          link.target = "_blank";
-          link.click();
-        });
+      document.getElementById('openIframeSource').addEventListener('click', function () {
+        var iframeSrc = document.getElementById('myIframe').src;
+        var link = document.createElement('a');
+        link.href = iframeSrc;
+        link.target = '_blank';
+        link.click();
+      });
     </script>
     <script src="/storage/js/settings.js"></script>
   </body>

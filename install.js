@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-import { execSync } from "child_process";
-import os from "os";
-import fs from "fs";
+import { execSync } from 'child_process';
+import fs from 'fs';
+import os from 'os';
 
 function run(cmd, opts = {}) {
   console.log(`> ${cmd}`);
-  execSync(cmd, { stdio: "inherit", shell: true, ...opts });
+  execSync(cmd, { stdio: 'inherit', shell: true, ...opts });
 }
 
 function has(cmd) {
   try {
-    execSync(`${cmd} --version`, { stdio: "ignore", shell: true });
+    execSync(`${cmd} --version`, { stdio: 'ignore', shell: true });
     return true;
   } catch {
     return false;
@@ -18,9 +18,7 @@ function has(cmd) {
 }
 
 function installLinux(pkg) {
-  const distro = fs.existsSync("/etc/os-release")
-    ? fs.readFileSync("/etc/os-release", "utf8")
-    : "";
+  const distro = fs.existsSync('/etc/os-release') ? fs.readFileSync('/etc/os-release', 'utf8') : '';
   if (/ubuntu|debian/i.test(distro)) {
     run(`sudo apt-get update && sudo apt-get install -y ${pkg}`);
   } else if (/fedora/i.test(distro)) {
@@ -33,117 +31,93 @@ function installLinux(pkg) {
 }
 
 function installMac(pkg) {
-  if (!has("brew")) {
-    console.log("Installing Homebrew...");
-    run(
-      '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
-    );
+  if (!has('brew')) {
+    console.log('Installing Homebrew...');
+    run('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"');
   }
   run(`brew install ${pkg}`);
 }
 
 function installRustTools() {
-  if (!has("cargo")) {
-    console.log("Installing Rust (cargo)...");
-    run(
-      "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y",
-    );
-    run("source $HOME/.cargo/env");
+  if (!has('cargo')) {
+    console.log('Installing Rust (cargo)...');
+    run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y");
+    run('source $HOME/.cargo/env');
   }
-  const WBG = "wasm-bindgen 0.2.100";
-  const WBGtest = execSync(`${cmd} -V`, { stdio: "ignore", shell: true });
+  const WBG = 'wasm-bindgen 0.2.100';
+  const WBGtest = execSync(`${cmd} -V`, { stdio: 'ignore', shell: true });
   if (WBG === WBGtest) {
-    console.log("Installing wasm-bindgen-cli...");
-    run("cargo install wasm-bindgen-cli --version=0.2.104 --locked");
+    console.log('Installing wasm-bindgen-cli...');
+    run('cargo install wasm-bindgen-cli --version=0.2.104 --locked');
   } else {
-    console.log("Installing wasm-bindgen-cli...");
-    run("cargo install wasm-bindgen-cli --version=0.2.104  --force --locked");
+    console.log('Installing wasm-bindgen-cli...');
+    run('cargo install wasm-bindgen-cli --version=0.2.104  --force --locked');
   }
-  console.log("Installing wasm-snip from GitHub...");
-  run("cargo install --git https://github.com/r58Playz/wasm-snip --locked");
-  run("cargo rustc -Zunstable-options -Cpanic=immediate-abort");
+  console.log('Installing wasm-snip from GitHub...');
+  run('cargo install --git https://github.com/r58Playz/wasm-snip --locked');
+  run('cargo rustc -Zunstable-options -Cpanic=immediate-abort');
 }
 
 function installBinaryen() {
-  console.log("Installing Binaryen (wasm-opt)...");
-  if (os.platform() === "darwin") {
-    installMac("binaryen");
+  console.log('Installing Binaryen (wasm-opt)...');
+  if (os.platform() === 'darwin') {
+    installMac('binaryen');
   } else {
-    installLinux("binaryen");
+    installLinux('binaryen');
   }
-}
-function runRegularInstall() {
-  const args = process.argv.slice(2);
-  const pnpm = spawn("pnpm install", ...args, {
-    shell: true,
-    stdio: ["inherit", "pipe", "pipe"],
-  });
-
-  pnpm.stdout.on("data", (data) => {
-    process.stdout.write(`${GREEN}${data}${RESET}`);
-  });
-  pnpm.on("close", (code) => {
-    if (code === 0) {
-      resolve();
-    } else {
-      reject(new Error(`Build failed for ${name} with exit code ${code}`));
-    }
-  }
-  );
 }
 function installDepsUnix() {
   const platform = os.platform();
   console.log(`Detected platform: ${platform}`);
 
-  if (platform === "linux") {
-    ["git", "curl"].forEach(installLinux);
+  if (platform === 'linux') {
+    ['git', 'curl'].forEach(installLinux);
 
-    if (!has("nvm")) {
-      console.log("Installing NVM...");
-      run("curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash");
-      run("export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\"");
+    if (!has('nvm')) {
+      console.log('Installing NVM...');
+      run('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash');
+      run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"');
     }
 
-    console.log("Installing Node.js 22 via NVM...");
-    run("export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\" && nvm install 22 && nvm use 22");
-  } else if (platform === "darwin") {
-    ["git", "curl"].forEach(installMac);
-    if (!has("nvm")) {
-      console.log("Installing NVM...");
-      run("curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash");
-      run("export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\"");
+    console.log('Installing Node.js 22 via NVM...');
+    run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && nvm install 22 && nvm use 22');
+  } else if (platform === 'darwin') {
+    ['git', 'curl'].forEach(installMac);
+    if (!has('nvm')) {
+      console.log('Installing NVM...');
+      run('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash');
+      run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"');
     }
 
-    console.log("Installing Node.js 22 via NVM...");
-    run("export NVM_DIR=\"$HOME/.nvm\" && source \"$NVM_DIR/nvm.sh\" && nvm install 22 && nvm use 22");
-
+    console.log('Installing Node.js 22 via NVM...');
+    run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && nvm install 22 && nvm use 22');
   } else {
-    console.error("Unsupported OS for this script");
+    console.error('Unsupported OS for this script');
     process.exit(1);
   }
 
-  if (!has("pnpm")) {
-    run("npm install -g pnpm");
+  if (!has('pnpm')) {
+    run('npm install -g pnpm');
   }
 
-  run("pnpm add -g @rspack/cli typescript @rslib/core");
+  run('pnpm add -g @rspack/cli typescript @rslib/core');
 
   installRustTools();
   installBinaryen();
   runRegularInstall();
-  console.log("All dependencies installed successfully!");
+  console.log('All dependencies installed successfully!');
 }
 
 function main() {
   const platform = os.platform();
 
-  if (platform === "win32") {
+  if (platform === 'win32') {
     // Running on Windows outside WSL
-    if (has("wsl")) {
-      console.log("Windows detected. Running dependency install inside WSL...");
+    if (has('wsl')) {
+      console.log('Windows detected. Running dependency install inside WSL...');
       run(`wsl bash -ic "bash ./wsl-install-deps.sh"`);
     } else {
-      console.error("WSL not detected. Please install WSL first.");
+      console.error('WSL not detected. Please install WSL first.');
       process.exit(1);
     }
   } else {

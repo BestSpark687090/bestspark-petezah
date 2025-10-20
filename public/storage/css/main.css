@@ -1,10 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
+  font-family: 'Poppins', sans-serif;
 }
 
 body {
@@ -265,7 +265,7 @@ iframe {
   border-radius: 16px;
 }
 
-@import url("https://fonts.googleapis.com/css2?family=Bobby+Jones+Soft&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Bobby+Jones+Soft&display=swap');
 
 .particles {
   position: fixed;

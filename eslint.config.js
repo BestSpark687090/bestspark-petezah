@@ -1,87 +1,87 @@
-import js from "@eslint/js";
-import globals from "globals";
-import json from "@eslint/json";
-import markdown from "@eslint/markdown";
-import css from "@eslint/css";
-import { defineConfig } from "eslint/config";
-import eslintConfigPrettier from "eslint-config-prettier/flat";
-import jsonParser from "jsonc-eslint-parser";
-import localPlugin from "./eslint-rules/index.js";
+import css from '@eslint/css';
+import js from '@eslint/js';
+import json from '@eslint/json';
+import markdown from '@eslint/markdown';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import { defineConfig } from 'eslint/config';
+import globals from 'globals';
+import jsonParser from 'jsonc-eslint-parser';
+import localPlugin from './eslint-rules/index.js';
 
 export default defineConfig([
   eslintConfigPrettier,
   {
-    files: ["**/*.{js,mjs,cjs}"],
+    files: ['**/*.{js,mjs,cjs}'],
     plugins: { js },
-    extends: ["js/recommended"],
+    extends: ['js/recommended'],
     languageOptions: {
       globals: {
         ...globals.browser,
-        ...globals.node,
-      },
+        ...globals.node
+      }
     },
     rules: {
-      "css/use-baseline": "off",
-    },
+      'css/use-baseline': 'off'
+    }
   },
   {
-    files: ["**/*.json"],
-    ignores: ["package-lock.json", "pnpm-lock.yaml", "yarn.lock"],
+    files: ['**/*.json'],
+    ignores: ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'],
     plugins: {
       json,
-      local: localPlugin,
+      local: localPlugin
     },
     languageOptions: {
-      parser: jsonParser,
+      parser: jsonParser
     },
     rules: {
-      "local/sort-labels": "warn",
+      'local/sort-labels': 'warn'
     },
-    extends: ["json/recommended"],
+    extends: ['json/recommended']
   },
   {
-    files: ["**/*.md"],
+    files: ['**/*.md'],
     plugins: { markdown },
-    extends: ["markdown/recommended"],
+    extends: ['markdown/recommended'],
     languageOptions: {
       parserOptions: {
-        ecmaVersion: "latest",
-        sourceType: "module",
-      },
+        ecmaVersion: 'latest',
+        sourceType: 'module'
+      }
     },
     rules: {
-      "markdown/no-html": "warn",
-      "markdown/no-bare-urls": "warn",
-      "markdown/no-missing-label-refs": "warn",
-    },
+      'markdown/no-html': 'warn',
+      'markdown/no-bare-urls': 'warn',
+      'markdown/no-missing-label-refs': 'warn'
+    }
   },
   {
-    files: ["**/*.css"],
-    language: "css/css",
+    files: ['**/*.css'],
+    language: 'css/css',
     plugins: { css },
-    extends: ["css/recommended"],
+    extends: ['css/recommended']
   },
   {
     ignores: [
-      "node_modules",
-      "external",
-      "public/storage/ag/g/**/*",
-      "public/storage/ag/g2/**/*",
-      "public/storage/ag/a/emulatorjs/**/*",
-      "public/scram/**/*",
-      "public/petezah/**/*",
-      "**/*.min.css",
-      "public/epoxy/**/*",
-      "public/baremux/**/*",
-    ],
+      'node_modules',
+      'external',
+      'public/storage/ag/g/**/*',
+      'public/storage/ag/g2/**/*',
+      'public/storage/ag/a/emulatorjs/**/*',
+      'public/scram/**/*',
+      'public/petezah/**/*',
+      '**/*.min.css',
+      'public/epoxy/**/*',
+      'public/baremux/**/*'
+    ]
   },
   {
-    files: ["**/sw.js"],
+    files: ['**/sw.js'],
     languageOptions: {
       globals: {
-        importScripts: "readonly",
-        worker: true,
-      },
-    },
-  },
+        importScripts: 'readonly',
+        worker: true
+      }
+    }
+  }
 ]);

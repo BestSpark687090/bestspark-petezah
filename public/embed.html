@@ -4,19 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Scramjet Embed</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="/storage/images/favicon-96x96.png"
-      sizes="96x96"
-    />
+    <link rel="icon" type="image/png" href="/storage/images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/storage/images/favicon.svg" />
     <link rel="shortcut icon" href="/storage/images/favicon.ico" />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/storage/images/apple-touch-icon.png"
-    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/storage/images/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="PeteZah" />
     <link rel="manifest" href="/storage/images/site.webmanifest" />
     <link
@@ -25,10 +16,7 @@
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Hind:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Hind:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link
       href="https://fonts.googleapis.com/css2?family=Hind:wght@300;400;500;600;700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
       rel="stylesheet"
@@ -37,8 +25,8 @@
     <script src="https://cdn.jsdelivr.net/npm/dreamland"></script>
     <style>
       @font-face {
-        font-family: "Inter";
-        src: url("images/Inter-Regular.woff2") format("woff2");
+        font-family: 'Inter';
+        src: url('images/Inter-Regular.woff2') format('woff2');
         font-weight: 400;
         font-style: normal;
       }
@@ -54,7 +42,7 @@
         width: 100vw;
         height: 100vh;
         overflow: hidden;
-        font-family: "Inter", Arial, Helvetica, sans-serif;
+        font-family: 'Inter', Arial, Helvetica, sans-serif;
         background: radial-gradient(circle at center, #001b33 0%, #000814 100%);
         background-size: 200% 200%;
         animation: bgShift 20s ease-in-out infinite;
@@ -186,9 +174,7 @@
         position: absolute;
         width: 100%;
         height: 100%;
-        background: transparent
-          url("https://www.transparenttextures.com/patterns/stardust.png")
-          repeat;
+        background: transparent url('https://www.transparenttextures.com/patterns/stardust.png') repeat;
         opacity: 0.08;
         z-index: 0;
         pointer-events: none;
@@ -228,19 +214,18 @@
     <div id="iframe-container"></div>
 
     <script>
-      const target = document.getElementById("glitch-text");
+      const target = document.getElementById('glitch-text');
       const original = target.textContent;
-      const chars =
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
       let iterations = 0;
 
       const glitchInterval = setInterval(() => {
-        let displayed = "";
+        let displayed = '';
         for (let i = 0; i < original.length; i++) {
           if (i < iterations) {
             displayed += original[i];
-          } else if (original[i] === " ") {
-            displayed += " ";
+          } else if (original[i] === ' ') {
+            displayed += ' ';
           } else {
             displayed += chars[Math.floor(Math.random() * chars.length)];
           }
@@ -257,36 +242,26 @@
       const { ScramjetController } = $scramjetLoadController();
       const scramjet = new ScramjetController({
         files: {
-          wasm: "/scram/scramjet.wasm.wasm",
-          all: "/scram/scramjet.all.js",
-          sync: "/scram/scramjet.sync.js",
-        },
+          wasm: '/scram/scramjet.wasm.wasm',
+          all: '/scram/scramjet.all.js',
+          sync: '/scram/scramjet.sync.js'
+        }
       });
 
       scramjet.init();
-      navigator.serviceWorker.register("./sw.js");
+      navigator.serviceWorker.register('./sw.js');
 
-      const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
+      const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
 
       const store = $store(
         {
-          url: "https://google.com",
-          wispurl:
-            _CONFIG?.wispurl ||
-            (location.protocol === "https:" ? "wss" : "ws") +
-              "://" +
-              location.host +
-              "/wisp/",
-          bareurl:
-            _CONFIG?.bareurl ||
-            (location.protocol === "https:" ? "https" : "http") +
-              "://" +
-              location.host +
-              "/bare/",
-          proxy: "",
-          transport: "/epoxy/index.mjs",
+          url: 'https://google.com',
+          wispurl: _CONFIG?.wispurl || (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/',
+          bareurl: _CONFIG?.bareurl || (location.protocol === 'https:' ? 'https' : 'http') + '://' + location.host + '/bare/',
+          proxy: '',
+          transport: '/epoxy/index.mjs'
         },
-        { ident: "settings", backing: "localstorage", autosave: "auto" },
+        { ident: 'settings', backing: 'localstorage', autosave: 'auto' }
       );
       self.store = store;
       async function loadFromHash() {
@@ -295,32 +270,32 @@
         if (hash) {
           let url = hash;
 
-          if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            url = "https://" + url;
+          if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
           }
 
           await waitForTransport();
 
           const frame = scramjet.createFrame();
-          document.getElementById("iframe-container").appendChild(frame.frame);
+          document.getElementById('iframe-container').appendChild(frame.frame);
 
           frame.frame.onload = () => {
-            document.getElementById("loading-screen").style.display = "none";
-            document.getElementById("iframe-container").style.display = "block";
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
           };
 
           frame.go(url);
         } else {
           await waitForTransport();
           const frame = scramjet.createFrame();
-          document.getElementById("iframe-container").appendChild(frame.frame);
+          document.getElementById('iframe-container').appendChild(frame.frame);
 
           frame.frame.onload = () => {
-            document.getElementById("loading-screen").style.display = "none";
-            document.getElementById("iframe-container").style.display = "block";
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('iframe-container').style.display = 'block';
           };
 
-          frame.go("https://start.duckduckgo.com/");
+          frame.go('https://start.duckduckgo.com/');
         }
       }
 
@@ -330,31 +305,21 @@
 
         while (attempts < maxAttempts) {
           try {
-            await connection.setTransport("/epoxy/index.mjs", [
-              { wisp: store.wispurl },
-            ]);
+            await connection.setTransport('/epoxy/index.mjs', [{ wisp: store.wispurl }]);
             return;
           } catch (e) {
             try {
-              await connection.setTransport("/baremux/index.mjs", [
-                store.bareurl,
-              ]);
+              await connection.setTransport('/baremux/index.mjs', [store.bareurl]);
               return;
             } catch (e2) {
               try {
-                await connection.setTransport("/libcurl/index.mjs", [
-                  { wisp: store.wispurl },
-                ]);
+                await connection.setTransport('/libcurl/index.mjs', [{ wisp: store.wispurl }]);
                 return;
               } catch (e3) {
                 attempts++;
                 if (attempts >= maxAttempts) {
-                  console.error(
-                    "Failed to set any transport after",
-                    maxAttempts,
-                    "attempts",
-                  );
-                  throw new Error("No bare clients available");
+                  console.error('Failed to set any transport after', maxAttempts, 'attempts');
+                  throw new Error('No bare clients available');
                 }
                 await new Promise((resolve) => setTimeout(resolve, 100));
               }
@@ -363,16 +328,16 @@
         }
       }
 
-      window.addEventListener("hashchange", async () => {
-        document.getElementById("loading-screen").style.display = "flex";
-        document.getElementById("iframe-container").style.display = "none";
-        const container = document.getElementById("iframe-container");
-        container.innerHTML = "";
+      window.addEventListener('hashchange', async () => {
+        document.getElementById('loading-screen').style.display = 'flex';
+        document.getElementById('iframe-container').style.display = 'none';
+        const container = document.getElementById('iframe-container');
+        container.innerHTML = '';
 
         await loadFromHash();
       });
 
-      window.addEventListener("load", async () => {
+      window.addEventListener('load', async () => {
         await loadFromHash();
       });
     </script>

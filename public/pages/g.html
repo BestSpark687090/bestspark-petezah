@@ -5,31 +5,28 @@
       (function (w, d, s, l, i) {
         w[l] = w[l] || [];
         w[l].push({
-          "gtm.start": new Date().getTime(),
-          event: "gtm.js",
+          'gtm.start': new Date().getTime(),
+          'event': 'gtm.js'
         });
         var f = d.getElementsByTagName(s)[0],
           j = d.createElement(s),
-          dl = l != "dataLayer" ? "&l=" + l : "";
+          dl = l != 'dataLayer' ? '&l=' + l : '';
         j.async = true;
-        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
         f.parentNode.insertBefore(j, f);
-      })(window, document, "script", "dataLayer", "GTM-WPH7NCG4");
+      })(window, document, 'script', 'dataLayer', 'GTM-WPH7NCG4');
     </script>
 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-SHE360M0YP"
-    ></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SHE360M0YP"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
       }
-      gtag("js", new Date());
-      gtag("config", "G-SHE360M0YP");
+      gtag('js', new Date());
+      gtag('config', 'G-SHE360M0YP');
     </script>
     <script
       async
@@ -38,28 +35,16 @@
     ></script>
 
     <title>PeteZah | Games</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="/storage/images/favicon-96x96.png"
-      sizes="96x96"
-    />
+    <link rel="icon" type="image/png" href="/storage/images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/storage/images/favicon.svg" />
     <link rel="shortcut icon" href="/storage/images/favicon.ico" />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/storage/images/apple-touch-icon.png"
-    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/storage/images/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="PeteZah" />
     <link rel="manifest" href="/storage/images/site.webmanifest" />
     <link rel="stylesheet" type="text/css" href="/storage/css/themes2.css" />
 
     <meta name="description" content="Pete Zah, game on" />
-    <meta
-      name="keywords"
-      content="Proxy, Unblocker, Pete Zah Unblocker, Pete Zah Games, Pete Zah"
-    />
+    <meta name="keywords" content="Proxy, Unblocker, Pete Zah Unblocker, Pete Zah Games, Pete Zah" />
     <style>
       body {
         display: flex;
@@ -70,7 +55,7 @@
         margin: 0;
         background-color: #0a1d37;
         color: white;
-        font-family: "Poppins", sans-serif;
+        font-family: 'Poppins', sans-serif;
         padding: 0;
         overflow: auto;
       }
@@ -107,22 +92,14 @@
           50% 50%,
           50% 50%;
         animation: fadeIn 2s ease;
-        mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          rgba(255, 255, 255, 0) 40%,
-          transparent 70%
-        );
-        -webkit-mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          white 40%,
-          transparent 70%
-        );
+        mask-image: radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0) 40%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at 100% 0%, white 40%, transparent 70%);
         pointer-events: none;
         z-index: -1;
       }
 
       .god-rays::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-image: var(--stripes), var(--rays);
@@ -146,7 +123,7 @@
       }
 
       .search-container input {
-        font-family: "Poppins", sans-serif;
+        font-family: 'Poppins', sans-serif;
         width: 50vw;
         padding: 12px 20px;
         font-size: 18px;
@@ -350,7 +327,7 @@
       }
 
       .search-header__input {
-        font-family: "DM Sans";
+        font-family: 'DM Sans';
         font-size: 16px;
         background-color: var(--input-background-color);
         border: solid 0.5px var(--border-color);
@@ -382,7 +359,7 @@
       .search-header__input::-webkit-input-placeholder {
         font-weight: 200;
         color: #868686;
-        font-family: "DM Sans";
+        font-family: 'DM Sans';
       }
 
       .search-header__input:focus + .search-header__button {
@@ -514,27 +491,15 @@
 
   <body>
     <noscript
-      ><iframe
-        src="https://www.googletagmanager.com/ns.html?id=GTM-WPH7NCG4"
-        height="0"
-        width="0"
-        style="display: none; visibility: hidden"
-      ></iframe
+      ><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WPH7NCG4" height="0" width="0" style="display: none; visibility: hidden"></iframe
     ></noscript>
 
     <div class="god-rays"></div>
 
-    <button class="randomGameOpensBtn" onclick="randomGameOpen()">
-      Random Game
-    </button>
+    <button class="randomGameOpensBtn" onclick="randomGameOpen()">Random Game</button>
 
     <div class="search-container">
-      <input
-        type="text"
-        id="search-games"
-        placeholder="Search for YOUR Favorite Game....."
-        onkeyup="filterItems()"
-      />
+      <input type="text" id="search-games" placeholder="Search for YOUR Favorite Game....." onkeyup="filterItems()" />
     </div>
 
     <div class="filter-container">
@@ -579,25 +544,25 @@
 
       async function loadGames() {
         try {
-          const response = await fetch("/storage/data/games.json");
+          const response = await fetch('/storage/data/games.json');
           games = (await response.json()).games;
           displayGames(games.slice(0, gamesPerPage));
           updateLoadMoreButton();
         } catch (error) {
-          console.error("Error loading games:", error);
+          console.error('Error loading games:', error);
         }
       }
 
       function displayGames(gamesToShow, append = false) {
-        const container = document.getElementById("imageContainer");
-        if (!append) container.innerHTML = "";
+        const container = document.getElementById('imageContainer');
+        if (!append) container.innerHTML = '';
         const fragment = document.createDocumentFragment();
         gamesToShow.forEach((game) => {
-          const div = document.createElement("div");
-          div.className = "image-item";
-          div.setAttribute("data-label", game.label);
+          const div = document.createElement('div');
+          div.className = 'image-item';
+          div.setAttribute('data-label', game.label);
           if (game.categories.length > 0) {
-            div.setAttribute("data-category", game.categories[0]);
+            div.setAttribute('data-category', game.categories[0]);
           }
           div.innerHTML = `
                     <a href="${game.url}" class="game-link" data-url="${game.url}">
@@ -611,30 +576,27 @@
       }
 
       function updateLoadMoreButton() {
-        let loadMoreBtn = document.getElementById("loadMoreBtn");
+        let loadMoreBtn = document.getElementById('loadMoreBtn');
         if (!loadMoreBtn) {
-          loadMoreBtn = document.createElement("button");
-          loadMoreBtn.id = "loadMoreBtn";
-          loadMoreBtn.textContent = "Load More";
+          loadMoreBtn = document.createElement('button');
+          loadMoreBtn.id = 'loadMoreBtn';
+          loadMoreBtn.textContent = 'Load More';
           loadMoreBtn.style.cssText = `
                     padding: 10px 20px; margin: 20px auto; display: block;
                     background-color: #141414; color: white; border: 1px solid white;
                     font-size: 16px; cursor: pointer; border-radius: 16px;
                 `;
-          loadMoreBtn.addEventListener("click", () => {
+          loadMoreBtn.addEventListener('click', () => {
             const start = currentPage * gamesPerPage;
             const end = start + gamesPerPage;
             const filteredGames = getFilteredGames();
             displayGames(filteredGames.slice(start, end), true);
             currentPage++;
-            if (end >= filteredGames.length) loadMoreBtn.style.display = "none";
+            if (end >= filteredGames.length) loadMoreBtn.style.display = 'none';
           });
-          document.getElementById("imageContainer").after(loadMoreBtn);
+          document.getElementById('imageContainer').after(loadMoreBtn);
         }
-        loadMoreBtn.style.display =
-          currentPage * gamesPerPage < getFilteredGames().length
-            ? "block"
-            : "none";
+        loadMoreBtn.style.display = currentPage * gamesPerPage < getFilteredGames().length ? 'block' : 'none';
       }
 
       function debounce(func, wait) {
@@ -650,22 +612,14 @@
       }
 
       function getFilteredGames() {
-        const searchInput = document
-          .getElementById("search-games")
-          .value.toLowerCase();
-        const category = document
-          .getElementById("gameFilter")
-          .value.toLowerCase();
+        const searchInput = document.getElementById('search-games').value.toLowerCase();
+        const category = document.getElementById('gameFilter').value.toLowerCase();
         let filteredGames = games;
         if (searchInput) {
-          filteredGames = filteredGames.filter((game) =>
-            game.label.toLowerCase().includes(searchInput),
-          );
+          filteredGames = filteredGames.filter((game) => game.label.toLowerCase().includes(searchInput));
         }
         if (category) {
-          filteredGames = filteredGames.filter((game) =>
-            game.categories.includes(category),
-          );
+          filteredGames = filteredGames.filter((game) => game.categories.includes(category));
         }
         return filteredGames;
       }
@@ -688,32 +642,26 @@
         filterItems();
       }
 
-      document
-        .getElementById("imageContainer")
-        .addEventListener("click", (e) => {
-          const link = e.target.closest(".game-link");
-          if (link) {
-            e.preventDefault();
-            window.location.href = link.getAttribute("data-url");
-          }
-        });
+      document.getElementById('imageContainer').addEventListener('click', (e) => {
+        const link = e.target.closest('.game-link');
+        if (link) {
+          e.preventDefault();
+          window.location.href = link.getAttribute('data-url');
+        }
+      });
 
       window.addEventListener(
-        "scroll",
+        'scroll',
         debounce(() => {
-          const loadMoreBtn = document.getElementById("loadMoreBtn");
-          if (
-            loadMoreBtn &&
-            loadMoreBtn.style.display !== "none" &&
-            loadMoreBtn.offsetParent !== null
-          ) {
+          const loadMoreBtn = document.getElementById('loadMoreBtn');
+          if (loadMoreBtn && loadMoreBtn.style.display !== 'none' && loadMoreBtn.offsetParent !== null) {
             const docHeight = Math.max(
               document.body.scrollHeight,
               document.documentElement.scrollHeight,
               document.body.offsetHeight,
               document.documentElement.offsetHeight,
               document.body.clientHeight,
-              document.documentElement.clientHeight,
+              document.documentElement.clientHeight
             );
             const scrollPosition = window.scrollY + window.innerHeight;
             const threshold = 200;
@@ -721,14 +669,12 @@
               loadMoreBtn.click();
             }
           }
-        }, 100),
+        }, 100)
       );
 
-      document.addEventListener("DOMContentLoaded", () => {
+      document.addEventListener('DOMContentLoaded', () => {
         loadGames();
-        document
-          .getElementById("search-games")
-          .addEventListener("input", debounce(filterItems, 300));
+        document.getElementById('search-games').addEventListener('input', debounce(filterItems, 300));
       });
     </script>
     <script src="/storage/js/settings.js"></script>

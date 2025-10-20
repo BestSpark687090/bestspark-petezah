@@ -1,42 +1,40 @@
-const sidebar = document.querySelector(".sidebar");
-const sidebarToggler = document.querySelector(".sidebar-toggler");
-const menuToggler = document.querySelector(".menu-toggler");
-const mainContent = document.querySelector(".main-content");
-const navLinks = document.querySelectorAll(".sidebar-nav .nav-link");
-const mainFrame = document.getElementById("mainFrame");
-const widgetButton = document.querySelector(".widget-button");
-const widgetPopup = document.querySelector(".widget-popup");
-const widgetOptions = document.querySelectorAll(".widget-option");
+const sidebar = document.querySelector('.sidebar');
+const sidebarToggler = document.querySelector('.sidebar-toggler');
+const menuToggler = document.querySelector('.menu-toggler');
+const mainContent = document.querySelector('.main-content');
+const navLinks = document.querySelectorAll('.sidebar-nav .nav-link');
+const mainFrame = document.getElementById('mainFrame');
+const widgetButton = document.querySelector('.widget-button');
+const widgetPopup = document.querySelector('.widget-popup');
+const widgetOptions = document.querySelectorAll('.widget-option');
 
-sidebar.classList.add("collapsed");
-mainContent.classList.remove("sidebar-expanded");
+sidebar.classList.add('collapsed');
+mainContent.classList.remove('sidebar-expanded');
 
-sidebarToggler.addEventListener("click", () => {
-  sidebar.classList.toggle("collapsed");
-  mainContent.classList.toggle("sidebar-expanded");
+sidebarToggler.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  mainContent.classList.toggle('sidebar-expanded');
 });
 
-const collapsedSidebarHeight = "56px";
-const fullSidebarHeight = "calc(100vh - 32px)";
+const collapsedSidebarHeight = '56px';
+const fullSidebarHeight = 'calc(100vh - 32px)';
 
 const toggleMenu = (isMenuActive) => {
-  sidebar.style.height = isMenuActive
-    ? `${sidebar.scrollHeight}px`
-    : collapsedSidebarHeight;
-  menuToggler.querySelector("span").innerText = isMenuActive ? "close" : "menu";
+  sidebar.style.height = isMenuActive ? `${sidebar.scrollHeight}px` : collapsedSidebarHeight;
+  menuToggler.querySelector('span').innerText = isMenuActive ? 'close' : 'menu';
 };
 
-menuToggler.addEventListener("click", () => {
-  toggleMenu(sidebar.classList.toggle("menu-active"));
+menuToggler.addEventListener('click', () => {
+  toggleMenu(sidebar.classList.toggle('menu-active'));
 });
 
-window.addEventListener("resize", () => {
+window.addEventListener('resize', () => {
   if (window.innerWidth >= 1024) {
     sidebar.style.height = fullSidebarHeight;
   } else {
-    sidebar.classList.remove("collapsed");
-    sidebar.style.height = "auto";
-    toggleMenu(sidebar.classList.contains("menu-active"));
+    sidebar.classList.remove('collapsed');
+    sidebar.style.height = 'auto';
+    toggleMenu(sidebar.classList.contains('menu-active'));
   }
 });
 
@@ -46,7 +44,7 @@ class TxtType {
     this.el = el;
     this.loopNum = 0;
     this.period = Number.parseInt(period, 10) || 2000;
-    this.txt = "";
+    this.txt = '';
     this.tick();
     this.isDeleting = false;
   }
@@ -58,7 +56,7 @@ class TxtType {
     } else {
       this.txt = fullTxt.substring(0, this.txt.length + 1);
     }
-    this.el.innerHTML = '<span class="wrap">' + this.txt + "</span>";
+    this.el.innerHTML = '<span class="wrap">' + this.txt + '</span>';
     let delta = 200 - Math.random() * 100;
     if (this.isDeleting) {
       delta /= 2;
@@ -66,7 +64,7 @@ class TxtType {
     if (!this.isDeleting && this.txt === fullTxt) {
       delta = this.period;
       this.isDeleting = true;
-    } else if (this.isDeleting && this.txt === "") {
+    } else if (this.isDeleting && this.txt === '') {
       this.isDeleting = false;
       this.loopNum++;
       delta = 500;
@@ -75,55 +73,52 @@ class TxtType {
   }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const elements = document.getElementsByClassName("typewrite");
+document.addEventListener('DOMContentLoaded', () => {
+  const elements = document.getElementsByClassName('typewrite');
   for (let i = 0; i < elements.length; i++) {
-    const toRotate = elements[i].getAttribute("data-type");
-    const period = elements[i].getAttribute("data-period");
+    const toRotate = elements[i].getAttribute('data-type');
+    const period = elements[i].getAttribute('data-period');
     if (toRotate) {
       new TxtType(elements[i], JSON.parse(toRotate), period);
     }
   }
-  const css = document.createElement("style");
-  css.type = "text/css";
-  css.innerHTML = ".typewrite > .wrap { border-right: 0.06em solid #a04cff}";
+  const css = document.createElement('style');
+  css.type = 'text/css';
+  css.innerHTML = '.typewrite > .wrap { border-right: 0.06em solid #a04cff}';
   document.body.appendChild(css);
   if (navLinks.length > 0) {
-    navLinks[0].classList.add("active");
+    navLinks[0].classList.add('active');
   }
 });
 
 navLinks.forEach((link) => {
-  link.addEventListener("click", (event) => {
+  link.addEventListener('click', (event) => {
     event.preventDefault();
-    const src = link.getAttribute("data-src");
+    const src = link.getAttribute('data-src');
     if (src) {
       mainFrame.src = src;
     }
-    navLinks.forEach((navLink) => navLink.classList.remove("active"));
-    link.classList.add("active");
+    navLinks.forEach((navLink) => navLink.classList.remove('active'));
+    link.classList.add('active');
   });
 });
 
-widgetButton.addEventListener("click", () => {
-  widgetPopup.classList.toggle("show");
+widgetButton.addEventListener('click', () => {
+  widgetPopup.classList.toggle('show');
 });
 
 widgetOptions.forEach((option) => {
-  option.addEventListener("click", () => {
-    const src = option.getAttribute("data-src");
+  option.addEventListener('click', () => {
+    const src = option.getAttribute('data-src');
     if (src) {
       mainFrame.src = src;
     }
-    widgetPopup.classList.remove("show");
+    widgetPopup.classList.remove('show');
   });
 });
 
-document.addEventListener("click", (event) => {
-  if (
-    !widgetButton.contains(event.target) &&
-    !widgetPopup.contains(event.target)
-  ) {
-    widgetPopup.classList.remove("show");
+document.addEventListener('click', (event) => {
+  if (!widgetButton.contains(event.target) && !widgetPopup.contains(event.target)) {
+    widgetPopup.classList.remove('show');
   }
 });

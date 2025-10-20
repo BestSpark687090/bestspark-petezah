@@ -2,27 +2,14 @@
 <html>
   <head>
     <link rel="stylesheet" href="css/styles.css" />
-    <link
-      rel="icon"
-      type="image/png"
-      href="/storage/images/favicon-96x96.png"
-      sizes="96x96"
-    />
+    <link rel="icon" type="image/png" href="/storage/images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/storage/images/favicon.svg" />
     <link rel="shortcut icon" href="/storage/images/favicon.ico" />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/storage/images/apple-touch-icon.png"
-    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/storage/images/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="PeteZah" />
     <link rel="manifest" href="/storage/images/site.webmanifest" />
     <link rel="shortcut icon" href="img/mlg-favicon.png" type="image/x-icon" />
-    <link
-      rel="apple-touch-icon"
-      href="img/mlg-favicon.png"
-      type="image/x-icon"
-    />
+    <link rel="apple-touch-icon" href="img/mlg-favicon.png" type="image/x-icon" />
     <title>Online Soundboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="title" content="Online Soundboard" />
@@ -35,14 +22,14 @@
     <link rel="manifest" href="./manifest.json" />
     <link rel="stylesheet" href="css/spinner.css" />
     <script>
-      if ("serviceWorker" in navigator) {
+      if ('serviceWorker' in navigator) {
         navigator.serviceWorker
-          .register("/sw.js")
+          .register('/sw.js')
           .then(function (registration) {
-            console.log("Service worker registered:", registration);
+            console.log('Service worker registered:', registration);
           })
           .catch(function (error) {
-            console.log("Service worker registration failed:", error);
+            console.log('Service worker registration failed:', error);
           });
       }
     </script>
@@ -51,16 +38,12 @@
     <h1>Online Soundboard</h1>
     <h2>
       Just click on the colorful buttons to play the sound.<br />
-      <a href="https://forms.gle/hoiTBEZ4p14iupXH6"
-        >Click here to submit a sound to be added!</a
-      ><br />
+      <a href="https://forms.gle/hoiTBEZ4p14iupXH6">Click here to submit a sound to be added!</a><br />
     </h2>
     <div class="control">
       Audio Controls
       <button class="woah" onclick="javascript:playAll()">Provoke Chaos</button>
-      <button class="woah" onclick="javascript:stopAll()">
-        Stop Everything
-      </button>
+      <button class="woah" onclick="javascript:stopAll()">Stop Everything</button>
     </div>
 
     <div class="soundboard-container">

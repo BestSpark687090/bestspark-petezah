@@ -1,0 +1,71 @@
+# ========================
+# Line Ending Normalization
+# ========================
+* text=auto
+*.sh text eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.md text eol=lf
+*.txt text eol=lf
+
+# ========================
+# Binary Files
+# ========================
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.exe binary
+*.wasm binary
+
+# ========================
+# Language-Specific Diff Drivers
+# ========================
+*.c     diff=cpp
+*.cpp   diff=cpp
+*.cs    diff=csharp
+*.py    diff=python
+*.js    diff=javascript
+*.ts    diff=typescript
+*.go    diff=golang
+*.rs    diff=rust
+
+# ========================
+# Merge Strategies
+# ========================
+*.lock merge=union
+*.json merge=union
+*.yml  merge=union
+*.yaml merge=union
+
+# ========================
+# Export Filtering
+# ========================
+/docs/** export-ignore
+/tests/** export-ignore
+*.log export-ignore
+*.tmp export-ignore
+
+# ========================
+# Linguist Overrides (GitHub)
+# ========================
+*.min.js linguist-generated
+*.map linguist-generated
+*.test.js linguist-documentation
+
+# ========================
+# Experimental / Advanced
+# ========================
+*.txt whitespace=tab-in-indent
+*.md  whitespace=space-before-tab
+*.rs  encoding=UTF-8
+*.js  filter=clean-js
+
+# ========================
+# Custom Attributes (for tooling)
+# ========================
+*.proto  custom-proto=true
+*.graphql custom-graphql=true
+*.sql     custom-db=true

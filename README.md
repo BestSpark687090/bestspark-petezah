@@ -1,10 +1,12 @@
 # **PeteZahGames**
 
-A unblocked gaming site for you that self hosts over 400+ games from reliable sources.
+A unblocked gaming site for you that self hosts over 400+ games from reliable
+sources.
 
 ## Our Purpose
 
-We are mainly a service that provides games completely self hosted but we also have a proxy!
+We are mainly a service that provides games completely self hosted but we also
+have a proxy!
 
 You're mainly supposed to use our site at places that have restrictions.
 
@@ -18,13 +20,14 @@ You're mainly supposed to use our site at places that have restrictions.
 
 Our website is host to over 300k users!
 
-Links- You can visit [https://petezahgames.com](https://petezahgames.com), and you can get more links in our [Discord Server](https://discord.gg/cYjHFDguxS)
+Links- You can visit [https://petezahgames.com](https://petezahgames.com), and
+you can get more links in our [Discord Server](https://discord.gg/cYjHFDguxS)
 
 ## Deploying
 
-> [!WARNING]
-> You **can not** host this proxy example locally via static web hosting.
-> These apply to (but not limited to): Netlify, Vercel, GitHub Pages, and Cloudflare Pages
+> [!WARNING] You **can not** host this proxy example locally via static web
+> hosting. These apply to (but not limited to): Netlify, Vercel, GitHub Pages,
+> and Cloudflare Pages
 
 ## Server Deployment
 
@@ -71,8 +74,8 @@ If you would like to use one of the following buttons to deploy
 
 (Links with "(gg)" are unblocked by GoGuardian, others are untested)
 
-> [!IMPORTANT]
-> You can get more links in our [Discord Server](https://discord.gg/cYjHFDguxS)
+> [!IMPORTANT] You can get more links in our
+> [Discord Server](https://discord.gg/cYjHFDguxS)
 
 ## Wildcard (replace the \* with anything you want, for GoGuardian using the keyword "math" is recommended. )
 

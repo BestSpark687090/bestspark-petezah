@@ -6,13 +6,13 @@
 
   <xsl:output method="html" encoding="UTF-8" indent="yes"/>
 
-  <xsl:template match="/">
-    <html lang="en">
+  <xsl:template match="sitemap:urlset">
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en">
       <head>
         <title>Sitemap</title>
         <meta charset="UTF-8"/>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&amp;display=swap');
           body {
             font-family: 'Poppins', sans-serif;
             background: #04041d;
@@ -64,25 +64,29 @@
       </head>
       <body>
         <h1>XML Sitemap</h1>
-        <p class="meta">This sitemap contains <xsl:value-of select="count(sitemap:urlset/sitemap:url)"/> URLs.</p>
+        <p class="meta">This sitemap contains <xsl:value-of select="count(sitemap:url)"/> URLs.</p>
         <table>
           <thead>
             <tr>
               <th>URL</th>
+              <th>Priority</th>
+              <th>Change Frequency</th>
               <th>Last Modified</th>
             </tr>
           </thead>
           <tbody>
-            <xsl:for-each select="sitemap:urlset/sitemap:url">
+            <xsl:for-each select="sitemap:url">
               <tr>
                 <td><a href="{sitemap:loc}"><xsl:value-of select="sitemap:loc"/></a></td>
+                <td><xsl:value-of select="sitemap:priority"/></td>
+                <td><xsl:value-of select="sitemap:changefreq"/></td>
                 <td><xsl:value-of select="sitemap:lastmod"/></td>
               </tr>
             </xsl:for-each>
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="2">Total URLs: <xsl:value-of select="count(sitemap:urlset/sitemap:url)"/></td>
+              <td colspan="2">Total URLs: <xsl:value-of select="count(sitemap:url)"/></td>
             </tr>
           </tfoot>
         </table>

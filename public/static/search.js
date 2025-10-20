@@ -18,7 +18,7 @@ function search(input, template) {
     // eg: example.com, https://example.com/test?q=param
     const url = new URL(`http://${input}`);
     // only if the hostname has a TLD/subdomain
-    if (url.hostname.includes(".")) return url.toString();
+    if (url.hostname.includes('.')) return url.toString();
   } catch (err) {
     // input was not valid URL
   }
@@ -27,5 +27,5 @@ function search(input, template) {
 
   // Attempts to convert the input to a fully qualified URL have failed
   // Treat the input as a search query
-  return template.replace("%s", encodeURIComponent(input));
+  return template.replace('%s', encodeURIComponent(input));
 }

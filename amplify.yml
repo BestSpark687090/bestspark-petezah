@@ -13,7 +13,7 @@ applications:
       artifacts:
         baseDirectory: public
         files:
-          - "**/*"
+          - '**/*'
       cache:
         paths:
           - node_modules/**/*

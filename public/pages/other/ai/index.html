@@ -11,19 +11,10 @@
     <meta name="theme-color" content="#b6b6b6" />
     <meta name="msapplication-TileColor" content="#b6b6b6" />
 
-    <link
-      rel="icon"
-      type="image/png"
-      href="/storage/images/favicon-96x96.png"
-      sizes="96x96"
-    />
+    <link rel="icon" type="image/png" href="/storage/images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/storage/images/favicon.svg" />
     <link rel="shortcut icon" href="/storage/images/favicon.ico" />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/storage/images/apple-touch-icon.png"
-    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/storage/images/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="PeteZah" />
     <link rel="manifest" href="/storage/images/site.webmanifest" />
 
@@ -36,36 +27,21 @@
     <!-- Removing them WILL, without a doubt, cause issues ˙◠˙ -->
     <!-- ============================ -->
 
-    <link
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/vs2015.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css"
-    />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.23.0/themes/prism-tomorrow.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/vs2015.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-WGJ2192JZY"
-    ></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WGJ2192JZY"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
       }
-      gtag("js", new Date());
-      gtag("config", "G-WGJ2192JZY");
+      gtag('js', new Date());
+      gtag('config', 'G-WGJ2192JZY');
     </script>
   </head>
   <body>
@@ -78,17 +54,11 @@
     <div class="chat-container">
       <div class="chat-header">
         PeteAI AI
-        <span class="version"
-          ><i class="fas fa-flask"></i> credits to
-          <a href="https://usewaves.site" target="_blank">Waves</a></span
-        >
+        <span class="version"><i class="fas fa-flask"></i> credits to <a href="https://usewaves.site" target="_blank">Waves</a></span>
       </div>
 
       <div class="branding">
-        <img
-          src="/storage/images/logo-png-removebg-preview.png"
-          alt="Pete AI Logo"
-        />
+        <img src="/storage/images/logo-png-removebg-preview.png" alt="Pete AI Logo" />
         <div>Pete AI</div>
       </div>
 
@@ -99,16 +69,10 @@
             <div class="selector-selected">Llama 3.1 8B Instant</div>
             <div class="selector-options">
               <div data-value="llama-3.1-8b-instant">Llama 3.1 8B Instant</div>
-              <div data-value="llama-3.3-70b-specdec">
-                Llama 3.3 70B SpecDec
-              </div>
-              <div data-value="llama-3.3-70b-versatile">
-                Llama 3.3 70B Versatile
-              </div>
+              <div data-value="llama-3.3-70b-specdec">Llama 3.3 70B SpecDec</div>
+              <div data-value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</div>
               <div data-value="qwen-2.5-32b">Qwen 2.5 32B</div>
-              <div data-value="deepseek-r1-distill-llama-70b">
-                Deepseek R1 Distill Llama 70B
-              </div>
+              <div data-value="deepseek-r1-distill-llama-70b">Deepseek R1 Distill Llama 70B</div>
               <div data-value="gemma2-9b-it">Gemma2 9B IT</div>
               <div data-value="mixtral-8x7b-32768">Mixtral 8x7B 32768</div>
             </div>
@@ -120,26 +84,14 @@
       <div class="suggestions-container" id="suggestionsContainer"></div>
 
       <div class="chat-input">
-        <input
-          type="text"
-          id="aiInput"
-          placeholder="What would you like to talk about?"
-          autocomplete="off"
-        />
-        <input
-          type="file"
-          id="imageUpload"
-          accept="image/*"
-          style="display: none"
-        />
+        <input type="text" id="aiInput" placeholder="What would you like to talk about?" autocomplete="off" />
+        <input type="file" id="imageUpload" accept="image/*" style="display: none" />
         <button id="sendMsg"><i class="fas fa-arrow-up"></i></button>
       </div>
     </div>
 
     <div class="social-icons">
-      <a href="https://discord.gg/cYjHFDguxS" target="_blank"
-        ><i class="fab fa-discord"></i
-      ></a>
+      <a href="https://discord.gg/cYjHFDguxS" target="_blank"><i class="fab fa-discord"></i></a>
     </div>
   </body>
 </html>

@@ -77,20 +77,12 @@
   </head>
   <body>
     <div id="app" class="flex-grow p-2 rounded-lg overflow-auto hide-scrollbar">
-      <h1
-        class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
-      >
-        about:blank embedder
-      </h1>
+      <h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">about:blank embedder</h1>
       <div class="mt-6">
         <input id="url-target" type="url" placeholder="Enter URL here..." />
         <div class="flex py-2">
-          <button class="bg-gray-200 mr-2" onclick="createPage()">
-            Create Page
-          </button>
-          <button class="bg-gray-200" onclick="clearInput()">
-            Clear Input
-          </button>
+          <button class="bg-gray-200 mr-2" onclick="createPage()">Create Page</button>
+          <button class="bg-gray-200" onclick="clearInput()">Clear Input</button>
         </div>
       </div>
     </div>
@@ -102,51 +94,48 @@
       }
 
       function createPage() {
-        let url = document.getElementById("url-target").value;
+        let url = document.getElementById('url-target').value;
         if (!url) {
-          toast("Error", { description: "URL cannot be empty." });
+          toast('Error', { description: 'URL cannot be empty.' });
           return;
         }
-        toast("Page opened!", {
-          description: "The page has been opened in a new tab.",
+        toast('Page opened!', {
+          description: 'The page has been opened in a new tab.'
         });
-        if (
-          url.substring(0, 8) !== "https://" &&
-          url.substring(0, 7) !== "http://"
-        ) {
-          url = "https://" + url.split("https://").pop();
-        } else if (url.substring(0, 7) == "http://") {
-          url = "https://" + url.split("http://").pop();
+        if (url.substring(0, 8) !== 'https://' && url.substring(0, 7) !== 'http://') {
+          url = 'https://' + url.split('https://').pop();
+        } else if (url.substring(0, 7) == 'http://') {
+          url = 'https://' + url.split('http://').pop();
         }
         const win = window.open();
-        win.document.body.style.margin = "0";
-        win.document.body.style.height = "100vh";
-        let frm = win.document.createElement("iframe");
-        frm.style.border = "none";
-        frm.style.width = "100%";
-        frm.style.height = "100%";
-        frm.style.margin = "0";
-        frm.referrerpolicy = "no-referrer";
-        frm.allow = "fullscreen";
+        win.document.body.style.margin = '0';
+        win.document.body.style.height = '100vh';
+        let frm = win.document.createElement('iframe');
+        frm.style.border = 'none';
+        frm.style.width = '100%';
+        frm.style.height = '100%';
+        frm.style.margin = '0';
+        frm.referrerpolicy = 'no-referrer';
+        frm.allow = 'fullscreen';
         frm.src = url;
         win.document.body.appendChild(frm);
       }
 
       function clearInput() {
-        let url = document.getElementById("url-target").value;
+        let url = document.getElementById('url-target').value;
         if (!url) {
-          toast("Error", { description: "Input is already empty." });
+          toast('Error', { description: 'Input is already empty.' });
           return;
         }
-        document.getElementById("url-target").value = "";
-        toast("Input cleared", {
-          description: "The input has been cleared.",
+        document.getElementById('url-target').value = '';
+        toast('Input cleared', {
+          description: 'The input has been cleared.',
           action: {
-            label: "Undo",
+            label: 'Undo',
             onClick: function () {
-              document.getElementById("url-target").value = url;
-            },
-          },
+              document.getElementById('url-target').value = url;
+            }
+          }
         });
       }
     </script>

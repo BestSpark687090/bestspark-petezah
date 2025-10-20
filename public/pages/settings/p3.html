@@ -5,44 +5,29 @@
     <script>
       (function (w, d, s, l, i) {
         w[l] = w[l] || [];
-        w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" });
+        w[l].push({ 'gtm.start': new Date().getTime(), 'event': 'gtm.js' });
         var f = d.getElementsByTagName(s)[0],
           j = d.createElement(s),
-          dl = l != "dataLayer" ? "&l=" + l : "";
+          dl = l != 'dataLayer' ? '&l=' + l : '';
         j.async = true;
-        j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
         f.parentNode.insertBefore(j, f);
-      })(window, document, "script", "dataLayer", "GTM-WPH7NCG4");
+      })(window, document, 'script', 'dataLayer', 'GTM-WPH7NCG4');
     </script>
     <!-- End Google Tag Manager -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PeteZah OAuth | Signup</title>
-    <link
-      rel="icon"
-      type="image/png"
-      href="/storage/images/favicon-96x96.png"
-      sizes="96x96"
-    />
+    <link rel="icon" type="image/png" href="/storage/images/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/storage/images/favicon.svg" />
     <link rel="shortcut icon" href="/storage/images/favicon.ico" />
-    <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/storage/images/apple-touch-icon.png"
-    />
+    <link rel="apple-touch-icon" sizes="180x180" href="/storage/images/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="PeteZah" />
     <link rel="manifest" href="/storage/images/site.webmanifest" />
     <meta name="description" content="Pete Zah, game on" />
     <link rel="stylesheet" href="/storage/css/themes.css" />
-    <meta
-      name="keywords"
-      content="Proxy, Unblocker, Pete Zah Unblocker, Pete Zah Games, Pete Zah"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap"
-      rel="stylesheet"
-    />
+    <meta name="keywords" content="Proxy, Unblocker, Pete Zah Unblocker, Pete Zah Games, Pete Zah" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       body {
@@ -51,7 +36,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        font-family: "Roboto", sans-serif;
+        font-family: 'Roboto', sans-serif;
         color: #fff;
         margin: 0;
         padding: 1rem;
@@ -70,7 +55,7 @@
       }
       .left-panel {
         height: 160px;
-        background-image: url("bg_alt.jpeg");
+        background-image: url('bg_alt.jpeg');
         background-size: cover;
         background-position: center;
       }
@@ -101,7 +86,7 @@
         position: relative;
       }
       .moon-icon::after {
-        content: "";
+        content: '';
         position: absolute;
         top: 3px;
         right: 3px;
@@ -177,7 +162,7 @@
         background: linear-gradient(135deg, #666, #888);
       }
       .remember-me input:checked::after {
-        content: "✔";
+        content: '✔';
         color: #fff;
         font-size: 0.9rem;
         position: absolute;
@@ -287,22 +272,14 @@
           50% 50%,
           50% 50%;
         animation: fadeIn 2s ease;
-        mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          rgba(255, 255, 255, 0) 40%,
-          transparent 70%
-        );
-        -webkit-mask-image: radial-gradient(
-          ellipse at 100% 0%,
-          white 40%,
-          transparent 70%
-        );
+        mask-image: radial-gradient(ellipse at 100% 0%, rgba(255, 255, 255, 0) 40%, transparent 70%);
+        -webkit-mask-image: radial-gradient(ellipse at 100% 0%, white 40%, transparent 70%);
         pointer-events: none;
         z-index: -1;
       }
 
       .god-rays::after {
-        content: "";
+        content: '';
         position: absolute;
         inset: 0;
         background-image: var(--stripes), var(--rays);
@@ -329,55 +306,27 @@
         <form id="signup-form">
           <div class="form-group">
             <label class="form-label">Email address</label>
-            <input
-              type="email"
-              id="email"
-              class="form-input"
-              placeholder="Enter your email"
-              required
-            />
+            <input type="email" id="email" class="form-input" placeholder="Enter your email" required />
           </div>
           <div class="form-group">
             <label class="form-label">Password</label>
-            <input
-              type="password"
-              id="password"
-              class="form-input"
-              placeholder="Enter your password"
-              required
-            />
+            <input type="password" id="password" class="form-input" placeholder="Enter your password" required />
           </div>
           <div class="form-group">
             <label class="form-label">Confirm Password</label>
-            <input
-              type="password"
-              id="confirm-password"
-              class="form-input"
-              placeholder="Confirm your password"
-              required
-            />
+            <input type="password" id="confirm-password" class="form-input" placeholder="Confirm your password" required />
           </div>
           <div class="form-options">
-            <label class="remember-me"
-              ><input type="checkbox" id="remember" />Remember me</label
-            >
+            <label class="remember-me"><input type="checkbox" id="remember" />Remember me</label>
             <a href="/pages/settings/p.html" class="signin-link">Sign in</a>
           </div>
           <button type="submit" class="sign-up-btn">Sign Up</button>
           <div class="oauth-container">
             <button onclick="signInWithOAuth('google')" class="oauth-btn">
-              <img
-                src="https://cdn.simpleicons.org/google/ffffff"
-                alt="Google"
-                style="width: 16px; height: 16px"
-              />Google
+              <img src="https://cdn.simpleicons.org/google/ffffff" alt="Google" style="width: 16px; height: 16px" />Google
             </button>
             <button onclick="signInWithOAuth('discord')" class="oauth-btn">
-              <img
-                src="https://cdn.simpleicons.org/discord/ffffff"
-                alt="Discord"
-                style="width: 16px; height: 16px"
-              />Discord
+              <img src="https://cdn.simpleicons.org/discord/ffffff" alt="Discord" style="width: 16px; height: 16px" />Discord
             </button>
           </div>
         </form>
@@ -386,76 +335,70 @@
     <script>
       let oauthVisible = false;
       function generateState() {
-        return (
-          Math.random().toString(36).substring(2, 15) +
-          Math.random().toString(36).substring(2, 15)
-        );
+        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       }
-      window.addEventListener("message", (e) => {
+      window.addEventListener('message', (e) => {
         if (e.origin !== window.location.origin) {
-          console.error("Invalid origin:", e.origin);
+          console.error('Invalid origin:', e.origin);
           return;
         }
-        const storedState = localStorage.getItem("oauth_state");
-        if (e.data.type === "oauth_success" && e.data.state === storedState) {
-          localStorage.removeItem("oauth_state");
-          window.location.href = "/pages/settings/p2.html";
+        const storedState = localStorage.getItem('oauth_state');
+        if (e.data.type === 'oauth_success' && e.data.state === storedState) {
+          localStorage.removeItem('oauth_state');
+          window.location.href = '/pages/settings/p2.html';
         } else {
-          console.error("State mismatch or invalid message:", e.data);
+          console.error('State mismatch or invalid message:', e.data);
         }
       });
-      document
-        .getElementById("signup-form")
-        .addEventListener("submit", async (e) => {
-          e.preventDefault();
-          const email = document.getElementById("email").value;
-          const password = document.getElementById("password").value;
-          const confirmPassword =
-            document.getElementById("confirm-password").value;
-          if (password !== confirmPassword) {
-            alert("Passwords do not match");
-            return;
-          }
-          try {
-            const response = await fetch("/api/signup", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                credentials: "include",
-              },
-              body: JSON.stringify({ email, password }),
-            });
-            const data = await response.json();
-            if (response.ok) {
-              alert(data.message);
-              window.location.href = "/pages/settings/p2.html";
-            } else {
-              alert(`Error: ${data.error}`);
-            }
-          } catch (error) {
-            alert(`Error: ${error.message}`);
-          }
-        });
-      async function signInWithOAuth(provider) {
+      document.getElementById('signup-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        if (password !== confirmPassword) {
+          alert('Passwords do not match');
+          return;
+        }
         try {
-          const state = generateState();
-          localStorage.setItem("oauth_state", state);
-          const response = await fetch("/api/signin/oauth", {
-            method: "POST",
+          const response = await fetch('/api/signup', {
+            method: 'POST',
             headers: {
-              "Content-Type": "application/json",
-              credentials: "include",
+              'Content-Type': 'application/json',
+              'credentials': 'include'
             },
-            body: JSON.stringify({ provider, state }),
+            body: JSON.stringify({ email, password })
           });
           const data = await response.json();
-          if (response.ok && data.url) {
-            window.open(data.url, "_blank", "noopener,noreferrer");
+          if (response.ok) {
+            alert(data.message);
+            window.location.href = '/pages/settings/p2.html';
           } else {
             alert(`Error: ${data.error}`);
           }
         } catch (error) {
-          console.error("OAuth error:", error);
+          alert(`Error: ${error.message}`);
+        }
+      });
+      async function signInWithOAuth(provider) {
+        try {
+          const state = generateState();
+          localStorage.setItem('oauth_state', state);
+          const response = await fetch('/api/signin/oauth', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'credentials': 'include'
+            },
+            body: JSON.stringify({ provider, state })
+          });
+          const data = await response.json();
+          if (response.ok && data.url) {
+            window.open(data.url, '_blank', 'noopener,noreferrer');
+          } else {
+            alert(`Error: ${data.error}`);
+          }
+        } catch (error) {
+          console.error('OAuth error:', error);
           alert(`Error: ${error.message}`);
         }
       }

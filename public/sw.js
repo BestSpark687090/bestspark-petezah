@@ -1,13 +1,13 @@
 /* global $scramjetLoadWorker */
 // dumb hack to allow firefox to work (please dont do this in prod)
-if (navigator.userAgent.includes("Firefox")) {
-  Object.defineProperty(globalThis, "crossOriginIsolated", {
+if (navigator.userAgent.includes('Firefox')) {
+  Object.defineProperty(globalThis, 'crossOriginIsolated', {
     value: true,
-    writable: false,
+    writable: false
   });
 }
 
-importScripts("/scram/scramjet.all.js");
+importScripts('/scram/scramjet.all.js');
 const { ScramjetServiceWorker } = $scramjetLoadWorker();
 const scramjet = new ScramjetServiceWorker();
 
@@ -16,10 +16,7 @@ async function handleRequest(event) {
 
   const url = new URL(event.request.url);
 
-  if (
-    url.hostname.includes("youtube.com") ||
-    url.hostname.includes("youtube-nocookie.com")
-  ) {
+  if (url.hostname.includes('youtube.com') || url.hostname.includes('youtube-nocookie.com')) {
     const redirectUrl = `/api/youtube-bypass/embed.html#${url.href}`;
     return Response.redirect(redirectUrl, 302);
   }
@@ -31,39 +28,39 @@ async function handleRequest(event) {
   return fetch(event.request);
 }
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener('fetch', (event) => {
   event.respondWith(handleRequest(event));
 });
 
 let playgroundData;
-self.addEventListener("message", ({ data }) => {
-  if (data.type === "playgroundData") {
+self.addEventListener('message', ({ data }) => {
+  if (data.type === 'playgroundData') {
     playgroundData = data;
   }
 });
 
-scramjet.addEventListener("request", (e) => {
+scramjet.addEventListener('request', (e) => {
   if (playgroundData && e.url.href.startsWith(playgroundData.origin)) {
     const headers = {};
     const origin = playgroundData.origin;
-    if (e.url.href === origin + "/") {
-      headers["content-type"] = "text/html";
+    if (e.url.href === origin + '/') {
+      headers['content-type'] = 'text/html';
       e.response = new Response(playgroundData.html, {
-        headers,
+        headers
       });
-    } else if (e.url.href === origin + "/style.css") {
-      headers["content-type"] = "text/css";
+    } else if (e.url.href === origin + '/style.css') {
+      headers['content-type'] = 'text/css';
       e.response = new Response(playgroundData.css, {
-        headers,
+        headers
       });
-    } else if (e.url.href === origin + "/script.js") {
-      headers["content-type"] = "application/javascript";
+    } else if (e.url.href === origin + '/script.js') {
+      headers['content-type'] = 'application/javascript';
       e.response = new Response(playgroundData.js, {
-        headers,
+        headers
       });
     } else {
-      e.response = new Response("empty response", {
-        headers,
+      e.response = new Response('empty response', {
+        headers
       });
     }
     e.response.rawHeaders = headers;
@@ -71,7 +68,7 @@ scramjet.addEventListener("request", (e) => {
       body: e.response.body,
       headers: headers,
       status: e.response.status,
-      statusText: e.response.statusText,
+      statusText: e.response.statusText
     };
     e.response.finalURL = e.url.toString();
   } else {

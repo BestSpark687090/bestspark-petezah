@@ -111,5 +111,4 @@ else
 fi
 # Install Binaryen (wasm-opt)
 install_pkg binaryen
-
 echo "All WSL dependencies installed successfully!"
