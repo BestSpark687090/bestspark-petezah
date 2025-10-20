@@ -399,11 +399,7 @@ function generateJson(domain, urls) {
     lastmod: u.lastmod,
     changefreq: computeChangefreq(u.lastmod),
     priority: computePriority(u.commitCount, maxCommits),
-    type: IMAGE_EXTENSIONS.includes(u.ext)
-      ? 'image'
-      : VIDEO_EXTENSIONS.includes(u.ext)
-        ? 'video'
-        : 'page'
+    type: IMAGE_EXTENSIONS.includes(u.ext) ? 'image' : VIDEO_EXTENSIONS.includes(u.ext) ? 'video' : 'page'
   }));
 }
 

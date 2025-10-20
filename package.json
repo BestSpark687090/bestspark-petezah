@@ -11,7 +11,7 @@
   "scripts": {
     "install": "node install.js",
     "start": "node server.js",
-    "lint": "pnpm exec eslint . --fix",
+    "lint": "pnpm exec eslint . --fix --cache",
     "format": "pnpm exec prettier --write .",
     "build": "node build.js",
     "build:debug": "node build.js --env=debug"

@@ -184,9 +184,16 @@ package-lock.json
 *.lock
 !pnpm-lock.yaml
 
-# secrets
+# Secrets
 .env
 *.env.*
 
 # Eslint cache
 .eslintcache
+
+# Jetbrains
+/.idea/
+*.iml
+
+# Sitemap
+.sitemap-base.json

@@ -46,7 +46,8 @@ export default defineConfig([
     languageOptions: {
       parserOptions: {
         ecmaVersion: 'latest',
-        sourceType: 'module'
+        sourceType: 'module',
+        gfm: true
       }
     },
     rules: {
@@ -72,7 +73,9 @@ export default defineConfig([
       'public/petezah/**/*',
       '**/*.min.css',
       'public/epoxy/**/*',
-      'public/baremux/**/*'
+      'public/baremux/**/*',
+      'public/youtube/**/*.js',
+      'public/static/uv/**/*'
     ]
   },
   {

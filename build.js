@@ -72,7 +72,8 @@ async function ensureSubmodules() {
     await new Promise((resolve, reject) => {
       const p = spawn('git', ['submodule', 'update', '--init', '--recursive'], { cwd: projdir, stdio: 'inherit' });
       p.on('close', (code) => {
-        if (code === 0) resolve(); else reject(new Error('git submodule update failed with code ' + code));
+        if (code === 0) resolve();
+        else reject(new Error('git submodule update failed with code ' + code));
       });
     });
   } else {
@@ -263,10 +264,7 @@ function getGitLastMod(filePath) {
 function getGitCommitCount(filePath) {
   try {
     // Use git rev-list --count which is cross-platform and returns a simple integer
-    return parseInt(
-      execSync(`git rev-list --count HEAD -- "${filePath}"`, { encoding: 'utf8' }).trim(),
-      10
-    ) || 0;
+    return parseInt(execSync(`git rev-list --count HEAD -- "${filePath}"`, { encoding: 'utf8' }).trim(), 10) || 0;
   } catch {
     return 0;
   }
@@ -300,9 +298,6 @@ function computePriority(commitCount, maxCommits) {
   const normalized = commitCount / maxCommits;
   return Math.max(0.1, Math.min(1.0, normalized));
 }
-
-
-
 
 async function main() {
   const start = Date.now();
