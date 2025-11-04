@@ -1,6 +1,10 @@
-let _CONFIG = {
-  wispurl: localStorage.getItem("proxServer") || "wss://youtube-bypass.6brothersimports.com.cdn.cloudflare.net/wisp/",
-  bareurl: "https://youtube-bypass.6brothersimports.com.cdn.cloudflare.net/bare/",
-};
+let host = location.protocol + "//" + location.host;
 
-// use these for google because google whitelisted those servers (and blacklisted mine :/)
+let _CONFIG = {
+  wispurl:
+    localStorage.getItem("proxServer") ||
+    (location.protocol === "https:" ? "wss://" : "ws://") +
+      location.host +
+      "/api/wisp-premium/",
+  bareurl: host + "/api/bare-premium/",
+};

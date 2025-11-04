@@ -1,26 +1,23 @@
-<html>
+<!doctype html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pete Proxy</title>
+    <title>PeteZah Proxy</title>
     <link rel="icon" type="icon/x-icon" href="storage/images/logo-png-removebg-preview.png" />
     <link rel="stylesheet" type="text/css" href="/storage/css/themes2.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100..900&family=Outfit:wght@100..900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
       body {
         color: #fff;
         background-color: #0a1d37;
-        font-family:
-          'Inter',
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          sans-serif;
+        font-family: 'Inter', sans-serif;
         display: flex;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: center;
         align-items: center;
         height: 100vh;
         margin: 0;
@@ -82,8 +79,41 @@
           0 0 20px rgba(255, 255, 255, 0.3);
         transition: transform 0.3s ease-in-out;
       }
-      h1:hover {
-        transform: scale(1.05);
+      .container {
+        width: 100%;
+        max-width: 900px;
+        padding: 0 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+      .header-card {
+        background: rgba(20, 35, 65, 0.35);
+        border: 1px solid rgba(78, 124, 196, 0.2);
+        border-radius: 16px;
+        padding: 11px 18px;
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.14);
+        width: fit-content;
+        text-shadow: 0 0 14px rgba(78, 124, 196, 0.55);
+      }
+      .header-card img {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.12));
+      }
+      .header-card h1 {
+        font-weight: 500;
+        font-size: 1.38rem;
+        color: #e8f0ff;
+        margin: 0;
+        letter-spacing: 0.35px;
+        text-shadow: 0 0 12px rgba(78, 124, 196, 0.5);
       }
       #dynamicParagraph {
         color: #ffffff;
@@ -99,8 +129,9 @@
         color: #a0a0a0;
       }
       #search-container {
-        margin-top: 20px;
-        text-align: center;
+        width: 100%;
+        max-width: 700px;
+        position: relative;
       }
       .search-bar-home {
         padding: 12px 18px;
@@ -110,45 +141,129 @@
         border-radius: 30px;
         font-family: 'Outfit', sans-serif;
         outline: none;
-        margin: 0;
         color: #fff;
-        font-size: 16px;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-        transition: all 0.3s ease-in-out;
+        font-size: 1.02rem;
+        backdrop-filter: blur(12px);
+        box-shadow:
+          0 4px 16px rgba(0, 0, 0, 0.18),
+          0 0 6px rgba(78, 124, 196, 0.15);
+        transition: all 0.3s ease;
       }
       .search-bar-home::placeholder {
-        color: #bbb;
-        opacity: 0.8;
-        font-size: 14px;
+        color: #8a9bc0;
+        font-weight: 400;
+        font-size: 0.95rem;
       }
       .search-bar-home:focus {
-        border-color: #64a6e0;
-        background-color: #1d2537;
+        border-color: rgba(78, 124, 196, 0.6);
+        background-color: rgba(25, 40, 75, 0.65);
+        box-shadow:
+          0 0 0 4px rgba(78, 124, 196, 0.14),
+          0 0 8px rgba(78, 124, 196, 0.18);
       }
-      .search-button {
-        padding: 10px 20px;
-        background-color: #1e2a47;
-        color: white;
-        font-size: 16px;
-        border: none;
-        border-radius: 30px;
-        margin-top: 10px;
+      .suggestion-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        margin-top: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        max-height: 190px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+      .suggestion-section {
+        padding: 8px 0;
+      }
+      .suggestion-section-title {
+        padding: 6px 16px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #555;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .suggestion-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 16px;
         cursor: pointer;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-        transition: all 0.3s ease-in-out;
+        color: #222;
+        font-size: 0.95rem;
+        transition: background 0.2s ease;
       }
-      .search-button:hover {
-        background-color: #64a6e0;
+      .suggestion-item:hover,
+      .suggestion-item.selected {
+        background: rgba(78, 124, 196, 0.15);
+      }
+      .suggestion-item i {
+        font-size: 0.9rem;
+        color: #666;
+      }
+      .icon-grid {
+        display: flex;
+        justify-content: center;
+        gap: 34px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+      }
+      .icon-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        transition: transform 0.22s ease;
+      }
+      .icon-item:hover {
         transform: translateY(-2px);
       }
-      .search-button i {
-        margin-left: 8px;
+      .icon-btn {
+        width: 64px;
+        height: 64px;
+        background: rgba(35, 50, 90, 0.45);
+        border: 1px solid rgba(78, 124, 196, 0.18);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+        backdrop-filter: blur(6px);
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+      .icon-btn img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+        border-radius: 6px;
+      }
+      .icon-item:hover .icon-btn {
+        background: rgba(45, 65, 115, 0.7);
+        border-color: rgba(78, 124, 196, 0.4);
+        box-shadow: 0 6px 16px rgba(78, 124, 196, 0.16);
+      }
+      .icon-label {
+        margin-top: 7px;
+        font-weight: 500;
+        font-size: 0.76rem;
+        color: #b8c8e8;
+        text-align: center;
+        letter-spacing: 0.25px;
       }
       #time {
         position: fixed;
-        top: 10px;
-        right: 10px;
-        font-size: 18px;
+        top: 12px;
+        right: 12px;
+        font-size: 15px;
         color: white;
         font-family: 'Outfit', sans-serif;
         background-color: rgba(0, 0, 0, 0.5);
@@ -174,6 +289,7 @@
         min-width: 400px;
         max-width: 450px;
         backdrop-filter: blur(8px);
+        text-align: center;
       }
       @keyframes popupFadeIn {
         from {
@@ -190,7 +306,10 @@
         font-weight: 600;
         color: #fff;
         letter-spacing: 0.5px;
+        font-family: 'Outfit', sans-serif;
+        text-shadow: 0 0 6px rgba(78, 124, 196, 0.25);
       }
+      .popup input[type='url'],
       .popup input[type='text'] {
         margin: 10px 0;
         width: 100%;
@@ -201,7 +320,10 @@
         border-radius: 10px;
         transition: all 0.3s ease;
         font-family: 'Outfit', sans-serif;
+        font-size: 0.95rem;
+        box-sizing: border-box;
       }
+      .popup input[type='url']:focus,
       .popup input[type='text']:focus {
         border-color: rgba(255, 255, 255, 0.5);
         background: rgba(255, 255, 255, 0.1);
@@ -213,6 +335,7 @@
         color: #fff;
         width: 100%;
         font-family: 'Outfit', sans-serif;
+        font-size: 0.9rem;
       }
       .popup input[type='file']::-webkit-file-upload-button {
         background: rgba(255, 255, 255, 0.1);
@@ -222,9 +345,11 @@
         color: #fff;
         cursor: pointer;
         transition: all 0.3s ease;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 500;
       }
       .popup input[type='file']::-webkit-file-upload-button:hover {
-        background: rgba(255, 255, 255砨, 0.2);
+        background: rgba(255, 255, 255, 0.2);
         border-color: rgba(255, 255, 255, 0.4);
       }
       .popup-buttons {
@@ -238,11 +363,12 @@
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.3);
         border-radius: 10px;
-        color: #fff;
+        color: white;
         cursor: pointer;
         transition: all 0.3s ease;
         font-family: 'Outfit', sans-serif;
         font-weight: 500;
+        font-size: 0.9rem;
       }
       .popup button:hover {
         background: rgba(255, 255, 255, 0.2);
@@ -258,90 +384,103 @@
         background: linear-gradient(135deg, #e0e0e0, #ffffff);
       }
       .add-pin-btn {
-        display: inline-flex;
+        display: flex;
         align-items: center;
         justify-content: center;
-        width: 35px;
-        height: 35px;
-        background: #ffffff;
-        border: 2px solid Franklin;
-        border-radius: 50%;
-        color: #0a1d37;
-        text-decoration: none;
+        width: 64px;
+        height: 64px;
+        background: rgba(35, 50, 90, 0.45);
+        border: 1px solid rgba(78, 124, 196, 0.18);
+        border-radius: 16px;
+        color: #ffffff;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+        backdrop-filter: blur(6px);
       }
       .add-pin-btn:hover {
-        transform: scale(1.2);
-        background: #e0e0e0;
-        color: #0a1d37;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        background: rgba(45, 65, 115, 0.7);
+        border-color: rgba(78, 124, 196, 0.4);
+        box-shadow: 0 6px 16px rgba(78, 124, 196, 0.16);
+        transform: translateY(-2px);
+      }
+      .add-pin-btn .material-icons {
+        font-size: 26px;
       }
     </style>
   </head>
   <body>
     <div class="god-rays"></div>
-    <br /><br /><br /><br /><br />
-    <h1>Pete Proxy</h1>
-    <p id="dynamicParagraph">(TEXT)</p>
-    <div id="search-container">
-      <form id="uv-form">
-        <input id="scram-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
-        <input id="uv-address" type="text" class="search-bar-home url-input" placeholder="Search or enter a URL" />
-        <button type="submit" class="search-button">SEARCH <i class="fa-solid fa-magnifying-glass"></i></button>
-      </form>
-      <div class="desc left-margin">
-        <p id="uv-error"></p>
-        <pre id="uv-error-code"></pre>
+
+    <div class="container">
+      <div class="header-card">
+        <img src="storage/images/logo-png-removebg-preview.png" alt="Logo" />
+        <h1>PeteZah Proxy</h1>
+      </div>
+      <p id="dynamicParagraph">(TEXT)</p>
+      <br />
+
+      <div id="search-container">
+        <form id="uv-form">
+          <input id="scram-search-engine" value="https://duckduckgo.com/?q=%s" type="hidden" />
+          <input id="uv-address" type="text" class="search-bar-home url-input" placeholder="Search for anything..." autocomplete="off" />
+        </form>
+        <div id="suggestion-dropdown" class="suggestion-dropdown">
+          <div id="search-results-section" class="suggestion-section" style="display: none">
+            <div class="suggestion-section-title">Search Suggestions</div>
+            <div id="search-results-list"></div>
+          </div>
+          <div id="history-section" class="suggestion-section" style="display: none">
+            <div class="suggestion-section-title">Recent</div>
+            <div id="history-list"></div>
+          </div>
+        </div>
+        <div class="desc left-margin">
+          <p id="uv-error"></p>
+          <pre id="uv-error-code"></pre>
+        </div>
+      </div>
+
+      <div class="icon-grid">
+        <a href="/scramjet/https%3A%2F%2Ftwitch.tv" class="icon-item">
+          <div class="icon-btn">
+            <img src="/storage/ag/a/twitch/IMG_5336.png" alt="Twitch" />
+          </div>
+          <div class="icon-label">Twitch</div>
+        </a>
+        <a href="/scramjet/https%3A%2F%2Fgoogle.com" class="icon-item">
+          <div class="icon-btn">
+            <img src="/storage/ag/a/google/IMG_5324.webp" alt="Google" />
+          </div>
+          <div class="icon-label">Google</div>
+        </a>
+        <a href="/scramjet/https%3A%2F%2Fnow.gg" class="icon-item">
+          <div class="icon-btn">
+            <img src="/storage/ag/a/nowgg/IMG_5325.png" alt="Now.gg" />
+          </div>
+          <div class="icon-label">Now.gg</div>
+        </a>
+        <a href="#" id="add-pin-btn" class="icon-item">
+          <div class="icon-btn add-pin-btn">
+            <span class="material-icons">add</span>
+          </div>
+          <div class="icon-label">Add</div>
+        </a>
       </div>
     </div>
-    <div class="pinned-icons" style="display: flex; justify-content: center; align-items: center; gap: 15px">
-      <a href="/scramjet/https%3A%2F%2Ftiktok.com" style="display: inline-block">
-        <img
-          src="/storage/ag/a/tiktok/IMG_5335.png"
-          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
-          onmouseover="this.style.transform='scale(1.2)'"
-          onmouseout="this.style.transform='scale(1)'"
-        />
-      </a>
-      <a href="/scramjet/https%3A%2F%2Ftwitch.tv" style="display: inline-block">
-        <img
-          src="/storage/ag/a/twitch/IMG_5336.png"
-          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
-          onmouseover="this.style.transform='scale(1.2)'"
-          onmouseout="this.style.transform='scale(1)'"
-        />
-      </a>
-      <a href="/scramjet/https%3A%2F%2Fgoogle.com" style="display: inline-block">
-        <img
-          src="/storage/ag/a/google/IMG_5324.webp"
-          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
-          onmouseover="this.style.transform='scale(1.2)'"
-          onmouseout="this.style.transform='scale(1)'"
-        />
-      </a>
-      <a href="/scramjet/https%3A%2F%2Fnow.gg" style="display: inline-block">
-        <img
-          src="/storage/ag/a/nowgg/IMG_5325.png"
-          style="width: 30px; height: 30px; border-radius: 50%; transition: transform 0.3s"
-          onmouseover="this.style.transform='scale(1.2)'"
-          onmouseout="this.style.transform='scale(1)'"
-        />
-      </a>
-      <a href="#" id="add-pin-btn" class="add-pin-btn">
-        <span class="material-icons" style="font-size: 20px">add</span>
-      </a>
-    </div>
+
     <div id="add-pin-popup" class="popup">
       <h3>Add New Pin</h3>
-      <input type="text" id="pin-url" placeholder="Enter URL (https:// required)" />
+      <input type="url" id="pin-url" placeholder="Enter URL (https:// required)" />
+      <input type="text" id="pin-name" placeholder="Enter name (e.g. YouTube)" />
       <input type="file" id="pin-image" accept="image/*" />
       <div class="popup-buttons">
         <button id="cancel-btn">Cancel</button>
         <button id="add-btn">Add</button>
       </div>
     </div>
+
     <div id="time"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/dreamland"></script>
     <script src="/baremux/index.js"></script>
     <script>
@@ -378,6 +517,196 @@
     <script src="/scram/scramjet.all.js"></script>
     <script src="config.js"></script>
     <script>
+      class SearchSuggestions {
+        constructor() {
+          this.maxResults = 6;
+          this.selectedSuggestionIndex = -1;
+          this.currentSectionIndex = 0;
+          this.store = {
+            history: JSON.parse(localStorage.getItem('searchHistory') || '[]')
+          };
+          this.sections = {
+            searchResults: {
+              section: document.getElementById('search-results-section'),
+              searchResults: document.getElementById('search-results-list')
+            },
+            history: {
+              section: document.getElementById('history-section'),
+              searchResults: document.getElementById('history-list')
+            }
+          };
+          this.dropdown = document.getElementById('suggestion-dropdown');
+          this.input = document.getElementById('uv-address');
+          this.setupEventListeners();
+        }
+
+        async generateSuggestions(query) {
+          if (!query.trim()) return [];
+          try {
+            const response = await fetch(`/results/${encodeURIComponent(query)}`);
+            if (!response.ok) return [];
+            const data = await response.json();
+            return data.map((item) => item.phrase);
+          } catch (error) {
+            console.error('Error fetching suggestions:', error);
+            return [];
+          }
+        }
+
+        populateSections(suggestions, query) {
+          this.populateSearchResults(suggestions);
+          this.populateHistory(query);
+          this.dropdown.style.display = suggestions.length > 0 || this.store.history.length > 0 ? 'block' : 'none';
+        }
+
+        populateSearchResults(suggestions) {
+          const { searchResults, section } = this.sections.searchResults;
+          searchResults.innerHTML = '';
+          if (suggestions.length > 0) {
+            section.style.display = 'block';
+            suggestions.slice(0, this.maxResults).forEach((suggestion) => {
+              const listItem = this.createSuggestionItem(suggestion);
+              searchResults.appendChild(listItem);
+            });
+          } else {
+            section.style.display = 'none';
+          }
+        }
+
+        populateHistory(query) {
+          const { searchResults, section } = this.sections.history;
+          searchResults.innerHTML = '';
+          const lowerQuery = query.toLowerCase();
+          const filteredHistory = this.store.history
+            .filter((item) => item.url.toLowerCase().includes(lowerQuery) || (item.title && item.title.toLowerCase().includes(lowerQuery)))
+            .slice(0, this.maxResults);
+
+          if (filteredHistory.length > 0) {
+            section.style.display = 'block';
+            filteredHistory.forEach((item) => {
+              const listItem = this.createSuggestionItem(item.url, item.title || item.url);
+              searchResults.appendChild(listItem);
+            });
+          } else {
+            section.style.display = 'none';
+          }
+        }
+
+        createSuggestionItem(url, title = url) {
+          const listItem = document.createElement('div');
+          listItem.className = 'suggestion-item';
+          const listIcon = document.createElement('i');
+          listIcon.className = 'fas fa-search';
+          const listSuggestion = document.createElement('span');
+          listSuggestion.className = 'suggestion-text';
+          listSuggestion.textContent = title;
+          listItem.appendChild(listIcon);
+          listItem.appendChild(listSuggestion);
+          listItem.addEventListener('click', () => {
+            this.input.value = url;
+            this.clearSuggestions();
+            this.dropdown.style.display = 'none';
+            handleSubmit();
+          });
+          return listItem;
+        }
+
+        clearSuggestions() {
+          Object.values(this.sections).forEach(({ searchResults, section }) => {
+            searchResults.innerHTML = '';
+            section.style.display = 'none';
+          });
+          this.selectedSuggestionIndex = -1;
+          this.currentSectionIndex = 0;
+        }
+
+        getCurrentSuggestionItems() {
+          return Object.values(this.sections)[this.currentSectionIndex].searchResults.querySelectorAll('.suggestion-item');
+        }
+
+        moveToNextSection() {
+          const sectionsArray = Object.values(this.sections);
+          this.currentSectionIndex = (this.currentSectionIndex + 1) % sectionsArray.length;
+          while (sectionsArray[this.currentSectionIndex].searchResults.children.length === 0) {
+            this.currentSectionIndex = (this.currentSectionIndex + 1) % sectionsArray.length;
+          }
+          this.selectedSuggestionIndex = -1;
+          this.updateSelectedSuggestion();
+        }
+
+        moveToPreviousSection() {
+          const sectionsArray = Object.values(this.sections);
+          this.currentSectionIndex = (this.currentSectionIndex - 1 + sectionsArray.length) % sectionsArray.length;
+          while (sectionsArray[this.currentSectionIndex].searchResults.children.length === 0) {
+            this.currentSectionIndex = (this.currentSectionIndex - 1 + sectionsArray.length) % sectionsArray.length;
+          }
+          const previousSectionItems = this.getCurrentSuggestionItems();
+          this.selectedSuggestionIndex = previousSectionItems.length - 1;
+          this.updateSelectedSuggestion();
+        }
+
+        updateSelectedSuggestion() {
+          const suggestionItems = this.getCurrentSuggestionItems();
+          document.querySelectorAll('.suggestion-item.selected').forEach((item) => {
+            item.classList.remove('selected');
+          });
+          suggestionItems.forEach((item, index) => {
+            item.classList.toggle('selected', index === this.selectedSuggestionIndex);
+          });
+        }
+
+        setupEventListeners() {
+          let debounceTimer;
+          this.input.addEventListener('input', () => {
+            clearTimeout(debounceTimer);
+            const query = this.input.value.trim();
+            debounceTimer = setTimeout(async () => {
+              this.clearSuggestions();
+              if (query) {
+                const suggestions = await this.generateSuggestions(query);
+                this.populateSections(suggestions, query);
+                this.selectedSuggestionIndex = -1;
+                this.currentSectionIndex = 0;
+              } else {
+                this.dropdown.style.display = 'none';
+              }
+            }, 150);
+          });
+
+          this.input.addEventListener('keydown', (e) => {
+            const items = this.getCurrentSuggestionItems();
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+              e.preventDefault();
+              if (this.selectedSuggestionIndex < items.length - 1 && this.selectedSuggestionIndex < this.maxResults - 1) {
+                this.selectedSuggestionIndex++;
+              } else {
+                this.moveToNextSection();
+              }
+              this.updateSelectedSuggestion();
+            } else if (e.key === 'ArrowUp') {
+              e.preventDefault();
+              if (this.selectedSuggestionIndex > 0) {
+                this.selectedSuggestionIndex--;
+              } else if (this.selectedSuggestionIndex === 0) {
+                this.moveToPreviousSection();
+              }
+              this.updateSelectedSuggestion();
+            } else if (e.key === 'Enter' && this.selectedSuggestionIndex >= 0) {
+              e.preventDefault();
+              items[this.selectedSuggestionIndex].click();
+            }
+          });
+
+          document.addEventListener('click', (e) => {
+            if (!this.input.contains(e.target) && !this.dropdown.contains(e.target)) {
+              this.dropdown.style.display = 'none';
+            }
+          });
+        }
+      }
+
       const phrases = [
         'If the Proxy doesnt work go the top left, settings, then tap the `fix proxy` button',
         'PeteZah best unblocked games site!',
@@ -421,7 +750,7 @@
       function loadSavedPins() {
         const savedPins = JSON.parse(localStorage.getItem('pinnedBookmarks') || '[]');
         savedPins.forEach((pin) => {
-          createPinElement(pin.url, pin.image);
+          createPinElement(pin.url, pin.image, pin.label);
         });
       }
       function createPinElement(url, imageData) {
@@ -486,7 +815,6 @@
       window.addEventListener('load', loadSavedPins);
       navigator.serviceWorker.register('./sw.js');
       const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
-      // build store safely (use $store if available, otherwise plain object)
       const _storeData = {
         url: 'https://',
         wispurl: _CONFIG?.wispurl || (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/',
@@ -525,7 +853,6 @@
         }
       }
 
-      // start trying to set a transport (runs async)
       waitForTransport();
       connection.setTransport('/epoxy/index.mjs', [{ wisp: store.wispurl }]);
       function handleSubmit(e) {
@@ -548,6 +875,8 @@
         }
       }
       document.getElementById('uv-form').addEventListener('submit', handleSubmit);
+
+      const suggestions = new SearchSuggestions();
     </script>
     <script src="/storage/js/settings.js"></script>
   </body>
