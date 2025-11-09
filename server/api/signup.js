@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import db from '../db.js';
+import dotenv from "dotenv";
 import { randomUUID } from 'crypto';
 
 export async function signupHandler(req, res) {
@@ -24,7 +25,7 @@ export async function signupHandler(req, res) {
     const now = Date.now();
 
     const isFirstUser = db.prepare('SELECT COUNT(*) AS count FROM users').get().count === 0;
-    const isAdmin = isFirstUser || email === 'your-admin-email@example.com';
+    const isAdmin = isFirstUser || email === process.env.ADMIN_EMAILS;
 
     db.prepare(`
       INSERT INTO users (id, email, password_hash, created_at, updated_at, is_admin, email_verified)
