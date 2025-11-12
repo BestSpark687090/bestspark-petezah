@@ -165,7 +165,7 @@ We plan to clean things up in the future, but for now here is a simple list of t
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=PeteZah-Games/PeteZahGames&type=Date)](https://www.star-history.com/#PeteZah-Games/PeteZahGames&Date)
+[![StarGazers](https://api.star-history.com/svg?repos=PeteZah-Games/PeteZahGames&type=date&theme=dark&legend=top-left)](https://github.com/PeteZah-Games/PeteZahGames/stargazers)
 
 ## Contributors
 
