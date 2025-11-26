@@ -8,6 +8,21 @@ const widgetButton = document.querySelector('.widget-button');
 const widgetPopup = document.querySelector('.widget-popup');
 const widgetOptions = document.querySelectorAll('.widget-option');
 
+if (
+  (location.pathname.endsWith('index.html') && location.hash === '#blank') ||
+  location.href.endsWith('#blank')
+) {
+  const win = window.open();
+  const iframe = win.document.createElement('iframe');
+  iframe.src = location.origin + location.pathname.replace('index.html', '') + '/';
+  iframe.style = 'border:none; width:100%; height:100vh; position:fixed; top:0; left:0;';
+  iframe.allow = 'fullscreen';
+  iframe.referrerpolicy = 'no-referrer';
+  win.document.body.style.margin = '0';
+  win.document.body.appendChild(iframe);
+  window.location = 'about:blank';
+}
+
 sidebar.classList.add('collapsed');
 mainContent.classList.remove('sidebar-expanded');
 
@@ -58,9 +73,7 @@ class TxtType {
     }
     this.el.innerHTML = '<span class="wrap">' + this.txt + '</span>';
     let delta = 200 - Math.random() * 100;
-    if (this.isDeleting) {
-      delta /= 2;
-    }
+    if (this.isDeleting) delta /= 2;
     if (!this.isDeleting && this.txt === fullTxt) {
       delta = this.period;
       this.isDeleting = true;
@@ -86,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
   css.type = 'text/css';
   css.innerHTML = '.typewrite > .wrap { border-right: 0.06em solid #a04cff}';
   document.body.appendChild(css);
+
   if (navLinks.length > 0) {
     navLinks[0].classList.add('active');
   }
@@ -122,21 +136,13 @@ document.addEventListener('click', (event) => {
     widgetPopup.classList.remove('show');
   }
 });
-document.addEventListener('click', (event) => {
-  if (!widgetButton.contains(event.target) && !widgetPopup.contains(event.target)) {
-    widgetPopup.classList.remove('show');
-  }
-});
 
 window.addEventListener('message', (event) => {
-  if (event.origin !== window.location.origin) {
-    return;
-  }
+  if (event.origin !== window.location.origin) return;
 
   if (event.data.type === 'login_success' || event.data.type === 'signup_success') {
     mainFrame.src = 'pages/settings/p2.html';
   }
-
   if (event.data.type === 'logout') {
     mainFrame.src = 'pages/settings/p.html';
   }

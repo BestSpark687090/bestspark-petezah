@@ -14,19 +14,39 @@ navigator.serviceWorker.register('./sw.js');
 
 const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
 
+const regionConfig = {
+  default: { wisp: "/wisp/", config: "config.js" },
+  "1": { wisp: "/api/alt-wisp-1/", config: "/static/alt-config-1.js" },
+  "2": { wisp: "/api/alt-wisp-2/", config: "/static/alt-config-2.js" },
+  "3": { wisp: "/api/alt-wisp-3/", config: "/static/alt-config-3.js" }
+};
+
+const savedRegion = localStorage.getItem("selectedVpnRegion") || "default";
+const currentConfig = regionConfig[savedRegion];
+
 const store = {
-  url: 'https://',
-  wispurl: _CONFIG?.wispurl || (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/',
-  bareurl: _CONFIG?.bareurl || (location.protocol === 'https:' ? 'https' : 'http') + '://' + location.host + '/bare/',
-  proxy: '',
-  transport: '/epoxy/index.mjs',
-  theme: 'dark',
-  homepage: 'petezah://newtab',
-  history: JSON.parse(localStorage.getItem('browserHistory') || '[]'),
+  url: "https://",
+  wispurl:
+    _CONFIG?.wispurl ||
+    (location.protocol === "https:" ? "wss" : "ws") +
+    "://" +
+    location.host +
+    currentConfig.wisp,
+  bareurl:
+    _CONFIG?.bareurl ||
+    (location.protocol === "https:" ? "https" : "http") +
+    "://" +
+    location.host +
+    "/bare/",
+  proxy: "",
+  transport: "/epoxy/index.mjs",
+  theme: "dark",
+  homepage: "petezah://newtab",
+  history: JSON.parse(localStorage.getItem("browserHistory") || "[]"),
   zoomLevel: 1,
   favorites: JSON.parse(localStorage.getItem('browserFavorites') || '[]')
 };
-
+self.store = store;
 async function waitForTransport() {
   let attempts = 0;
   const maxAttempts = 10;
@@ -57,6 +77,17 @@ async function waitForTransport() {
 }
 
 waitForTransport();
+
+window.addEventListener("storage", (e) => {
+  if (e.key === "selectedVpnRegion" && e.newValue) {
+    const newConfig = regionConfig[e.newValue];
+    if (newConfig) {
+      store.wispurl = (location.protocol === "https:" ? "wss" : "ws") + "://" + location.host + newConfig.wisp;
+      connection.setTransport("/epoxy/index.mjs", [{ wisp: store.wispurl }]);
+    }
+  }
+});
+
 let tabs = [];
 let activeTabId = 1;
 let nextTabId = 2;
@@ -889,6 +920,7 @@ window.addEventListener('load', async () => {
 
   document.getElementById('wisp_url_input').addEventListener('change', (e) => {
     store.wispurl = e.target.value;
+    connection.setTransport("/epoxy/index.mjs", [{ wisp: store.wispurl }]);
   });
   document.getElementById('bare_url_input').addEventListener('change', (e) => {
     store.bareurl = e.target.value;

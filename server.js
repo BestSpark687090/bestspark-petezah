@@ -611,12 +611,20 @@ const handleUpgradeVerification = (req, socket, next) => {
   const verified = isVerified(req);
   const isWsBrowser = isBrowser(req);
   console.log(`WebSocket Upgrade Attempt: URL=${req.url}, Verified=${verified}, IsBrowser=${isWsBrowser}, Cookies=${req.headers.cookie || 'none'}`);
-  if (req.url.startsWith('/wisp/')) {
+
+  // Allow all WISP endpoints without verification
+  if (req.url.startsWith("/wisp/") ||
+    req.url.startsWith("/api/wisp-premium/") ||
+    req.url.startsWith("/api/alt-wisp-1/") ||
+    req.url.startsWith("/api/alt-wisp-2/") ||
+    req.url.startsWith("/api/alt-wisp-3/")) {
     return next();
   }
+
   if (verified && isWsBrowser) {
     return next();
   }
+
   console.log(`WebSocket Rejected: URL=${req.url}, Reason=${verified ? 'Not a browser' : 'Not verified'}`);
   socket.destroy();
 };
@@ -637,20 +645,20 @@ const server = createServer((req, res) => {
 
 server.on('upgrade', (req, socket, head) => {
   if (bare.shouldRoute(req)) {
-    handleUpgradeVerification(req, socket, () => {
-      bare.routeUpgrade(req, socket, head);
-    });
+    handleUpgradeVerification(req, socket, () => bare.routeUpgrade(req, socket, head));
   } else if (barePremium.shouldRoute(req)) {
-    handleUpgradeVerification(req, socket, () => {
-      barePremium.routeUpgrade(req, socket, head);
-    });
-  } else if (req.url && (req.url.startsWith('/wisp/') || req.url.startsWith('/api/wisp-premium/'))) {
-    handleUpgradeVerification(req, socket, () => {
-      if (req.url.startsWith('/api/wisp-premium/')) {
-        req.url = req.url.replace('/api/wisp-premium/', '/wisp/');
-      }
-      wisp.routeRequest(req, socket, head);
-    });
+    handleUpgradeVerification(req, socket, () => barePremium.routeUpgrade(req, socket, head));
+  } else if (req.url?.startsWith("/wisp/") ||
+    req.url?.startsWith("/api/wisp-premium/") ||
+    req.url?.startsWith("/api/alt-wisp-1/") ||
+    req.url?.startsWith("/api/alt-wisp-2/") ||
+    req.url?.startsWith("/api/alt-wisp-3/")) {
+    // Skip verification for WISP endpoints
+    if (req.url.startsWith("/api/wisp-premium/")) req.url = req.url.replace("/api/wisp-premium/", "/wisp/");
+    if (req.url.startsWith("/api/alt-wisp-1/")) req.url = req.url.replace("/api/alt-wisp-1/", "/wisp/");
+    if (req.url.startsWith("/api/alt-wisp-2/")) req.url = req.url.replace("/api/alt-wisp-2/", "/wisp/");
+    if (req.url.startsWith("/api/alt-wisp-3/")) req.url = req.url.replace("/api/alt-wisp-3/", "/wisp/");
+    wisp.routeRequest(req, socket, head);
   } else {
     socket.end();
   }
