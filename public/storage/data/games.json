@@ -41,6 +41,42 @@
       "url": "/iframe.html?url=/storage/ag/g/superstarcar",
       "imageUrl": "/storage/images/main/superstarcar.jpeg",
       "categories": ["skill", "racing"]
+      "categories": [
+        "skill",
+        "racing"
+      ]
+    },
+     {
+      "label": "EaglerCraft-Mobile",
+      "imageUrl": "/storage/ag/g/Eagler-Mobile/IMG_2545.jpeg",
+      "url": "/iframe.html?url=/storage/ag/g/Eagler-Mobile/index.html",
+      "categories": [
+        "skill"
+      ]
+    },   
+    {
+      "label": "EaglerCraft",
+      "imageUrl": "/storage/ag/g/EaglerCraft/IMG_2922.jpeg",
+      "url": "/iframe.html?url=/storage/ag/g/EaglerCraft/index.html",
+      "categories": [
+        "skill"
+      ]
+    },
+    {
+      "label": "Smashy Roads",
+      "url": "/iframe.html?url=/storage/ag/g/smashyroad",
+      "imageUrl": "/storage/images/main/smashy.jpg",
+      "categories": [
+        "action"
+      ]
+    },
+    {
+      "label": "Smashy Roads 2",
+      "url": "/iframe.html?url=/storage/ag/g/smashy-roads-2",
+      "imageUrl": "/storage/images/main/smashyroad.webp",
+      "categories": [
+        "action"
+      ]
     },
     {
       "label": "Clash Royale",
