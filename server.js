@@ -14,7 +14,7 @@ import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import fs from 'fs';
 import { createProxyMiddleware } from 'http-proxy-middleware';
-import { parseJSONC } from 'jsonc-parser';
+import { parse as parseJSONC } from 'jsonc-parser';
 import NodeCache from 'node-cache';
 import crypto from 'node:crypto';
 import { createServer } from 'node:http';
@@ -31,14 +31,6 @@ import db from './server/db.js';
 const configRaw = fs.readFileSync('./config.jsonc', 'utf-8');
 const config = parseJSONC(configRaw);
 const legalRemoved = config.legalRemoved || [];
-
-app.use((req, res, next) => {
-  if (legalRemoved.includes(req.path)) {
-    return res.status(451).send('Removed due to legal reasons');
-  }
-  next();
-});
-
 const cache = new NodeCache({ stdTTL: 86400 });
 let SESSION_SECRET;
 dotenv.config();
@@ -56,16 +48,27 @@ const bare = createBareServer('/bare/', {
 });
 const barePremium = createBareServer('/api/bare-premium/');
 const app = express();
-app.use(
-  cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: ['Content-Type']
-  })
-);
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(fileUpload());
+
+// Consolidate common middleware into a helper to avoid duplication and make
+// future updates easier.
+function applyCommonMiddleware(app) {
+  // Trust proxy when in production or explicitly enabled; this is useful when
+  // deploying behind a proxy/load balancer and for secure cookies.
+  const trustProxy = process.env.TRUST_PROXY === '1' || process.env.NODE_ENV === 'production';
+  if (trustProxy) app.set('trust proxy', 1);
+
+  app.use(
+    cors({
+      origin: '*',
+      methods: ['GET', 'POST', 'DELETE'],
+      allowedHeaders: ['Content-Type']
+    })
+  );
+
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(fileUpload());
+}
 if (process.env.SESSION_SECRET) {
   SESSION_SECRET = process.env.SESSION_SECRET;
 } else {
@@ -77,7 +80,7 @@ app.use(
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: true }
+    cookie: { secure: process.env.NODE_ENV === 'production', sameSite: 'lax' }
   })
 );
 app.use(cookieParser());
@@ -99,6 +102,19 @@ app.use(
     }
   })
 );
+
+// Add a final headers-setting middleware here which will be applied to all
+// responses after the above middleware runs
+app.use((req, res, next) => {
+  res.set({
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Cross-Origin-Embedder-Policy': 'require-corp'
+  });
+  next();
+});
+
+// Apply the consolidated middleware once now
+applyCommonMiddleware(app);
 
 const verifyMiddleware = (req, res, next) => {
   const verified = req.cookies?.verified === 'ok' || req.headers['x-bot-token'] === process.env.BOT_TOKEN;
@@ -140,469 +156,444 @@ const apiLimiter = rateLimit({
     });
   }
 });
-
 app.use('/bare/', apiLimiter);
 app.use('/api/', apiLimiter);
 
+// Proxies and helper routes (kept at top-level to ensure they're only
+// registered once and not on every request)
 app.use(
-  cors({
-    origin: '*',
-    methods: ['GET', 'POST', 'DELETE'],
-    allowedHeaders: ['Content-Type']
+  '/api/gn-math/covers',
+  createProxyMiddleware({
+    target: 'https://cdn.jsdelivr.net/gh/gn-math/covers@main',
+    changeOrigin: true,
+    pathRewrite: { '^/api/gn-math/covers': '' }
   })
 );
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(fileUpload());
+
 app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: true }
+  '/api/gn-math/html',
+  createProxyMiddleware({
+    target: 'https://cdn.jsdelivr.net/gh/gn-math/html@main',
+    changeOrigin: true,
+    pathRewrite: { '^/api/gn-math/html': '' }
   })
 );
-app.use((req, res, next) => {
-  res.set({
-    'Cross-Origin-Opener-Policy': 'same-origin',
-    'Cross-Origin-Embedder-Policy': 'require-corp'
-  });
-  next();
-  app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false, cookie: { secure: false } }));
 
-  app.use(
-    '/api/gn-math/covers',
-    createProxyMiddleware({
-      target: 'https://cdn.jsdelivr.net/gh/gn-math/covers@main',
-      changeOrigin: true,
-      pathRewrite: { '^/api/gn-math/covers': '' }
-    })
-  );
+app.get('/ip', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/pages/other/roblox/ip.html'));
+});
 
-  app.use(
-    '/api/gn-math/html',
-    createProxyMiddleware({
-      target: 'https://cdn.jsdelivr.net/gh/gn-math/html@main',
-      changeOrigin: true,
-      pathRewrite: { '^/api/gn-math/html': '' }
-    })
-  );
+// Add stricter rate limits for signup and profile-pic upload
+const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 3, // 3 signups per IP per hour
+  message: 'Too many accounts created from this IP, try again later.'
+});
+app.post('/api/signup', signupLimiter, signupHandler);
 
-  app.get('/ip', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/pages/other/roblox/ip.html'));
-  });
+const pfpLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // 5 uploads per user per hour
+  keyGenerator: (req) => req.session.user?.id || req.ip,
+  message: 'Too many profile picture uploads, try again later.'
+});
+app.post('/api/upload-profile-pic', pfpLimiter, (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const file = req.files?.file;
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const userId = req.session.user.id;
+    const uploadsDir = path.join(__dirname, 'public', 'uploads', 'profile-pics', userId);
+    if (!fs.existsSync(uploadsDir)) {
+      fs.mkdirSync(uploadsDir, { recursive: true });
+    }
+    const fileName = `${Date.now()}-${file.name}`;
+    const filePath = path.join(uploadsDir, fileName);
+    fs.writeFileSync(filePath, file.data);
+    const avatarUrl = `/uploads/profile-pics/${userId}/${fileName}`;
+    const now = Date.now();
+    db.prepare('UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?').run(avatarUrl, now, userId);
+    req.session.user.avatar_url = avatarUrl;
+    return res.status(200).json({ url: avatarUrl });
+  } catch (error) {
+    console.error('Upload error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
-  // Add stricter rate limits for signup and profile-pic upload
-  const signupLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 3, // 3 signups per IP per hour
-    message: 'Too many accounts created from this IP, try again later.'
-  });
-  app.post('/api/signup', signupLimiter, signupHandler);
-
-  const pfpLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5, // 5 uploads per user per hour
-    keyGenerator: (req) => req.session.user?.id || req.ip,
-    message: 'Too many profile picture uploads, try again later.'
-  });
-  app.post('/api/upload-profile-pic', pfpLimiter, (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+app.post('/api/signin', signinHandler);
+app.post('/api/admin/user-action', adminUserActionHandler);
+app.post('/api/comment', addCommentHandler);
+app.get('/api/comments', getCommentsHandler);
+app.post('/api/like', likeHandler);
+app.get('/api/likes', getLikesHandler);
+app.get('/api/verify-email', (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.status(400).send('<html><body><h1>Invalid verification link</h1></body></html>');
+  }
+  try {
+    const user = db.prepare('SELECT id FROM users WHERE verification_token = ?').get(token);
+    if (!user) {
+      return res.status(400).send('<html><body><h1>Invalid or expired verification link</h1></body></html>');
     }
-    try {
-      const file = req.files?.file;
-      if (!file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-      const userId = req.session.user.id;
-      const uploadsDir = path.join(__dirname, 'public', 'uploads', 'profile-pics', userId);
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-      const fileName = `${Date.now()}-${file.name}`;
-      const filePath = path.join(uploadsDir, fileName);
-      fs.writeFileSync(filePath, file.data);
-      const avatarUrl = `/uploads/profile-pics/${userId}/${fileName}`;
-      const now = Date.now();
-      db.prepare('UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?').run(avatarUrl, now, userId);
-      req.session.user.avatar_url = avatarUrl;
-      return res.status(200).json({ url: avatarUrl });
-    } catch (error) {
-      console.error('Upload error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-  app.post('/api/signin', signinHandler);
-  app.post('/api/admin/user-action', adminUserActionHandler);
-  app.post('/api/comment', addCommentHandler);
-  app.get('/api/comments', getCommentsHandler);
-  app.post('/api/like', likeHandler);
-  app.get('/api/likes', getLikesHandler);
-  app.get('/api/verify-email', (req, res) => {
-    const { token } = req.query;
-    if (!token) {
-      return res.status(400).send('<html><body><h1>Invalid verification link</h1></body></html>');
-    }
-    try {
-      const user = db.prepare('SELECT id FROM users WHERE verification_token = ?').get(token);
-      if (!user) {
-        return res.status(400).send('<html><body><h1>Invalid or expired verification link</h1></body></html>');
-      }
-      const now = Date.now();
-      db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL, updated_at = ? WHERE id = ?').run(now, user.id);
-      return res
-        .status(200)
-        .send(
-          '<html><body style="background:#0a1d37;color:#fff;font-family:Arial;text-align:center;padding:50px;"><h1>Email verified successfully!</h1><p>You can now log in to your account.</p><a href="/pages/settings/p.html" style="color:#3b82f6;">Go to Login</a></body></html>'
-        );
-    } catch (error) {
-      console.error('Verification error:', error);
-      return res.status(500).send('<html><body><h1>Verification failed</h1></body></html>');
-    }
-  });
-  app.post('/api/signout', (req, res) => {
-    req.session.destroy();
-    return res.status(200).json({ message: 'Signout successful' });
-  });
-  app.get('/api/profile', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    try {
-      const user = db.prepare('SELECT id, email, username, bio, avatar_url, is_admin, created_at FROM users WHERE id = ?').get(req.session.user.id);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      let role = 'User';
-      if (user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) {
-        role = 'Owner';
-      } else if (user.is_admin === 3) {
-        role = 'Admin';
-      } else if (user.is_admin === 2) {
-        role = 'Staff';
-      }
-      return res.status(200).json({
-        user: {
-          id: user.id,
-          email: user.email,
-          user_metadata: {
-            name: user.username,
-            bio: user.bio,
-            avatar_url: user.avatar_url
-          },
-          app_metadata: {
-            provider: 'email',
-            is_admin: user.is_admin,
-            role
-          }
-        }
-      });
-    } catch {
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.post('/api/update-profile', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    try {
-      const { username, bio, age, school } = req.body;
-      db.prepare('UPDATE users SET username = ?, bio = ?, age = ?, school = ? WHERE id = ?').run(
-        username || null,
-        bio || null,
-        age || null,
-        school || null,
-        req.session.user.id
+    const now = Date.now();
+    db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL, updated_at = ? WHERE id = ?').run(now, user.id);
+    return res
+      .status(200)
+      .send(
+        '<html><body style="background:#0a1d37;color:#fff;font-family:Arial;text-align:center;padding:50px;"><h1>Email verified successfully!</h1><p>You can now log in to your account.</p><a href="/pages/settings/p.html" style="color:#3b82f6;">Go to Login</a></body></html>'
       );
-      req.session.user.username = username;
-      req.session.user.bio = bio;
-      return res.status(200).json({ message: 'Profile updated' });
-    } catch {
-      return res.status(500).json({ error: 'Internal server error' });
+  } catch (error) {
+    console.error('Verification error:', error);
+    return res.status(500).send('<html><body><h1>Verification failed</h1></body></html>');
+  }
+});
+app.post('/api/signout', (req, res) => {
+  req.session.destroy();
+  return res.status(200).json({ message: 'Signout successful' });
+});
+app.get('/api/profile', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const user = db.prepare('SELECT id, email, username, bio, avatar_url, is_admin, created_at FROM users WHERE id = ?').get(req.session.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
-  });
-  app.post('/api/save-localstorage', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    let role = 'User';
+    if (user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) {
+      role = 'Owner';
+    } else if (user.is_admin === 3) {
+      role = 'Admin';
+    } else if (user.is_admin === 2) {
+      role = 'Staff';
     }
-    try {
-      const { data } = req.body;
-      const now = Date.now();
-      db.prepare(
-        `
+    return res.status(200).json({
+      user: {
+        id: user.id,
+        email: user.email,
+        user_metadata: {
+          name: user.username,
+          bio: user.bio,
+          avatar_url: user.avatar_url
+        },
+        app_metadata: {
+          provider: 'email',
+          is_admin: user.is_admin,
+          role
+        }
+      }
+    });
+  } catch {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.post('/api/update-profile', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { username, bio, age, school } = req.body;
+    db.prepare('UPDATE users SET username = ?, bio = ?, age = ?, school = ? WHERE id = ?').run(
+      username || null,
+      bio || null,
+      age || null,
+      school || null,
+      req.session.user.id
+    );
+    req.session.user.username = username;
+    req.session.user.bio = bio;
+    return res.status(200).json({ message: 'Profile updated' });
+  } catch {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.post('/api/save-localstorage', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { data } = req.body;
+    const now = Date.now();
+    db.prepare(
+      `
       INSERT INTO user_settings (user_id, localstorage_data, updated_at)
       VALUES (?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET localstorage_data = ?, updated_at = ?
     `
-      ).run(req.session.user.id, data, now, data, now);
-      return res.status(200).json({ message: 'LocalStorage saved' });
-    } catch (error) {
-      console.error('Save error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.get('/api/load-localstorage', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    try {
-      const result = db.prepare('SELECT localstorage_data FROM user_settings WHERE user_id = ?').get(req.session.user.id);
-      return res.status(200).json({ data: result?.localstorage_data || '{}' });
-    } catch (error) {
-      console.error('Load error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.delete('/api/delete-account', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    try {
-      db.prepare('DELETE FROM users WHERE id = ?').run(req.session.user.id);
-      req.session.destroy();
-      return res.status(200).json({ message: 'Account deleted' });
-    } catch (error) {
-      console.error('Delete error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.get('/api/changelog', (req, res) => {
-    try {
-      const changelogs = db
-        .prepare(
-          `
+    ).run(req.session.user.id, data, now, data, now);
+    return res.status(200).json({ message: 'LocalStorage saved' });
+  } catch (error) {
+    console.error('Save error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.get('/api/load-localstorage', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const result = db.prepare('SELECT localstorage_data FROM user_settings WHERE user_id = ?').get(req.session.user.id);
+    return res.status(200).json({ data: result?.localstorage_data || '{}' });
+  } catch (error) {
+    console.error('Load error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.delete('/api/delete-account', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    db.prepare('DELETE FROM users WHERE id = ?').run(req.session.user.id);
+    req.session.destroy();
+    return res.status(200).json({ message: 'Account deleted' });
+  } catch (error) {
+    console.error('Delete error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.get('/api/changelog', (req, res) => {
+  try {
+    const changelogs = db
+      .prepare(
+        `
       SELECT c.*, u.username as author_name
       FROM changelog c
       LEFT JOIN users u ON c.author_id = u.id
       ORDER BY c.created_at DESC
       LIMIT 50
     `
-        )
-        .all();
-      return res.status(200).json({ changelogs });
-    } catch (error) {
-      console.error('Changelog error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.get('/api/feedback', (req, res) => {
-    try {
-      const feedback = db
-        .prepare(
-          `
+      )
+      .all();
+    return res.status(200).json({ changelogs });
+  } catch (error) {
+    console.error('Changelog error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.get('/api/feedback', (req, res) => {
+  try {
+    const feedback = db
+      .prepare(
+        `
       SELECT f.*, u.username, u.email
       FROM feedback f
       LEFT JOIN users u ON f.user_id = u.id
       ORDER BY f.created_at DESC
       LIMIT 100
     `
-        )
-        .all();
-      return res.status(200).json({ feedback });
-    } catch (error) {
-      console.error('Feedback list error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      )
+      .all();
+    return res.status(200).json({ feedback });
+  } catch (error) {
+    console.error('Feedback list error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.post('/api/changelog', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
+    if (!user || !user.is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
-  });
-  app.post('/api/changelog', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const { title, content } = req.body;
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Title and content are required' });
     }
-    try {
-      const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
-      if (!user || !user.is_admin) {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      const { title, content } = req.body;
-      if (!title || !content) {
-        return res.status(400).json({ error: 'Title and content are required' });
-      }
-      const id = randomUUID();
-      const now = Date.now();
-      db.prepare('INSERT INTO changelog (id, title, content, author_id, created_at) VALUES (?, ?, ?, ?, ?)').run(
-        id,
-        title,
-        content,
-        req.session.user.id,
-        now
-      );
-      return res.status(201).json({ message: 'Changelog created', id });
-    } catch (error) {
-      console.error('Changelog create error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+    const id = randomUUID();
+    const now = Date.now();
+    db.prepare('INSERT INTO changelog (id, title, content, author_id, created_at) VALUES (?, ?, ?, ?, ?)').run(
+      id,
+      title,
+      content,
+      req.session.user.id,
+      now
+    );
+    return res.status(201).json({ message: 'Changelog created', id });
+  } catch (error) {
+    console.error('Changelog create error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.post('/api/feedback', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { content } = req.body;
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Feedback content is required' });
     }
-  });
-  app.post('/api/feedback', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const id = randomUUID();
+    const now = Date.now();
+    db.prepare('INSERT INTO feedback (id, user_id, content, created_at) VALUES (?, ?, ?, ?)').run(id, req.session.user.id, content.trim(), now);
+    return res.status(201).json({ message: 'Feedback submitted', id });
+  } catch (error) {
+    console.error('Feedback error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.get('/api/admin/feedback', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
+    if (!user || !user.is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
-    try {
-      const { content } = req.body;
-      if (!content || content.trim().length === 0) {
-        return res.status(400).json({ error: 'Feedback content is required' });
-      }
-      const id = randomUUID();
-      const now = Date.now();
-      db.prepare('INSERT INTO feedback (id, user_id, content, created_at) VALUES (?, ?, ?, ?)').run(id, req.session.user.id, content.trim(), now);
-      return res.status(201).json({ message: 'Feedback submitted', id });
-    } catch (error) {
-      console.error('Feedback error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.get('/api/admin/feedback', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    try {
-      const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
-      if (!user || !user.is_admin) {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      const feedback = db
-        .prepare(
-          `
+    const feedback = db
+      .prepare(
+        `
       SELECT f.*, u.email, u.username
       FROM feedback f
       LEFT JOIN users u ON f.user_id = u.id
       ORDER BY f.created_at DESC
       LIMIT 100
     `
-        )
-        .all();
-      return res.status(200).json({ feedback });
-    } catch (error) {
-      console.error('Admin feedback error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
+      )
+      .all();
+    return res.status(200).json({ feedback });
+  } catch (error) {
+    console.error('Admin feedback error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.get('/api/admin/stats', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
+    if (!user || !user.is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
-  });
-  app.get('/api/admin/stats', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+    const feedbackCount = db.prepare('SELECT COUNT(*) as count FROM feedback').get().count;
+    const changelogCount = db.prepare('SELECT COUNT(*) as count FROM changelog').get().count;
+    return res.status(200).json({
+      userCount,
+      feedbackCount,
+      changelogCount
+    });
+  } catch (error) {
+    console.error('Admin stats error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.get('/api/admin/users', (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
+    if (!user || !((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3)) {
+      return res.status(403).json({ error: 'Admin access required' });
     }
-    try {
-      const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
-      if (!user || !user.is_admin) {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
-      const feedbackCount = db.prepare('SELECT COUNT(*) as count FROM feedback').get().count;
-      const changelogCount = db.prepare('SELECT COUNT(*) as count FROM changelog').get().count;
-      return res.status(200).json({
-        userCount,
-        feedbackCount,
-        changelogCount
-      });
-    } catch (error) {
-      console.error('Admin stats error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.get('/api/admin/users', (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    try {
-      const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
-      if (!user || !((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3)) {
-        return res.status(403).json({ error: 'Admin access required' });
-      }
-      const users = db
-        .prepare(
-          `
+    const users = db
+      .prepare(
+        `
       SELECT id, email, username, created_at, is_admin, avatar_url, bio, school, age, ip
       FROM users
       ORDER BY created_at DESC
       LIMIT 100
     `
-        )
-        .all();
-      const usersWithExtras = users.map((u) => {
-        let ip = 'N/A';
-        if (user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) {
-          ip = u.ip || 'N/A';
-        }
-        return {
-          ...u,
-          ip,
-          signup_link: null,
-          role: u.is_admin === 1 && u.email === process.env.ADMIN_EMAIL ? 'Owner' : u.is_admin === 3 ? 'Admin' : u.is_admin === 2 ? 'Staff' : 'User'
-        };
-      });
-      return res.status(200).json({ users: usersWithExtras });
-    } catch (error) {
-      console.error('Admin users error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-  app.post('/api/change-password', async (req, res) => {
-    if (!req.session.user) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-    try {
-      const { currentPassword, newPassword } = req.body;
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ error: 'Current and new password are required' });
+      )
+      .all();
+    const usersWithExtras = users.map((u) => {
+      let ip = 'N/A';
+      if (user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) {
+        ip = u.ip || 'N/A';
       }
-      if (newPassword.length < 8) {
-        return res.status(400).json({ error: 'New password must be at least 8 characters' });
-      }
-      const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.session.user.id);
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      const passwordMatch = await bcrypt.compare(currentPassword, user.password_hash);
-      if (!passwordMatch) {
-        return res.status(401).json({ error: 'Current password is incorrect' });
-      }
-      const newPasswordHash = await bcrypt.hash(newPassword, 10);
-      const now = Date.now();
-      db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?').run(newPasswordHash, now, req.session.user.id);
-      return res.status(200).json({ message: 'Password changed successfully' });
-    } catch (error) {
-      console.error('Change password error:', error);
-      return res.status(500).json({ error: 'Internal server error' });
-    }
-  });
-
-  app.use((req, res) => {
-    return res.status(404).sendFile(join(__dirname, publicPath, '404.html'));
-  });
-
-  function parseCookies(header) {
-    if (!header) return {};
-    return header.split(';').reduce((acc, cookie) => {
-      const [name, value] = cookie.trim().split('=');
-      acc[name] = value;
-      return acc;
-    }, {});
-  }
-
-  const isVerified = (req) => {
-    const cookies = parseCookies(req.headers.cookie);
-    return cookies.verified === 'ok' || req.headers['x-bot-token'] === process.env.BOT_TOKEN;
-  };
-
-  const isBrowser = (req) => {
-    const ua = req.headers['user-agent'] || '';
-    return /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
-  };
-
-  const handleHttpVerification = (req, res, next) => {
-    const acceptsHtml = req.headers.accept?.includes('text/html');
-    if (!acceptsHtml) return next();
-    if (isVerified(req) && isBrowser(req)) return next();
-    if (!isBrowser(req)) {
-      res.writeHead(403, { 'Content-Type': 'text/plain' });
-      return res.end('Forbidden');
-    }
-    res.writeHead(200, {
-      'Content-Type': 'text/html',
-      'Set-Cookie': 'verified=ok; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax'
+      return {
+        ...u,
+        ip,
+        signup_link: null,
+        role: u.is_admin === 1 && u.email === process.env.ADMIN_EMAIL ? 'Owner' : u.is_admin === 3 ? 'Admin' : u.is_admin === 2 ? 'Staff' : 'User'
+      };
     });
-    res.end(`
+    return res.status(200).json({ users: usersWithExtras });
+  } catch (error) {
+    console.error('Admin users error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+app.post('/api/change-password', async (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    }
+    const user = db.prepare('SELECT password_hash FROM users WHERE id = ?').get(req.session.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password_hash);
+    if (!passwordMatch) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    const now = Date.now();
+    db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?').run(newPasswordHash, now, req.session.user.id);
+    return res.status(200).json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Change password error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.use((req, res) => {
+  return res.status(404).sendFile(join(__dirname, publicPath, '404.html'));
+});
+
+function parseCookies(header) {
+  if (!header) return {};
+  return header.split(';').reduce((acc, cookie) => {
+    const [name, value] = cookie.trim().split('=');
+    acc[name] = value;
+    return acc;
+  }, {});
+}
+
+const isVerified = (req) => {
+  const cookies = parseCookies(req.headers.cookie);
+  return cookies.verified === 'ok' || req.headers['x-bot-token'] === process.env.BOT_TOKEN;
+};
+
+const isBrowser = (req) => {
+  const ua = req.headers['user-agent'] || '';
+  return /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
+};
+
+const handleHttpVerification = (req, res, next) => {
+  const acceptsHtml = req.headers.accept?.includes('text/html');
+  if (!acceptsHtml) return next();
+  if (isVerified(req) && isBrowser(req)) return next();
+  if (!isBrowser(req)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    return res.end('Forbidden');
+  }
+  res.writeHead(200, {
+    'Content-Type': 'text/html',
+    'Set-Cookie': 'verified=ok; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax'
+  });
+  res.end(`
     <!DOCTYPE html>
     <html>
       <body>
@@ -614,169 +605,169 @@ app.use((req, res, next) => {
       </body>
     </html>
   `);
-  };
+};
 
-  const handleUpgradeVerification = (req, socket, next) => {
-    const verified = isVerified(req);
-    const isWsBrowser = isBrowser(req);
-    console.log(`WebSocket Upgrade Attempt: URL=${req.url}, Verified=${verified}, IsBrowser=${isWsBrowser}, Cookies=${req.headers.cookie || 'none'}`);
-    if (req.url.startsWith('/wisp/')) {
-      return next();
-    }
-    if (verified && isWsBrowser) {
-      return next();
-    }
-    console.log(`WebSocket Rejected: URL=${req.url}, Reason=${verified ? 'Not a browser' : 'Not verified'}`);
-    socket.destroy();
-  };
-
-  const server = createServer((req, res) => {
-    if (bare.shouldRoute(req)) {
-      handleHttpVerification(req, res, () => {
-        bare.routeRequest(req, res);
-      });
-    } else if (barePremium.shouldRoute(req)) {
-      handleHttpVerification(req, res, () => {
-        barePremium.routeRequest(req, res);
-      });
-    } else {
-      app.handle(req, res);
-    }
-  });
-
-  server.on('upgrade', (req, socket, head) => {
-    if (bare.shouldRoute(req)) {
-      handleUpgradeVerification(req, socket, () => {
-        bare.routeUpgrade(req, socket, head);
-      });
-    } else if (barePremium.shouldRoute(req)) {
-      handleUpgradeVerification(req, socket, () => {
-        barePremium.routeUpgrade(req, socket, head);
-      });
-    } else if (req.url && (req.url.startsWith('/wisp/') || req.url.startsWith('/api/wisp-premium/'))) {
-      handleUpgradeVerification(req, socket, () => {
-        if (req.url.startsWith('/api/wisp-premium/')) {
-          req.url = req.url.replace('/api/wisp-premium/', '/wisp/');
-        }
-        wisp.routeRequest(req, socket, head);
-      });
-    } else {
-      socket.end();
-    }
-  });
-  const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
-  const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov'];
-
-  // Load cache at startup
-  const urls = JSON.parse(fs.readFileSync('.sitemap-base.json', 'utf8'));
-  cache.set('urls', urls);
-
-  // --- Priority & changefreq ---
-  function computePriority(commitCount, maxCommits) {
-    if (maxCommits === 0) return 0.5;
-    const normalized = commitCount / maxCommits;
-    return Math.max(0.1, Math.min(1.0, normalized));
+const handleUpgradeVerification = (req, socket, next) => {
+  const verified = isVerified(req);
+  const isWsBrowser = isBrowser(req);
+  console.log(`WebSocket Upgrade Attempt: URL=${req.url}, Verified=${verified}, IsBrowser=${isWsBrowser}, Cookies=${req.headers.cookie || 'none'}`);
+  if (req.url.startsWith('/wisp/')) {
+    return next();
   }
-  function computeChangefreq(lastmod) {
-    const last = new Date(lastmod);
-    const days = (Date.now() - last.getTime()) / (1000 * 60 * 60 * 24);
-    if (days <= 7) return 'daily';
-    if (days <= 30) return 'weekly';
-    if (days <= 180) return 'monthly';
-    return 'yearly';
+  if (verified && isWsBrowser) {
+    return next();
   }
+  console.log(`WebSocket Rejected: URL=${req.url}, Reason=${verified ? 'Not a browser' : 'Not verified'}`);
+  socket.destroy();
+};
 
-  // --- XML generator ---
-  function generateXml(domain, urls) {
-    const maxCommits = urls.reduce((max, u) => Math.max(max, u.commitCount), 0);
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-    xml += `<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>\n`;
-    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
-    xml += `        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"\n`;
-    xml += `        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n`;
-    urls.forEach((u) => {
-      const priority = computePriority(u.commitCount, maxCommits).toFixed(2);
-      const changefreq = computeChangefreq(u.lastmod);
-      xml += `  <url>\n`;
-      xml += `    <loc>${domain}${u.loc}</loc>\n`;
-      xml += `    <lastmod>${u.lastmod}</lastmod>\n`;
-      xml += `    <changefreq>${changefreq}</changefreq>\n`;
-      xml += `    <priority>${priority}</priority>\n`;
-      if (IMAGE_EXTENSIONS.includes(u.ext)) {
-        xml += `    <image:image><image:loc>${domain}${u.loc}</image:loc></image:image>\n`;
-      }
-      if (VIDEO_EXTENSIONS.includes(u.ext)) {
-        xml += `    <video:video>\n`;
-        xml += `      <video:content_loc>${domain}${u.loc}</video:content_loc>\n`;
-        xml += `      <video:title>${path.basename(u.loc)}</video:title>\n`;
-        xml += `      <video:description>Video file ${path.basename(u.loc)}</video:description>\n`;
-        xml += `    </video:video>\n`;
-      }
-      xml += `  </url>\n`;
+const server = createServer((req, res) => {
+  if (bare.shouldRoute(req)) {
+    handleHttpVerification(req, res, () => {
+      bare.routeRequest(req, res);
     });
-    xml += `</urlset>`;
-    return xml;
-  }
-
-  // --- JSON generator ---
-  function generateJson(domain, urls) {
-    const maxCommits = urls.reduce((max, u) => Math.max(max, u.commitCount), 0);
-    return urls.map((u) => ({
-      loc: domain + u.loc,
-      lastmod: u.lastmod,
-      changefreq: computeChangefreq(u.lastmod),
-      priority: computePriority(u.commitCount, maxCommits),
-      type: IMAGE_EXTENSIONS.includes(u.ext) ? 'image' : VIDEO_EXTENSIONS.includes(u.ext) ? 'video' : 'page'
-    }));
-  }
-
-  // --- TXT generator ---
-  function generateTxt(domain, urls) {
-    return urls.map((u) => domain + u.loc).join('\n');
-  }
-
-  // --- Routes ---
-  app.use(express.static(path.join(__dirname, 'public'))); // serve sitemap.xsl
-
-  app.get('/sitemap.xml', (req, res) => {
-    res.type('application/xml');
-    const domain = req.protocol + '://' + req.get('host');
-    res.send(generateXml(domain, cache.get('urls')));
-  });
-
-  app.get('/sitemap.json', (req, res) => {
-    const domain = req.protocol + '://' + req.get('host');
-    res.json(generateJson(domain, cache.get('urls')));
-  });
-
-  app.get('/sitemap.txt', (req, res) => {
-    res.type('text/plain');
-    const domain = req.protocol + '://' + req.get('host');
-    res.send(generateTxt(domain, cache.get('urls')));
-  });
-  const port = parseInt(config.PORT || process.env.PORT || '3000');
-  server.keepAliveTimeout = 5000;
-  server.headersTimeout = 6000;
-
-  server.listen({ port }, () => {
-    const address = server.address();
-    console.log(`Listening on:`);
-    console.log(`\thttp://localhost:${address.port}`);
-    console.log(`\thttp://${hostname()}:${address.port}`);
-    console.log(`\thttp://${address.family === 'IPv6' ? `[${address.address}]` : address.address}:${address.port}`);
-  });
-
-  process.on('SIGINT', () => shutdown('INT'));
-  process.on('SIGTERM', () => shutdown('TERM'));
-
-  function shutdown(signal) {
-    console.log(`SIG${signal} received: shutting down...`);
-    server.close(() => {
-      console.log('HTTP server closed');
-      bare.close(() => {
-        console.log('Bare server closed');
-        process.exit(0);
-      });
+  } else if (barePremium.shouldRoute(req)) {
+    handleHttpVerification(req, res, () => {
+      barePremium.routeRequest(req, res);
     });
+  } else {
+    app.handle(req, res);
   }
 });
+
+server.on('upgrade', (req, socket, head) => {
+  if (bare.shouldRoute(req)) {
+    handleUpgradeVerification(req, socket, () => {
+      bare.routeUpgrade(req, socket, head);
+    });
+  } else if (barePremium.shouldRoute(req)) {
+    handleUpgradeVerification(req, socket, () => {
+      barePremium.routeUpgrade(req, socket, head);
+    });
+  } else if (req.url && (req.url.startsWith('/wisp/') || req.url.startsWith('/api/wisp-premium/'))) {
+    handleUpgradeVerification(req, socket, () => {
+      if (req.url.startsWith('/api/wisp-premium/')) {
+        req.url = req.url.replace('/api/wisp-premium/', '/wisp/');
+      }
+      wisp.routeRequest(req, socket, head);
+    });
+  } else {
+    socket.end();
+  }
+});
+const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+const VIDEO_EXTENSIONS = ['.mp4', '.webm', '.mov'];
+
+// Load cache at startup
+const urls = JSON.parse(fs.readFileSync('.sitemap-base.json', 'utf8'));
+cache.set('urls', urls);
+
+// --- Priority & changefreq ---
+function computePriority(commitCount, maxCommits) {
+  if (maxCommits === 0) return 0.5;
+  const normalized = commitCount / maxCommits;
+  return Math.max(0.1, Math.min(1.0, normalized));
+}
+function computeChangefreq(lastmod) {
+  const last = new Date(lastmod);
+  const days = (Date.now() - last.getTime()) / (1000 * 60 * 60 * 24);
+  if (days <= 7) return 'daily';
+  if (days <= 30) return 'weekly';
+  if (days <= 180) return 'monthly';
+  return 'yearly';
+}
+
+// --- XML generator ---
+function generateXml(domain, urls) {
+  const maxCommits = urls.reduce((max, u) => Math.max(max, u.commitCount), 0);
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+  xml += `<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>\n`;
+  xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
+  xml += `        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"\n`;
+  xml += `        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">\n`;
+  urls.forEach((u) => {
+    const priority = computePriority(u.commitCount, maxCommits).toFixed(2);
+    const changefreq = computeChangefreq(u.lastmod);
+    xml += `  <url>\n`;
+    xml += `    <loc>${domain}${u.loc}</loc>\n`;
+    xml += `    <lastmod>${u.lastmod}</lastmod>\n`;
+    xml += `    <changefreq>${changefreq}</changefreq>\n`;
+    xml += `    <priority>${priority}</priority>\n`;
+    if (IMAGE_EXTENSIONS.includes(u.ext)) {
+      xml += `    <image:image><image:loc>${domain}${u.loc}</image:loc></image:image>\n`;
+    }
+    if (VIDEO_EXTENSIONS.includes(u.ext)) {
+      xml += `    <video:video>\n`;
+      xml += `      <video:content_loc>${domain}${u.loc}</video:content_loc>\n`;
+      xml += `      <video:title>${path.basename(u.loc)}</video:title>\n`;
+      xml += `      <video:description>Video file ${path.basename(u.loc)}</video:description>\n`;
+      xml += `    </video:video>\n`;
+    }
+    xml += `  </url>\n`;
+  });
+  xml += `</urlset>`;
+  return xml;
+}
+
+// --- JSON generator ---
+function generateJson(domain, urls) {
+  const maxCommits = urls.reduce((max, u) => Math.max(max, u.commitCount), 0);
+  return urls.map((u) => ({
+    loc: domain + u.loc,
+    lastmod: u.lastmod,
+    changefreq: computeChangefreq(u.lastmod),
+    priority: computePriority(u.commitCount, maxCommits),
+    type: IMAGE_EXTENSIONS.includes(u.ext) ? 'image' : VIDEO_EXTENSIONS.includes(u.ext) ? 'video' : 'page'
+  }));
+}
+
+// --- TXT generator ---
+function generateTxt(domain, urls) {
+  return urls.map((u) => domain + u.loc).join('\n');
+}
+
+// --- Routes ---
+// public folder static assets already served by middleware in applyCommonMiddleware()
+
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  const domain = req.protocol + '://' + req.get('host');
+  res.send(generateXml(domain, cache.get('urls')));
+});
+
+app.get('/sitemap.json', (req, res) => {
+  const domain = req.protocol + '://' + req.get('host');
+  res.json(generateJson(domain, cache.get('urls')));
+});
+
+app.get('/sitemap.txt', (req, res) => {
+  res.type('text/plain');
+  const domain = req.protocol + '://' + req.get('host');
+  res.send(generateTxt(domain, cache.get('urls')));
+});
+const port = parseInt(config.PORT || process.env.PORT || '3000');
+server.keepAliveTimeout = 5000;
+server.headersTimeout = 6000;
+
+server.listen({ port }, () => {
+  const address = server.address();
+  console.log(`Listening on:`);
+  console.log(`\thttp://localhost:${address.port}`);
+  console.log(`\thttp://${hostname()}:${address.port}`);
+  console.log(`\thttp://${address.family === 'IPv6' ? `[${address.address}]` : address.address}:${address.port}`);
+});
+
+process.on('SIGINT', () => shutdown('INT'));
+process.on('SIGTERM', () => shutdown('TERM'));
+
+function shutdown(signal) {
+  console.log(`SIG${signal} received: shutting down...`);
+  server.close(() => {
+    console.log('HTTP server closed');
+    bare.close(() => {
+      console.log('Bare server closed');
+      process.exit(0);
+    });
+  });
+}
+

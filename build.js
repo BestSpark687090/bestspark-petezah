@@ -102,7 +102,9 @@ class JsonArrayWriter {
       throw new Error('Stream is in error state');
     }
     return new Promise((resolve, reject) => {
-      this.stream.end('\n]\n', 'utf8',
+      this.stream.end(
+        '\n]\n',
+        'utf8',
         /**
          * @param {Error | null | undefined} err
          * @returns {void}
@@ -147,8 +149,8 @@ const Submodules = ['scramjet', 'ultraviolet'];
 // --- Build commands ---
 /** @type {Record<string, string>} */
 const buildCommands = {
-  //scramjet: "CI=true pnpm install && PATH='$HOME/.cargo/bin:$PATH' npm run rewriter:build && npm run build:all",
-  ultraviolet: 'CI=true npm install && npm run build'
+  scramjet: "CI=true pnpm install && PATH='$HOME/.cargo/bin:$PATH' npm run rewriter:build && npm run build:all",
+  ultraviolet: 'CI=true pnpm install --ignore-workspace --no-frozen-lockfile --no-verify-store-integrity && pnpm run build'
 };
 const YELLOW = '\x1b[33m';
 const GREEN = '\x1b[32m';
