@@ -33,36 +33,7 @@
   "prettier.singleQuote": true,
   "prettier.trailingComma": "all",
   "prettier.arrowParens": "always",
-
-  // Deno
-  "deno.enable": true,
-  "deno.enablePaths": ["supabase/functions"],
-  "deno.lint": true,
-  "deno.unstable": [
-    "bare-node-builtins",
-    "byonm",
-    "sloppy-imports",
-    "unsafe-proto",
-    "webgpu",
-    "broadcast-channel",
-    "worker-options",
-    "cron",
-    "kv",
-    "ffi",
-    "fs",
-    "http",
-    "net",
-    "cache",
-    "flash",
-    "metrics",
-    "websocket-stream"
-  ],
-  "deno.suggest.imports.hosts": {
-    "https://deno.land": true,
-    "https://cdn.nest.land": true,
-    "https://x.nest.land": true,
-    "https://esm.sh": true
-  },
+  "prettier.endOfLine": "lf",
 
   // TypeScript
   "[typescript]": {

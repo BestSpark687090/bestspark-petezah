@@ -1,5 +1,6 @@
 onlyBuiltDependencies:
   - argon2
+  - bcrypt
   - better-sqlite3
   - bufferutil
   - canvas

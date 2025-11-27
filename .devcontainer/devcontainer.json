@@ -5,14 +5,7 @@
   "postCreateCommand": "pnpm install",
   "customizations": {
     "vscode": {
-      "extensions": [
-        "dbaeumer.vscode-eslint",
-        "esbenp.prettier-vscode",
-        "denoland.vscode-deno",
-        "eamodio.gitlens",
-        "webhint.vscode-webhint",
-        "stylelint.vscode-stylelint"
-      ]
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "eamodio.gitlens", "stylelint.vscode-stylelint"]
     }
   }
 }

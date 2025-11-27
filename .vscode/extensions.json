@@ -7,5 +7,5 @@
     "webhint.vscode-webhint",
     "stylelint.vscode-stylelint"
   ],
-  "unwantedRecommendations": ["ms-vscode.vscode-typescript-tslint-plugin", "hookyqr.beautify"]
+  "unwantedRecommendations": ["ms-vscode.vscode-typescript-tslint-plugin", "hookyqr.beautify", "webhint.vscode-webhint"]
 }
