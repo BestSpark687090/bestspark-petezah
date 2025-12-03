@@ -49,6 +49,7 @@
     "jsonc-parser": "^3.3.1",
     "minimist": "^1.2.8",
     "node-cache": "^5.1.2",
+    "nodemailer": "^7.0.11",
     "p-limit": "^7.2.0",
     "sharp": "^0.33.5",
     "utf-8-validate": "^5.0.10"

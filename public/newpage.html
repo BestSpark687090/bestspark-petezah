@@ -693,6 +693,19 @@
               <div class="vpn-country">America</div>
             </div>
           </div>
+
+          <div class="vpn-region-card" data-region="4">
+            <div
+              class="flag-icon"
+              style="
+                background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzQxMCIgaGVpZ2h0PSIzOTAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI3NDEwIiBoZWlnaHQ9IjEzMDAiIGZpbGw9IiNmZjAwMDAiLz48cmVjdCB3aWR0aD0iNzQxMCIgaGVpZ2h0PSIzMDAiIHk9IjEzMDAiIGZpbGw9IiNmZmZmZmYiLz48cmVjdCB3aWR0aD0iNzQxMCIgaGVpZ2h0PSIxMzAwIiB5PSIyNjAwIiBmaWxsPSIjZmYwMDAwIi8+PC9zdmc+');
+              "
+            ></div>
+            <div class="vpn-region-info">
+              <div class="vpn-location">Austria</div>
+              <div class="vpn-country">Vienna</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1004,6 +1017,11 @@
           flag: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3NDEwIDM5MDAiPjxyZWN0IHdpZHRoPSI3NDEwIiBoZWlnaHQ9IjM5MDAiIGZpbGw9IiNiMjIyMzQiLz48cGF0aCBkPSJNMCwwaDc0MTB2MzAwSDBaTTAsNjAwaDE3NDEwdjMwMEgwWk0wLDEyMDBoNzQxMHYzMDBIMFpNMCwxODAwaDc0MTB2MzAwSDBaTTAsMjQwMGg3NDEwdjMwMEgwWk0wLDMwMDBoNzQxMHYzMDBIMFpNMCwzNjAwaDE3NDEwdjMwMEgweiIgZmlsbD0iI2ZmZiIvPjxyZWN0IHdpZHRoPSIyOTY0IiBoZWlnaHQ9IjIxMDAiIGZpbGw9IiMzYzNiNmUiLz48L3N2Zz4=',
           name: 'America',
           location: 'Mclean'
+        },
+        4: {
+          flag: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNzQxMCIgaGVpZ2h0PSIzOTAwIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHdpZHRoPSI3NDEwIiBoZWlnaHQ9IjEzMDAiIGZpbGw9IiNmZjAwMDAiLz48cmVjdCB3aWR0aD0iNzQxMCIgaGVpZ2h0PSIzMDAiIHk9IjEzMDAiIGZpbGw9IiNmZmZmZmYiLz48cmVjdCB3aWR0aD0iNzQxMCIgaGVpZ2h0PSIxMzAwIiB5PSIyNjAwIiBmaWxsPSIjZmYwMDAwIi8+PC9zdmc+',
+          name: 'Austria',
+          location: 'Vienna'
         }
       };
 
@@ -1011,7 +1029,8 @@
         default: { wisp: '/wisp/', config: 'config.js' },
         1: { wisp: '/api/alt-wisp-1/', config: '/static/alt-config-1.js' },
         2: { wisp: '/api/alt-wisp-2/', config: '/static/alt-config-2.js' },
-        3: { wisp: '/api/alt-wisp-3/', config: '/static/alt-config-3.js' }
+        3: { wisp: '/api/alt-wisp-3/', config: '/static/alt-config-3.js' },
+        4: { wisp: '/api/alt-wisp-4/', config: '/static/alt-config-4.js' }
       };
 
       vpnToggle.addEventListener('click', function (e) {

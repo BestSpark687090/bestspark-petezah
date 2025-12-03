@@ -1,25 +1,25 @@
-import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
-import { epoxyPath } from '@mercuryworkshop/epoxy-transport';
-import { libcurlPath } from '@mercuryworkshop/libcurl-transport';
-import { server as wisp } from '@mercuryworkshop/wisp-js/server';
-import { createBareServer } from '@tomphttp/bare-server-node';
-import bcrypt from 'bcrypt';
-import cookieParser from 'cookie-parser';
-import cors from 'cors';
-import { randomUUID } from 'crypto';
-import dotenv from 'dotenv';
-import express from 'express';
-import fileUpload from 'express-fileupload';
-import rateLimit from 'express-rate-limit';
-import session from 'express-session';
-import fs from 'fs';
-import { createProxyMiddleware } from 'http-proxy-middleware';
-import NodeCache from 'node-cache';
-import crypto from 'node:crypto';
-import { createServer } from 'node:http';
-import { hostname } from 'node:os';
-import path, { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { baremuxPath } from "@mercuryworkshop/bare-mux/node";
+import bareServerPkg from "@tomphttp/bare-server-node";
+import bcrypt from "bcrypt";
+import cookieParser from "cookie-parser";
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import fileUpload from "express-fileupload";
+import fs from "fs";
+import { createProxyMiddleware } from "http-proxy-middleware";
+import { epoxyPath } from "@mercuryworkshop/epoxy-transport";
+import { libcurlPath } from "@mercuryworkshop/libcurl-transport";
+import NodeCache from "node-cache";
+import { hostname } from "node:os";
+import path, { join } from "node:path";
+import session from "express-session";;
+import { server as wisp } from "@mercuryworkshop/wisp-js/server";
+import { randomUUID } from "crypto";
+import { createServer } from "node:http";
+import { fileURLToPath } from "node:url";
+import rateLimit from "express-rate-limit";
+const { createBareServer } = bareServerPkg;
 import { adminUserActionHandler } from './server/api/admin-user-action.js';
 import { addCommentHandler, getCommentsHandler } from './server/api/comments.js';
 import { getLikesHandler, likeHandler } from './server/api/likes.js';
@@ -39,13 +39,12 @@ if (fs.existsSync(envFile)) {
 }
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const publicPath = 'public';
-const bare = createBareServer('/bare/', {
-  requestOptions: {
-    agent: false
-  }
+const publicPath = "public";
+const bare = createBareServer("/bare/", {
 });
-const barePremium = createBareServer('/api/bare-premium/');
+const barePremium = createBareServer("/api/bare-premium/", {
+});
+
 const app = express();
 
 // Consolidate common middleware into a helper to avoid duplication and make
