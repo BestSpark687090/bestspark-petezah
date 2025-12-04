@@ -1,7 +1,5 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -32,12 +30,10 @@
       overflow: hidden;
       background-color: #000;
     }
-
     #iframe-container {
       width: 100%;
       height: 100%;
     }
-
     #iframe-container iframe {
       width: 100%;
       height: 100%;
@@ -49,10 +45,8 @@
   <script src="/scram/scramjet.all.js"></script>
   <script src="/config.js"></script>
 </head>
-
 <body>
   <div id="iframe-container"></div>
-
   <script>
     const { ScramjetController } = $scramjetLoadController();
     const scramjet = new ScramjetController({
@@ -65,9 +59,7 @@
     });
     scramjet.init();
     navigator.serviceWorker.register("./sw.js");
-
     const connection = new BareMux.BareMuxConnection("/baremux/worker.js");
-
     const store = {
       url: "https://",
       wispurl:
@@ -85,24 +77,21 @@
       proxy: "",
       transport: "/epoxy/index.mjs",
     };
-
-
     async function loadFromHash() {
       const hash = window.location.hash.substring(1);
-
-      if (hash) {
-        let url = hash;
-
+      const noRedirect = hash.startsWith("no-redirect#");
+      let url = noRedirect ? hash.substring(12) : hash;
+      if (url) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
           url = "https://" + url;
         }
-
         await waitForTransport();
-
         const frame = scramjet.createFrame();
         document.getElementById("iframe-container").appendChild(frame.frame);
-
         frame.go(url);
+        if (noRedirect) {
+          blockPopups(frame.frame);
+        }
       } else {
         await waitForTransport();
         const frame = scramjet.createFrame();
@@ -110,11 +99,34 @@
         frame.go("https://google.com/");
       }
     }
-
+    function blockPopups(iframe) {
+      try {
+        const iframeWindow = iframe.contentWindow;
+        const originalOpen = iframeWindow.open;
+        iframeWindow.open = function() {
+          console.log("Blocked popup attempt");
+          return null;
+        };
+        iframe.addEventListener("load", function() {
+          try {
+            const iframeDoc = iframe.contentWindow;
+            if (iframeDoc && iframeDoc.open) {
+              iframeDoc.open = function() {
+                console.log("Blocked popup attempt");
+                return null;
+              };
+            }
+          } catch (e) {
+            console.log("Cannot access iframe content due to CORS");
+          }
+        });
+      } catch (e) {
+        console.log("Cannot access iframe window");
+      }
+    }
     async function waitForTransport() {
       let attempts = 0;
       const maxAttempts = 10;
-
       while (attempts < maxAttempts) {
         try {
           await connection.setTransport("/epoxy/index.mjs", [{ wisp: store.wispurl }]);
@@ -139,18 +151,14 @@
         }
       }
     }
-
     window.addEventListener("hashchange", async () => {
       const container = document.getElementById("iframe-container");
       container.innerHTML = "";
-
       await loadFromHash();
     });
-
     window.addEventListener("load", async () => {
       await loadFromHash();
     });
   </script>
 </body>
-
 </html>
