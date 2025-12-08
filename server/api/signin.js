@@ -2,6 +2,8 @@ import argon2 from 'argon2';
 import bcrypt from 'bcrypt';
 import db from '../db.js';
 
+const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ12';
+
 export async function signinHandler(req, res) {
   const { email, password } = req.body;
 
@@ -10,13 +12,12 @@ export async function signinHandler(req, res) {
   }
 
   try {
-    const user = db.prepare('SELECT id, email, password_hash, username, bio, avatar_url, email_verified, ip FROM users WHERE email = ?').get(email);
+    const user = db.prepare(
+      'SELECT id, email, password_hash, username, bio, avatar_url, email_verified, ip FROM users WHERE email = ?'
+    ).get(email);
 
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password' });
-    }
-
-    const hash = user.password_hash;
+    // Use dummy hash if user not found to mitigate timing attacks
+    const hash = user ? user.password_hash : DUMMY_HASH;
     let passwordMatch = false;
 
     // Detect hash type
@@ -24,24 +25,28 @@ export async function signinHandler(req, res) {
       // bcrypt
       passwordMatch = await bcrypt.compare(password, hash);
 
-      if (passwordMatch) {
+      if (passwordMatch && user) {
         // Upgrade to Argon2id
         const newHash = await argon2.hash(password, {
           type: argon2.argon2id,
-          memoryCost: 65565, // 64 MB
-          timeCost: 5, // iterations
-          parallelism: 1 // threads
+          memoryCost: 65565, // ~64 MB
+          timeCost: 5,       // iterations
+          parallelism: 1     // threads
         });
-        db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?').run(newHash, Date.now(), user.id);
+        db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?')
+          .run(newHash, Date.now(), user.id);
       }
     } else if (hash.startsWith('$argon2id$')) {
       // Argon2id
       passwordMatch = await argon2.verify(hash, password);
     } else {
-      console.warn('Unknown hash format for user:', user.email);
+      // Unknown hash format
+      console.warn('Unknown hash format for user:', user?.email);
     }
 
-    if (!passwordMatch) {
+    // If no user or password mismatch, add slight delay to reduce timing attack risk
+    if (!user || !passwordMatch) {
+      await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 50)));
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
@@ -51,6 +56,7 @@ export async function signinHandler(req, res) {
       });
     }
 
+    // Update IP if missing
     let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || null;
     if (ip && typeof ip === 'string' && ip.includes(',')) ip = ip.split(',')[0].trim();
     if (ip && ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
@@ -58,6 +64,7 @@ export async function signinHandler(req, res) {
       db.prepare('UPDATE users SET ip = ? WHERE id = ?').run(ip, user.id);
     }
 
+    // Attach session
     req.session.user = {
       id: user.id,
       email: user.email,

@@ -358,95 +358,126 @@
           <h1 class="welcome-title">Create an account</h1>
           <p class="welcome-subtitle">Sign up for premium features</p>
         </div>
-        <form id="signup-form">
-          <div class="form-group">
-            <label class="form-label">Email address</label>
-            <input type="email" id="email" class="form-input" placeholder="Enter your email" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Password</label>
-            <input type="password" id="password" class="form-input" placeholder="Enter your password" required />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Confirm Password</label>
-            <input type="password" id="confirm-password" class="form-input" placeholder="Confirm your password" required />
-          </div>
-          <!--
-        <div class="form-group">
-          <label class="form-label">School</label>
-          <input type="text" id="school" class="form-input" placeholder="Enter your school (optional)">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Age</label>
-          <input type="number" id="age" class="form-input" placeholder="Enter your age (optional)" min="1" max="120">
-        </div>
-        -->
-          <div class="form-options">
-            <label class="remember-me"><input type="checkbox" id="remember" />Remember me</label>
-            <a href="/pages/settings/p.html" class="signin-link">Sign in</a>
-          </div>
-          <button type="submit" class="sign-up-btn" id="submit-btn">Sign Up</button>
-        </form>
-      </div>
-    </div>
-    <script src="/storage/js/popup.js"></script>
-    <script>
-      document.getElementById('signup-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-        const schoolInput = document.getElementById('school');
-        const ageInput = document.getElementById('age');
-        const school = schoolInput ? schoolInput.value : null;
-        const age = ageInput ? ageInput.value : null;
-        if (password !== confirmPassword) {
-          showPopup('Passwords do not match', 'error');
-          return;
-        }
-        if (password.length < 8) {
-          showPopup('Password must be at least 8 characters', 'error');
-          return;
-        }
-        const submitBtn = document.getElementById('submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Creating account...';
-        try {
-          const response = await fetch('/api/signup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ email, password, school, age })
-          });
-          const data = await response.json();
-          if (response.ok) {
-            showPopup(data.message, 'success');
-            setTimeout(() => {
-              if (window.parent !== window) {
-                window.parent.postMessage({ type: 'signup_success' }, window.location.origin);
-                const iframe = window.frameElement;
-                if (iframe) {
-                  iframe.src = '/pages/settings/p.html';
-                }
-              } else {
-                window.location.href = '/pages/settings/p.html';
-              }
-            }, 2000);
-          } else {
-            showPopup(data.error || 'Signup failed. Please try again.', 'error');
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Sign Up';
-          }
-        } catch (error) {
-          showPopup('Network error. Please check your connection.', 'error');
-          submitBtn.disabled = false;
-          submitBtn.textContent = 'Sign Up';
-        }
+<form id="signup-form">
+  <div class="form-group">
+    <label class="form-label">Email address</label>
+    <input type="email" id="email" class="form-input" placeholder="Enter your email" required />
+  </div>
+  <div class="form-group">
+    <label class="form-label">Password</label>
+    <input type="password" id="password" class="form-input" placeholder="Enter your password" required />
+  </div>
+  <div class="form-group">
+    <label class="form-label">Confirm Password</label>
+    <input type="password" id="confirm-password" class="form-input" placeholder="Confirm your password" required />
+  </div>
+
+  <!-- Honeypot + bot token for anti-bot protection -->
+  <input type="text" name="website" id="hp_website" autocomplete="off"
+         style="display:none !important; position:absolute; left:-9999px; opacity:0; width:0; height:0;">
+  <input type="hidden" name="bot_token" id="bot_token">
+
+  <div class="form-group">
+    <label class="form-label">School</label>
+    <input type="text" id="school" class="form-input" placeholder="Enter your school (optional)">
+  </div>
+  <div class="form-group">
+    <label class="form-label">Age</label>
+    <input type="number" id="age" class="form-input" placeholder="Enter your age (optional)" min="1" max="120">
+  </div>
+
+  <div class="form-options">
+    <label class="remember-me"><input type="checkbox" id="remember" />Remember me</label>
+    <a href="/pages/settings/p.html" class="signin-link">Sign in</a>
+  </div>
+  <button type="submit" class="sign-up-btn" id="submit-btn">Sign Up</button>
+</form>
+
+<script src="/storage/js/popup.js"></script>
+<script>
+  const formStartTime = Date.now();
+
+  // Generate bot token
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const t = Date.now() + ":" + crypto.getRandomValues(new Uint32Array(1))[0];
+    document.getElementById("bot_token").value = btoa(t);
+  }
+
+  document.getElementById('signup-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+    const schoolInput = document.getElementById('school');
+    const ageInput = document.getElementById('age');
+    const school = schoolInput ? schoolInput.value : null;
+    const age = ageInput ? ageInput.value : null;
+    const honeypot = document.getElementById('hp_website').value;
+    const botToken = document.getElementById('bot_token').value;
+
+    // Validation
+    if (password !== confirmPassword) {
+      showPopup('Passwords do not match', 'error');
+      return;
+    }
+    if (password.length < 8) {
+      showPopup('Password must be at least 8 characters', 'error');
+      return;
+    }
+    if (!botToken) {
+      showPopup('Signup failed. Bot token missing.', 'error');
+      return;
+    }
+
+    const formTime = Date.now() - formStartTime;
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Form-Time': formTime.toString(),
+          'X-User-Agent': navigator.userAgent,
+          'X-Language': navigator.language || 'en',
+          'X-Platform': navigator.platform || 'unknown'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ email, password, school, age, website: honeypot, bot_token: botToken })
       });
-      if (window.parent !== window) {
-        document.body.style.minHeight = '100vh';
+
+      const data = await response.json();
+      if (response.ok) {
+        showPopup(data.message, 'success');
+        setTimeout(() => {
+          if (window.parent !== window) {
+            window.parent.postMessage({ type: 'signup_success' }, window.location.origin);
+            const iframe = window.frameElement;
+            if (iframe) {
+              iframe.src = '/pages/settings/p.html';
+            }
+          } else {
+            window.location.href = '/pages/settings/p.html';
+          }
+        }, 2000);
+      } else {
+        showPopup(data.error || 'Signup failed. Please try again.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Sign Up';
       }
-    </script>
+    } catch (error) {
+      showPopup('Network error. Please check your connection.', 'error');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Sign Up';
+    }
+  });
+
+  if (window.parent !== window) {
+    document.body.style.minHeight = '100vh';
+  }
+</script>
     <script src="/storage/js/settings.js"></script>
   </body>
 </html>
