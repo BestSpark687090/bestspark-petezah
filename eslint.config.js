@@ -5,7 +5,7 @@ import eslintConfigPrettier from 'eslint-config-prettier/flat';
 import { defineConfig } from 'eslint/config';
 import globals from 'globals';
 import jsonParser from 'jsonc-eslint-parser';
-import localPlugin from './eslint-rules/index.js';
+import localPlugin from './eslint-plugin-sorter/index.js';
 
 export default defineConfig([
   eslintConfigPrettier,
@@ -28,13 +28,13 @@ export default defineConfig([
     ignores: ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', '.sitemap-base.json'],
     plugins: {
       json,
-      local: localPlugin
+      localPlugin
     },
     languageOptions: {
       parser: jsonParser
     },
     rules: {
-      'local/sort-labels': 'warn'
+      'localPlugin/sort-labels': 'warn'
     },
     extends: ['json/recommended']
   },
