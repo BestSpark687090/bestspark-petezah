@@ -4,7 +4,17 @@ import { randomUUID } from 'crypto';
 function sanitizeContent(content) {
   if (typeof content !== 'string') return '';
   
-  return content
+  let cleaned = content;
+  
+  cleaned = cleaned.replace(/\\u[\dA-F]{4}/gi, (match) => {
+    return String.fromCharCode(parseInt(match.replace(/\\u/g, ''), 16));
+  });
+  
+  cleaned = cleaned.replace(/&#x?[0-9a-f]+;?/gi, '');
+  cleaned = cleaned.replace(/\x00/g, '');
+  cleaned = cleaned.replace(/\\/g, '');
+  
+  return cleaned
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -38,7 +48,17 @@ function validateContent(content) {
     /<iframe/i,
     /<object/i,
     /<embed/i,
-    /data:text\/html/i
+    /<img/i,
+    /<svg/i,
+    /<link/i,
+    /<style/i,
+    /data:/i,
+    /vbscript:/i,
+    /\.innerHTML/i,
+    /document\./i,
+    /window\./i,
+    /eval\(/i,
+    /expression\(/i
   ];
   
   if (dangerousPatterns.some(p => p.test(content))) return false;
@@ -91,4 +111,30 @@ export async function getCommentsHandler(req, res) {
   ).all(type, targetId);
   
   res.json({ comments });
+}
+
+export async function deleteCommentHandler(req, res) {
+  if (!req.session.user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  
+  const { commentId } = req.body;
+  
+  if (!commentId || typeof commentId !== 'string') {
+    return res.status(400).json({ error: 'Invalid commentId' });
+  }
+  
+  const comment = db.prepare('SELECT * FROM comments WHERE id = ?').get(commentId);
+  
+  if (!comment) {
+    return res.status(404).json({ error: 'Comment not found' });
+  }
+  
+  if (comment.user_id !== req.session.user.id && !req.session.user.isAdmin) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  
+  db.prepare('DELETE FROM comments WHERE id = ?').run(commentId);
+  
+  res.json({ message: 'Comment deleted.' });
 }
