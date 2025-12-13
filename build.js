@@ -182,7 +182,8 @@ const Submodules = ['scramjet', 'ultraviolet'];
 // --- Build commands ---
 /** @type {Record<string, string>} */
 const buildCommands = {
-  scramjet: 'CI=true pnpm install -P  --no-verify-store-integrity	--shamefully-hoist --store-dir ~/.pnpm-store && npm run rewriter:build && npm run build:all',
+  scramjet:
+    'CI=true pnpm install -P  --no-verify-store-integrity	--shamefully-hoist --store-dir ~/.pnpm-store && npm run rewriter:build && npm run build:all',
   ultraviolet: 'CI=true pnpm install --ignore-workspace --no-lockfile --no-verify-store-integrity && pnpm run build'
 };
 const YELLOW = '\x1b[33m';

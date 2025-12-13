@@ -1,14 +1,10 @@
+import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { Pool } from 'pg';
-import Database from 'better-sqlite3';
+import { fileURLToPath } from 'url';
 
-const useCloudSQL =
-  process.env.DB_HOST &&
-  process.env.DB_USER &&
-  process.env.DB_PASS &&
-  process.env.DB_NAME;
+const useCloudSQL = process.env.DB_HOST && process.env.DB_USER && process.env.DB_PASS && process.env.DB_NAME;
 
 const SQLitePath = process.env.DB_SQLITE_PATH;
 
@@ -22,7 +18,7 @@ if (useCloudSQL && !SQLitePath) {
     password: process.env.DB_PASS,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 5432,
-    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
   });
 
   // Run schema setup once at startup
@@ -109,9 +105,7 @@ if (useCloudSQL && !SQLitePath) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  const dbPath = SQLitePath
-    ? path.join(__dirname, SQLitePath)
-    : path.join(__dirname, '..', 'data', 'users.db');
+  const dbPath = SQLitePath ? path.join(__dirname, SQLitePath) : path.join(__dirname, '..', 'data', 'users.db');
   const dbDir = path.dirname(dbPath);
 
   if (!fs.existsSync(dbDir)) {
@@ -224,7 +218,7 @@ if (useCloudSQL && !SQLitePath) {
     `);
 
   db = sqlite;
-};
+}
 
 export default db;
 export { useCloudSQL };
