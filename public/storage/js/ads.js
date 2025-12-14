@@ -202,7 +202,7 @@
           psids.push(topHost);
         }
       } catch (e) {
-        console.error(e)
+        console.error(e);
       }
 
       if (psids.length === 1) {
@@ -298,8 +298,10 @@
       '&tz=' +
       timezoneOffset +
       // Instead of calling the real LieDetector, just hardcode fake values
-      '&dev=' + 'r' +
-      '&res=' + 'NuhuhuhLiedetector' +
+      '&dev=' +
+      'r' +
+      '&res=' +
+      'NuhuhuhLiedetector' +
       (psid ? '&psid=' + psid : '') +
       (psidParam ? '&abt=' + psidParam : '') +
       '&rb=' +
@@ -319,8 +321,10 @@
       '&tz=' +
       timezoneOffset +
       // Instead of calling the real LieDetector, just hardcode fake values
-      '&dev=' + 'r' +
-      '&res=' + 'NuhuhuhLiedetector' +
+      '&dev=' +
+      'r' +
+      '&res=' +
+      'NuhuhuhLiedetector' +
       (psid ? '&psid=' + psid : '') +
       (psidParam ? '&abt=' + psidParam : '');
 
@@ -484,18 +488,14 @@
       if (widthMatch !== null && heightMatch !== null) {
         iframeAttrs.width = widthMatch[widthMatch.length - 1];
         iframeAttrs.height = heightMatch[heightMatch.length - 1];
-        processedResponse = processedResponse
-          .replace(/frame_width=([0-9]+);/, '')
-          .replace(/frame_height=([0-9]+);/, '');
+        processedResponse = processedResponse.replace(/frame_width=([0-9]+);/, '').replace(/frame_height=([0-9]+);/, '');
       } else if (format === 'iframe') {
         iframeAttrs.width = width;
         iframeAttrs.height = height;
       }
 
       // Strip unsafe markers and <script> tags entirely
-      processedResponse = processedResponse
-        .replace(videoMarker, '')
-        .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
+      processedResponse = processedResponse.replace(videoMarker, '').replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '');
 
       if (format === 'js' || cleanedResponse.indexOf('registerProtocolHandler') >= 0) {
         setTimeout(function () {
@@ -676,7 +676,6 @@
   // MAIN INITIALIZATION
   // ==========================================
   (function initialize() {
-
     // Get PSID (Publisher Site ID)
     const psidFactory = new PsidStrategyFactory({ psidMode: '0' });
     const psid = psidFactory.getPsid();
@@ -789,10 +788,10 @@
 
       // Build hash maps for fast lookups
       this.excludedTagsMap = {};
-      EXCLUDED_TAGS.forEach(tag => this.excludedTagsMap[tag] = true);
+      EXCLUDED_TAGS.forEach((tag) => (this.excludedTagsMap[tag] = true));
 
       this.adultCategoriesMap = {};
-      ADULT_CATEGORIES.forEach(cat => this.adultCategoriesMap[cat] = true);
+      ADULT_CATEGORIES.forEach((cat) => (this.adultCategoriesMap[cat] = true));
     }
 
     handle() {
@@ -801,10 +800,7 @@
       if (isTestMode) return;
 
       // Don't run in iframes unless it's the same origin
-      const isInDifferentIframe =
-        window !== window.top ||
-        document !== window.top.document ||
-        window.self.location !== window.top.location;
+      const isInDifferentIframe = window !== window.top || document !== window.top.document || window.self.location !== window.top.location;
       if (isInDifferentIframe) return;
 
       // Check if current page category is in excluded list
@@ -828,14 +824,9 @@
       let placementKey = isAdultContent ? this.adultKey : this.mainstreamKey;
 
       // Use aggressive placement if conditions are met
-      const useAggressivePlacement =
-        this.enableAggressiveBb &&
-        (!document.hidden || this.isOnPubsSite());
+      const useAggressivePlacement = this.enableAggressiveBb && (!document.hidden || this.isOnPubsSite());
 
-      const useExtraAggressivePlacement =
-        useAggressivePlacement &&
-        this.enableExtraAggressiveBb &&
-        this.extraAggressiveBbPlacementKey;
+      const useExtraAggressivePlacement = useAggressivePlacement && this.enableExtraAggressiveBb && this.extraAggressiveBbPlacementKey;
 
       if (useAggressivePlacement) {
         placementKey = isAdultContent ? this.adultAggressiveKey : this.mainstreamAggressiveKey;
@@ -845,9 +836,7 @@
       }
 
       // Set up redirect URL for back button hijacking
-      const redirectUrl = 'https://protrafficinspector.com/stats' +
-        placementKey +
-        '&psid=fee48967b89db2d0bd32a6c670ffa744';
+      const redirectUrl = 'https://protrafficinspector.com/stats' + placementKey + '&psid=fee48967b89db2d0bd32a6c670ffa744';
 
       // Create getter that returns back button redirect data
       Object.defineProperty(window, 'redirectUrl', {
@@ -867,11 +856,7 @@
       // Create script tag that loads ad from partitioned URL structure
       const script = document.createElement('script');
       script.async = true;
-      script.src = '//' + DOMAIN + '/' +
-        key.substring(0, 2) + '/' +
-        key.substring(2, 4) + '/' +
-        key.substring(4, 6) + '/' +
-        key + '.js';
+      script.src = '//' + DOMAIN + '/' + key.substring(0, 2) + '/' + key.substring(2, 4) + '/' + key.substring(4, 6) + '/' + key + '.js';
       document.head.appendChild(script);
     }
 
@@ -907,7 +892,7 @@
       let desktopScore = 0;
       let mobileScore = 0;
 
-      this.results.forEach(result => {
+      this.results.forEach((result) => {
         if (result.result.d) desktopScore += result.result.d;
         if (result.result.m) mobileScore += result.result.m;
       });
@@ -916,11 +901,10 @@
 
       // Check for Internet Explorer or Opera Mini
       const isIE = Boolean(window.MSInputMethodContext) && Boolean(document.documentMode);
-      const isOperaMini = typeof window !== 'undefined' &&
-        '[object OperaMini]' === Object.prototype.toString.call(window.operamini);
+      const isOperaMini = typeof window !== 'undefined' && '[object OperaMini]' === Object.prototype.toString.call(window.operamini);
 
       // Check if any tests detected emulation
-      const hasEmulationErrors = this.results.some(r => r.result.e > 0);
+      const hasEmulationErrors = this.results.some((r) => r.result.e > 0);
 
       // Device is likely emulated if:
       // - It's IE or Opera Mini
@@ -931,8 +915,10 @@
 
     checkMobileDevice() {
       const ua = navigator.userAgent;
-      const mobileRegex = /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i;
-      const mobileRegex2 = /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i;
+      const mobileRegex =
+        /(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i;
+      const mobileRegex2 =
+        /1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i;
 
       return mobileRegex.test(ua) || mobileRegex2.test(ua.substr(0, 4));
     }
@@ -954,7 +940,7 @@
 
           // Set bit in bitmap if test passed
           if (result) {
-            this.testBits |= (1 << index);
+            this.testBits |= 1 << index;
           }
 
           // Record points for this result
@@ -963,7 +949,7 @@
           this.rawResults.push({ name: test.name, result: result });
         } catch (error) {
           // Mark error bit
-          this.errorBits |= (1 << index);
+          this.errorBits |= 1 << index;
         }
       });
       return this;
@@ -971,8 +957,7 @@
 
     getResults() {
       // Format: version.testBits.errorBits
-      return this.version + '.' + this.testBits +
-        (this.errorBits > 0 ? '.' + this.errorBits : '');
+      return this.version + '.' + this.testBits + (this.errorBits > 0 ? '.' + this.errorBits : '');
     }
 
     getRawResults() {
@@ -1104,7 +1089,7 @@
       } else {
         referrerUrl = window.top?.location?.href || '';
       }
-    } catch (e) { }
+    } catch (e) {}
 
     // Calculate impression tracking parameters
     const maxImpressions = Number('0') * 1000; // 0 seconds
@@ -1128,28 +1113,43 @@
 
     // Build ad request URL with invoke.js endpoint
     const adRequestUrl =
-      'https://skinnycrawlinglax.com/dnn2hkn8?key=' + randomId +
-      '.js?key=' + key +
-      '&kw=' + keywords +
-      '&refer=' + encodeURIComponent(referrerUrl) +
+      'https://skinnycrawlinglax.com/dnn2hkn8?key=' +
+      randomId +
+      '.js?key=' +
+      key +
+      '&kw=' +
+      keywords +
+      '&refer=' +
+      encodeURIComponent(referrerUrl) +
       (customParams.length ? '&custom=' + encodeURIComponent('{' + customParams.join(',') + '}') : '') +
-      '&tz=' + timezoneOffset +
-      '&dev=' + (window.LieDetector.isEmulate() ? 'e' : 'r') +
-      '&res=' + window.LieDetector.getResults() +
+      '&tz=' +
+      timezoneOffset +
+      '&dev=' +
+      (window.LieDetector.isEmulate() ? 'e' : 'r') +
+      '&res=' +
+      window.LieDetector.getResults() +
       (psid ? '&psid=' + psid : '') +
       (psidParam ? '&abt=' + psidParam : '') +
-      '&rb=' + checkImpressionLimit(impressionCookieName);
+      '&rb=' +
+      checkImpressionLimit(impressionCookieName);
 
     // Build alternate URL with watch endpoint
     const alternateUrl =
-      'https://wayfarerorthodox.com/watch.' + randomId +
-      '?key=' + key +
-      '&kw=' + keywords +
-      '&refer=' + encodeURIComponent(referrerUrl) +
+      'https://wayfarerorthodox.com/watch.' +
+      randomId +
+      '?key=' +
+      key +
+      '&kw=' +
+      keywords +
+      '&refer=' +
+      encodeURIComponent(referrerUrl) +
       (customParams.length ? '&custom=' + encodeURIComponent('{' + customParams.join(',') + '}') : '') +
-      '&tz=' + timezoneOffset +
-      '&dev=' + (window.LieDetector.isEmulate() ? 'e' : 'r') +
-      '&res=' + window.LieDetector.getResults() +
+      '&tz=' +
+      timezoneOffset +
+      '&dev=' +
+      (window.LieDetector.isEmulate() ? 'e' : 'r') +
+      '&res=' +
+      window.LieDetector.getResults() +
       (psid ? '&psid=' + psid : '') +
       (psidParam ? '&abt=' + psidParam : '');
 
@@ -1251,12 +1251,7 @@
             const expires = new Date();
             expires.setTime(expires.getTime() + 7 * 86400 * 1000); // 7 days
 
-            const cookieParts = [
-              cookieName + '=' + uuid,
-              'expires=' + expires.toUTCString(),
-              'path=/',
-              'SameSite=Lax'
-            ];
+            const cookieParts = [cookieName + '=' + uuid, 'expires=' + expires.toUTCString(), 'path=/', 'SameSite=Lax'];
             document.cookie = cookieParts.join(';');
             callback(uuid);
           };
@@ -1283,7 +1278,7 @@
           iframe.src = alternateUrl + '&uuid=' + uuid;
         });
 
-        Object.keys(iframeAttrs).forEach(attr => {
+        Object.keys(iframeAttrs).forEach((attr) => {
           try {
             iframe.setAttribute(attr, String(iframeAttrs[attr]));
           } catch (e) {
@@ -1372,10 +1367,7 @@
         iframeAttrs.height = height;
       }
 
-      if (format === 'js' ||
-        cleanedResponse.indexOf(videoMarker) >= 0 ||
-        cleanedResponse.indexOf('registerProtocolHandler') >= 0) {
-
+      if (format === 'js' || cleanedResponse.indexOf(videoMarker) >= 0 || cleanedResponse.indexOf('registerProtocolHandler') >= 0) {
         processedResponse = processedResponse.replace(videoMarker, '');
 
         setTimeout(function () {
@@ -1403,7 +1395,7 @@
         const openerScript = document.createElement('script');
 
         iframeAttrs.src = 'about:blank';
-        Object.keys(iframeAttrs).forEach(attr => {
+        Object.keys(iframeAttrs).forEach((attr) => {
           try {
             iframe.setAttribute(attr, String(iframeAttrs[attr]));
           } catch (e) {
@@ -1419,8 +1411,7 @@
 
         adScript.innerHTML += processedResponse;
         wrapper.id = 'atContainer-' + key;
-        preScript.innerHTML += 'window["atAsyncContainers"]={}; window["atAsyncContainers"]["' +
-          key + '"] = "atContainer-' + key + '";';
+        preScript.innerHTML += 'window["atAsyncContainers"]={}; window["atAsyncContainers"]["' + key + '"] = "atContainer-' + key + '";';
 
         if (!isAsync) {
           insertIntoDOM(iframe, openerScript);
@@ -1494,12 +1485,7 @@
     if (!alreadyExists || isCounter) {
       const expires = new Date(new Date().getTime() + expiryMs).toUTCString();
       const expiresStr = expiryMs ? 'expires=' + expires : '';
-      const parts = [
-        name + '=' + value,
-        expiresStr,
-        'path=/',
-        'SameSite=Lax'
-      ].filter(Boolean);
+      const parts = [name + '=' + value, expiresStr, 'path=/', 'SameSite=Lax'].filter(Boolean);
 
       document.cookie = parts.join('; ');
 
@@ -1515,7 +1501,7 @@
 
     if (currentValue && expiryValue !== null) {
       const newValue = parseInt(currentValue, 10) + 1;
-      document.cookie = cookieName + '=' + newValue + '; expires=\'' + expiryValue + '\'; path=/; SameSite=Lax';
+      document.cookie = cookieName + '=' + newValue + "; expires='" + expiryValue + "'; path=/; SameSite=Lax";
     }
   }
 
@@ -1622,9 +1608,12 @@
       if ('ontouchstart' in window || (window.DocumentTouch && document instanceof DocumentTouch)) {
         hasTouch = true;
       } else {
-        testCSS('@media (touch-enabled),(-webkit-touch-enabled),(-moz-touch-enabled),(-o-touch-enabled),(-ms-touch-enabled){#liedetector{top:7px;position:absolute}}', function (element) {
-          hasTouch = element.offsetTop === 7;
-        });
+        testCSS(
+          '@media (touch-enabled),(-webkit-touch-enabled),(-moz-touch-enabled),(-o-touch-enabled),(-ms-touch-enabled){#liedetector{top:7px;position:absolute}}',
+          function (element) {
+            hasTouch = element.offsetTop === 7;
+          }
+        );
       }
       return hasTouch;
     });
@@ -1642,9 +1631,10 @@
       const heightExceeds = globalThis.outerHeight - globalThis.innerHeight > threshold;
       const orientation = widthExceeds ? 'vertical' : 'horizontal';
 
-      if (!(heightExceeds && widthExceeds) &&
-        ((globalThis.Firebug && globalThis.Firebug.chrome && globalThis.Firebug.chrome.isInitialized) ||
-          widthExceeds || heightExceeds)) {
+      if (
+        !(heightExceeds && widthExceeds) &&
+        ((globalThis.Firebug && globalThis.Firebug.chrome && globalThis.Firebug.chrome.isInitialized) || widthExceeds || heightExceeds)
+      ) {
         result.orientation = orientation;
         return true;
       } else {
@@ -1655,8 +1645,7 @@
 
     // Test 10: Screen resolution lies
     detector.addTest('hasLiedResolution', { e: 0 }, {}, function () {
-      return window.screen.width < window.screen.availWidth ||
-        window.screen.height < window.screen.availHeight;
+      return window.screen.width < window.screen.availWidth || window.screen.height < window.screen.availHeight;
     });
 
     // Test 11: OS spoofing detection
@@ -1688,9 +1677,7 @@
       }
 
       // Check for touch support
-      const hasTouch = 'ontouchstart' in window ||
-        navigator.maxTouchPoints > 0 ||
-        navigator.msMaxTouchPoints > 0;
+      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
 
       // Touch devices should be mobile/tablet OS
       if (hasTouch && ['Android', 'Chrome OS', 'iOS', 'Other', 'Windows Phone'].indexOf(detectedOS) === -1) {
@@ -1729,9 +1716,7 @@
       }
 
       // Check plugins property (mobile browsers typically don't have plugins)
-      return typeof navigator.plugins === 'undefined' &&
-        detectedOS !== 'Windows' &&
-        detectedOS !== 'Windows Phone';
+      return typeof navigator.plugins === 'undefined' && detectedOS !== 'Windows' && detectedOS !== 'Windows Phone';
     });
 
     // Test 12: Browser spoofing detection
@@ -1853,11 +1838,7 @@
         script.dataset.domain = this.psid;
       }
 
-      script.src = '//' + DOMAIN + '/' +
-        key.substring(0, 2) + '/' +
-        key.substring(2, 4) + '/' +
-        key.substring(4, 6) + '/' +
-        key + '.js';
+      script.src = '//' + DOMAIN + '/' + key.substring(0, 2) + '/' + key.substring(2, 4) + '/' + key.substring(4, 6) + '/' + key + '.js';
 
       document.head.appendChild(script);
     }
@@ -1900,15 +1881,14 @@
       let titleElement = null;
 
       try {
-        const head = window.top?.document?.getElementsByTagName('head')[0] ||
-          document.getElementsByTagName('head')[0];
+        const head = window.top?.document?.getElementsByTagName('head')[0] || document.getElementsByTagName('head')[0];
         if (head) {
           const title = head.querySelector('title');
           if (title) {
             titleElement = 'textContent' in title ? title.textContent : '';
           }
         }
-      } catch (e) { }
+      } catch (e) {}
 
       if (titleElement === null) {
         setTimeout(() => extractKeywords(), 20);
