@@ -8,7 +8,7 @@ function showPopup(message, type = 'info') {
       <button class="popup-close" onclick="this.parentElement.parentElement.remove()">×</button>
     </div>
   `;
-  
+
   const style = document.createElement('style');
   style.textContent = `
     .styled-popup {
@@ -99,19 +99,19 @@ function showPopup(message, type = 'info') {
       color: #f8fafc;
     }
   `;
-  
+
   if (!document.getElementById('popup-styles')) {
     style.id = 'popup-styles';
     document.head.appendChild(style);
   }
-  
+
   document.body.appendChild(popup);
-  
+
   setTimeout(() => {
     popup.style.animation = 'slideOut 0.3s ease-in';
     setTimeout(() => popup.remove(), 300);
   }, 5000);
-  
+
   const slideOutStyle = document.createElement('style');
   slideOutStyle.textContent = `
     @keyframes slideOut {
@@ -130,4 +130,3 @@ function showPopup(message, type = 'info') {
     document.head.appendChild(slideOutStyle);
   }
 }
-

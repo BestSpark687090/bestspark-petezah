@@ -5,10 +5,10 @@ services:
     plan: free
     envVars:
       - key: SUPABASE_URL
-        value: ""
+        value: ''
       - key: SUPABASE_KEY
-        value: ""
+        value: ''
       - key: SESSION_SECRET
-        value: ""
+        value: ''
     buildCommand: pnpm install
     startCommand: pnpm start

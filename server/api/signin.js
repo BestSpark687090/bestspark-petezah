@@ -5,19 +5,19 @@ const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1
 
 export async function signinHandler(req, res) {
   const { email, password } = req.body;
-  
+
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password are required' });
   }
 
   try {
     const user = db.prepare('SELECT id, email, password_hash, username, bio, avatar_url, email_verified, ip FROM users WHERE email = ?').get(email);
-    
+
     const hashToCompare = user ? user.password_hash : DUMMY_HASH;
     const passwordMatch = await bcrypt.compare(password, hashToCompare);
-    
+
     if (!user || !passwordMatch) {
-      await new Promise(resolve => setTimeout(resolve, Math.floor(Math.random() * 50)));
+      await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 50)));
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 

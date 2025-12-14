@@ -1,5 +1,5 @@
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -9,13 +9,13 @@ const transporter = nodemailer.createTransport({
   secure: process.env.SMTP_SECURE === 'true',
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
+    pass: process.env.SMTP_PASS
+  }
 });
 
 export async function sendVerificationEmail(email, token, protocol, host) {
   const verificationUrl = `${protocol}://${host}/api/verify-email?token=${token}`;
-  
+
   const mailOptions = {
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: email,
@@ -40,7 +40,7 @@ export async function sendVerificationEmail(email, token, protocol, host) {
         </div>
       </body>
       </html>
-    `,
+    `
   };
 
   try {
@@ -51,4 +51,3 @@ export async function sendVerificationEmail(email, token, protocol, host) {
     return false;
   }
 }
-

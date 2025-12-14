@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
+import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,10 +31,10 @@ db.exec(`
 `);
 
 try {
-  const tableInfo = db.prepare("PRAGMA table_info(users)").all();
-  const columnNames = tableInfo.map(col => col.name);
+  const tableInfo = db.prepare('PRAGMA table_info(users)').all();
+  const columnNames = tableInfo.map((col) => col.name);
   const hasExistingUsers = db.prepare('SELECT COUNT(*) as count FROM users').get().count > 0;
-  
+
   if (!columnNames.includes('email_verified')) {
     db.exec('ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0');
     if (hasExistingUsers) {
@@ -121,4 +121,3 @@ db.exec(`
 `);
 
 export default db;
-
