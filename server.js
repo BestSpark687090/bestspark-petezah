@@ -2,6 +2,7 @@ import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
 import { epoxyPath } from '@mercuryworkshop/epoxy-transport';
 import { libcurlPath } from '@mercuryworkshop/libcurl-transport';
 import { server as wisp } from '@mercuryworkshop/wisp-js/server';
+import { uvPath } from '@petezah-games/ultraviolet';
 import bareServerPkg from '@tomphttp/bare-server-node';
 import bcrypt from 'bcrypt';
 import cookieParser from 'cookie-parser';
@@ -44,7 +45,7 @@ const bare = createBareServer('/bare/', {});
 const barePremium = createBareServer('/api/bare-premium/', {});
 
 const app = express();
-
+app.use('/petezah', express.static(uvPath));
 // Consolidate common middleware into a helper to avoid duplication and make
 // future updates easier.
 function applyCommonMiddleware(app) {

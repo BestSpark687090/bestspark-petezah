@@ -2,5 +2,33 @@
   // Port number for the server to listen on
   "Port": 3000,
   // For files that have been removed for legal reasons
-  "LegalRemoved": ["/ag/g/undertale"]
+  "LegalRemoved": ["/ag/g/undertale"],
+  "imageSettings": [
+    {
+      "ext": ".webp",
+      "path": "banners/",
+      "width": 300,
+      "height": 400,
+      "fit": "cover",
+      "quality": 80,
+      "background": "#ffffff"
+    },
+    {
+      "ext": ".avif",
+      "path": "banners/",
+      "width": 300,
+      "height": 400,
+      "fit": "contain",
+      "quality": 50,
+      "background": "#000000"
+    },
+    {
+      "ext": ".png",
+      "path": "thumbnails/",
+      "width": 150,
+      "height": 150,
+      "fit": "inside",
+      "compressionLevel": 9
+    }
+  ]
 }

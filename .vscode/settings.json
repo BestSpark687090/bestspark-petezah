@@ -20,7 +20,7 @@
     "strings": true
   },
   "editor.minimap.enabled": true,
-  "editor.minimap.renderCharacters": false,
+  "editor.minimap.renderCharacters": true,
   "editor.wordWrap": "on",
   "editor.bracketPairColorization.enabled": true,
 

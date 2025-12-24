@@ -42,7 +42,7 @@ function installRustTools() {
   if (!has('cargo')) {
     console.log('Installing Rust (cargo)...');
     run("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y");
-    run('source $HOME/.cargo/env');
+    run('. $HOME/.cargo/env');
   }
   const WBG = 'wasm-bindgen 0.2.100';
   const WBGtest = execSync(`wasm-bindgen -V`, { stdio: 'ignore', shell: true });
@@ -76,21 +76,21 @@ function installDepsUnix() {
     if (!has('nvm')) {
       console.log('Installing NVM...');
       run('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash');
-      run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"');
+      run('export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh"');
     }
 
     console.log('Installing Node.js 22 via NVM...');
-    run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && nvm install 22 && nvm use 22');
+    run('export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm install 22 && nvm use 22');
   } else if (platform === 'darwin') {
     ['git', 'curl'].forEach(installMac);
     if (!has('nvm')) {
       console.log('Installing NVM...');
       run('curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash');
-      run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh"');
+      run('export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh"');
     }
 
     console.log('Installing Node.js 22 via NVM...');
-    run('export NVM_DIR="$HOME/.nvm" && source "$NVM_DIR/nvm.sh" && nvm install 22 && nvm use 22');
+    run('export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && nvm install 22 && nvm use 22');
   } else {
     console.error('Unsupported OS for this script');
     process.exit(1);

@@ -103,7 +103,7 @@ if ! [[ "$(wasm-bindgen -V)" =~ ^"$WBG" ]]; then
 else
   echo "wasm-bindgen-cli is already at the required version."
 fi
-cargo install --git https://github.com/r58Playz/wasm-snip --locked
+cargo install --git https://github.com/r58Playz/wasm-snip --locked --force
 
 if ! grep -q 'export PATH="$HOME/.cargo/bin:$PATH"' "$HOME/.bashrc"; then
   echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "$HOME/.bashrc"

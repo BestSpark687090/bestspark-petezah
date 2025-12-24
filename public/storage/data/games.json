@@ -27,12 +27,6 @@
       "categories": ["sports"]
     },
     {
-      "label": "3 Slices",
-      "url": "/iframe.html?url=/embed.html#https://images-opensocial.googleusercontent.com/gadgets/ifr?url=https://s3.amazonaws.com/production-assetsbucket-8ljvyr1xczmb/1ee20621-61bc-4ec8-a8ec-5e839c2e6edc%2F3-slices.xml",
-      "imageUrl": "/storage/images/main2/3slices.webp",
-      "categories": ["skill"]
-    },
-    {
       "label": "3D Bowling",
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/320.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/320.html",
@@ -219,6 +213,12 @@
       "categories": ["io"]
     },
     {
+      "label": "Agar.io",
+      "url": "/iframe.html?url=/storage/ag/g/agar",
+      "imageUrl": "/storage/images/main/agario.jpg",
+      "categories": ["io"]
+    },
+    {
       "label": "Age of War",
       "url": "/iframe.html?url=/storage/ag/g/age-of-war/",
       "imageUrl": "/storage/ag/g/age-of-war/icon.jpg",
@@ -337,6 +337,12 @@
       "url": "/iframe.html?url=/storage/ag/g2/armed-forces-io/",
       "imageUrl": "/storage/images/main3/armedforcesio.png",
       "categories": ["action", "shooting", "io"]
+    },
+    {
+      "label": "Arras.io",
+      "url": "/iframe.html?url=/storage/ag/g/arras",
+      "imageUrl": "/storage/images/main/arras.jpg",
+      "categories": ["io"]
     },
     {
       "label": "Arras.io",
@@ -1032,6 +1038,12 @@
       "categories": ["shooting"]
     },
     {
+      "label": "Call of Duty",
+      "url": "/iframe.html?url=/storage/ag/g/callofduty",
+      "imageUrl": "/storage/images/main/callme.jpg",
+      "categories": ["shooting"]
+    },
+    {
       "label": "Camouflage and Sniper",
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/378.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/378.html",
@@ -1419,6 +1431,12 @@
       "categories": []
     },
     {
+      "label": "Crushed Adventures",
+      "url": "/iframe.html?url=/storage/ag/g/crushed-adventures",
+      "imageUrl": "/storage/images/main/crushed-ad.png",
+      "categories": ["skill"]
+    },
+    {
       "label": "Crusher Clicker",
       "url": "/iframe.html?url=/storage/ag/g/crusherclicker",
       "imageUrl": "/storage/images/main/crusherclicker.jpg",
@@ -1580,6 +1598,12 @@
       "url": "/iframe.html?url=/storage/ag/g/death-run-3d",
       "imageUrl": "/storage/images/main/dr3d.jpg",
       "categories": ["skill"]
+    },
+    {
+      "label": "Deeeep.io",
+      "url": "/iframe.html?url=/storage/ag/g/dieeeeeep",
+      "imageUrl": "/storage/images/main/dieeeep.jpg",
+      "categories": ["io"]
     },
     {
       "label": "Deeeep.io",
@@ -2530,6 +2554,12 @@
       "categories": ["shooting"]
     },
     {
+      "label": "Funny Shooter",
+      "url": "/iframe.html?url=/storage/ag/g/funnyshooter",
+      "imageUrl": "/storage/images/main/funnyshooter.jpg",
+      "categories": ["shooting"]
+    },
+    {
       "label": "Funny Shooter 2",
       "url": "/iframe.html?url=/storage/ag/g2/funny-shooter-2/",
       "imageUrl": "/storage/images/main3/funnyshooter2.png",
@@ -2813,6 +2843,12 @@
       "categories": ["io"]
     },
     {
+      "label": "Hexanaut.io",
+      "url": "/iframe.html?url=/storage/ag/g/hexa",
+      "imageUrl": "/storage/images/main/hexa.jpg",
+      "categories": ["io"]
+    },
+    {
       "label": "Hextris",
       "url": "/iframe.html?url=/storage/ag/g/hextris",
       "imageUrl": "/storage/images/main/hextris.png",
@@ -2889,6 +2925,12 @@
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/157.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/157.html",
       "categories": []
+    },
+    {
+      "label": "Hole.io",
+      "url": "/iframe.html?url=/storage/ag/g/holeio/",
+      "imageUrl": "/storage/images/main/hole.jpg",
+      "categories": ["io"]
     },
     {
       "label": "Hole.io",
@@ -3568,6 +3610,12 @@
       "categories": ["strategy"]
     },
     {
+      "label": "N-Gon",
+      "url": "/iframe.html?url=/storage/ag/g/n-gon",
+      "imageUrl": "/storage/images/main/ngon.jpg",
+      "categories": ["strategy"]
+    },
+    {
       "label": "n-gon",
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/180.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/180.html",
@@ -3821,6 +3869,18 @@
       "categories": ["io"]
     },
     {
+      "label": "Paper.io",
+      "url": "/iframe.html?url=/storage/ag/g/paperio",
+      "imageUrl": "/storage/images/main/paper.jpg",
+      "categories": ["io"]
+    },
+    {
+      "label": "Paper.io 2",
+      "url": "/iframe.html?url=/storage/ag/g/paperio2",
+      "imageUrl": "/storage/images/main/paper2.jpg",
+      "categories": ["io"]
+    },
+    {
       "label": "Paper.io 2",
       "url": "/iframe.html?url=/storage/ag/g/paperio2",
       "imageUrl": "/storage/images/main/paper2.jpg",
@@ -4051,6 +4111,12 @@
       "url": "/iframe.html?url=/storage/ag/g2/race-survival-arena-king/",
       "imageUrl": "/storage/images/main3/racesurvivalarenaking.png",
       "categories": ["action", "racing"]
+    },
+    {
+      "label": "Race Survival Car",
+      "url": "/iframe.html?url=/storage/ag/g/racesurvival",
+      "imageUrl": "/storage/ag/g/racesurvival/logo.jpeg",
+      "categories": ["racing", "action"]
     },
     {
       "label": "Race Survival Car",
@@ -4330,6 +4396,12 @@
       "categories": ["action"]
     },
     {
+      "label": "Rip-Off Brawl Stars",
+      "url": "/iframe.html?url=/storage/ag/g/brawlstars",
+      "imageUrl": "/storage/images/main/brawlstars1.jpg",
+      "categories": ["action"]
+    },
+    {
       "label": "Road of Fury",
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/42.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/42.html",
@@ -4564,6 +4636,12 @@
       "categories": ["io"]
     },
     {
+      "label": "Skribbl.io",
+      "url": "/iframe.html?url=/storage/ag/g/skribbl/",
+      "imageUrl": "/storage/ag/g/skribbl/IMG_5303.jpeg",
+      "categories": ["io"]
+    },
+    {
       "label": "Sky Riders",
       "url": "/iframe.html?url=/storage/ag/g2/sky-riders/",
       "imageUrl": "/storage/images/main3/skyriders.png",
@@ -4625,6 +4703,12 @@
     },
     {
       "label": "Slither.io",
+      "url": "/iframe.html?url=/storage/ag/g/slither",
+      "imageUrl": "/storage/images/main/slitherio.jpg",
+      "categories": ["io"]
+    },
+    {
+      "label": "Slither.io",
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/461.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/461.html",
       "categories": []
@@ -4637,9 +4721,21 @@
     },
     {
       "label": "Slope",
+      "url": "/iframe.html?url=/storage/ag/g/slope/",
+      "imageUrl": "/storage/ag/g/slope/IMG_5256.jpeg",
+      "categories": ["skill"]
+    },
+    {
+      "label": "Slope",
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/198.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/198.html",
       "categories": []
+    },
+    {
+      "label": "Slope 2",
+      "url": "/iframe.html?url=/storage/ag/g/slope2/",
+      "imageUrl": "/storage/ag/g/slope2/splash.png",
+      "categories": ["action"]
     },
     {
       "label": "Slope 2",
@@ -4676,6 +4772,12 @@
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/370.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/370.html",
       "categories": []
+    },
+    {
+      "label": "Smash Karts.io",
+      "url": "/iframe.html?url=/storage/ag/g/smashkarts/index.html",
+      "imageUrl": "/storage/ag/g/smashkarts/smashkarts.webp",
+      "categories": ["io"]
     },
     {
       "label": "Smash Karts.io",
@@ -4833,6 +4935,12 @@
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/179.html",
       "featured": true,
       "categories": []
+    },
+    {
+      "label": "Space Huggers",
+      "url": "/iframe.html?url=/storage/ag/g/spacehuggers",
+      "imageUrl": "/storage/images/main/spacehuggers.jpg",
+      "categories": ["shooting"]
     },
     {
       "label": "Space Huggers",
@@ -5148,6 +5256,12 @@
       "categories": ["action"]
     },
     {
+      "label": "Stumble Guys",
+      "url": "/iframe.html?url=/storage/ag/g/stumbleguys",
+      "imageUrl": "/storage/images/main/stumble.jpg",
+      "categories": ["action"]
+    },
+    {
       "label": "Stunt Paradise",
       "url": "/iframe.html?url=/storage/ag/g/stuntparadise/",
       "imageUrl": "/storage/images/main/stunt.jpg",
@@ -5260,6 +5374,12 @@
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/145.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/145.html",
       "categories": []
+    },
+    {
+      "label": "Super Auto Pets",
+      "url": "/iframe.html?url=/embed.html#https://teamwood.itch.io/super-auto-pets",
+      "imageUrl": "/storage/images/main/superpets.jpg",
+      "categories": ["skill", "strategy"]
     },
     {
       "label": "Super Auto Pets",
@@ -5506,6 +5626,12 @@
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/10.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/10.html",
       "categories": []
+    },
+    {
+      "label": "Territorial.io",
+      "url": "/iframe.html?url=/storage/ag/g/territorial",
+      "imageUrl": "/storage/images/main/territorialio.jpg",
+      "categories": ["io"]
     },
     {
       "label": "Territorial.io",
@@ -6151,6 +6277,12 @@
       "imageUrl": "https://cdn.jsdelivr.net/gh/gn-math/covers@main/554.png",
       "url": "/iframe.html?url=/pages/other/interpreter/index.html?url=https://cdn.jsdelivr.net/gh/gn-math/html@main/554.html",
       "categories": []
+    },
+    {
+      "label": "Yohoho.io",
+      "url": "/iframe.html?url=/storage/ag/g/yohoho/",
+      "imageUrl": "/storage/ag/g/yohoho/IMG_5302.jpeg",
+      "categories": ["io"]
     },
     {
       "label": "Yohoho.io",

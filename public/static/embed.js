@@ -1,8 +1,9 @@
+// @ts-check
+import __uv$config from './config.js';
 import { registerSW } from './register-sw.js';
-import { __uv$config } from './uv/config.js';
 
 ('use strict');
-let destination = '';
+let destination;
 
 try {
   destination = new URL(location.hash.slice(1));
@@ -28,7 +29,7 @@ try {
 
 registerSW()
   .then(() => {
-    window.open(__uv$config.prefix + __uv$config.encodeUrl(destination), '_self');
+    window.open(__uv$config.prefix + __uv$config.encodeUrl(destination.toString()), '_self');
   })
   .catch((err) => {
     alert(`Encountered error:\n${err}`);

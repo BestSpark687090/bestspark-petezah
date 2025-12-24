@@ -32,6 +32,10 @@ export default {
     {
       files: ['**/*.html'],
       customSyntax: 'postcss-html'
+    },
+    {
+      files: ['**/*.js'],
+      customSyntax: 'postcss-js'
     }
   ]
 };

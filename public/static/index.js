@@ -1,28 +1,20 @@
 // @ts-check
 
+import __uv$config from './config.js';
+import { assertForm, assertInput, assertParagraph, assertPre } from './HtmlNullCheck.js';
 import { registerSW } from './register-sw.js';
 import { search } from './search.js';
-import { __uv$config } from './uv/uv.config.js';
-/**
- * @type {HTMLFormElement}
- */
+
 const form = document.getElementById('uv-form');
-/**
- * @type {HTMLInputElement}
- */
+assertForm(form);
 const address = document.getElementById('uv-address');
-/**
- * @type {HTMLInputElement}
- */
+assertInput(address);
 const searchEngine = document.getElementById('uv-search-engine');
-/**
- * @type {HTMLParagraphElement}
- */
+assertInput(searchEngine);
 const error = document.getElementById('uv-error');
-/**
- * @type {HTMLPreElement}
- */
+assertParagraph(error);
 const errorCode = document.getElementById('uv-error-code');
+assertPre(errorCode);
 
 // Attach form submit event listener
 form.addEventListener('submit', async (event) => {

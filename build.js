@@ -13,6 +13,9 @@ import pLimit from 'p-limit';
 import path from 'path';
 import sharp from 'sharp';
 import { fileURLToPath } from 'url';
+import parseConfig from './server/parseconfig.js';
+
+const config = parseConfig('./config.jsonc');
 
 /**
  * Creates hash of given files/folders. Used to conditionally deploy custom
@@ -164,27 +167,24 @@ if (args.env === 'debug') {
 }
 
 const SKIP_SUBMODULES = args['skip-submodules'] || process.env.SKIP_SUBMODULES === '1' || false;
-const _NO_CACHE = args['no-cache'] || process.env.NO_CACHE === '1' || false;
 const USAGE = `build.js [options]
 
 Options:
   --help, -h              Show this help message
   --skip-submodules       Skip building external submodules (env SKIP_SUBMODULES=1)
   --keep-submodules       Do not refresh submodules (env KEEP_SUBMODULES=1)
-  --no-cache              Do not load or save git metadata cache (env NO_CACHE=1)
   --env=NAME              Set environment mode (e.g., --env=debug)
 `;
 
 // --- Submodules configuration (mirrors .gitmodules and bash array)
 /** @type {string[]} */
-const Submodules = ['scramjet', 'ultraviolet'];
+const Submodules = ['scramjet'];
 
 // --- Build commands ---
 /** @type {Record<string, string>} */
 const buildCommands = {
   scramjet:
-    'CI=true pnpm install -P  --no-verify-store-integrity	--shamefully-hoist --store-dir ~/.pnpm-store && npm run rewriter:build && npm run build:all',
-  ultraviolet: 'CI=true pnpm install --ignore-workspace --no-lockfile --no-verify-store-integrity && pnpm run build'
+    'CI=true pnpm install -P  --no-verify-store-integrity	--shamefully-hoist --store-dir ~/.pnpm-store && npm run rewriter:build && npm run build:all'
 };
 const YELLOW = '\x1b[33m';
 const GREEN = '\x1b[32m';
@@ -195,19 +195,42 @@ const INPUT_VECTORS = path.join(projdir, 'inputvectors');
 const OUTPUT_OPTIMG = path.join(projdir, 'public', 'optimg');
 const OUTPUT_OUTVECT = path.join(projdir, 'public', 'outvect');
 
-// Raster formats to generate
+// ---------------------------------------------------------------------------
+// Image Optimization (rewritten for config.imageSettings + full Sharp options)
+// ---------------------------------------------------------------------------
+
 /**
  * @typedef {Object} RasterTarget
  * @property {string} ext
- * @property {(img: import('sharp').Sharp) => import('sharp').Sharp} opts
+ * @property {string} path
+ * @property {number=} width
+ * @property {number=} height
+ * @property {string=} fit
+ * @property {string=} background
+ * @property {number=} density
+ * @property {number=} quality
+ * @property {number=} compressionLevel
+ * @property {boolean=} lossless
+ * @property {boolean=} progressive
  */
-/** @type {RasterTarget[]} */
-const RASTER_TARGETS = [
-  { ext: '.avif', opts: (img) => img.avif({ quality: 80 }) },
-  { ext: '.webp', opts: (img) => img.webp({ quality: 80 }) },
-  { ext: '.jpg', opts: (img) => img.jpeg({ quality: 80 }) },
-  { ext: '.png', opts: (img) => img.png() }
-];
+
+/**
+ * Build raster targets from JSONC config.imageSettings
+ * @type {RasterTarget[]}
+ */
+const RASTER_TARGETS = config.imageSettings.map((s) => ({
+  ext: s.ext.toLowerCase(),
+  path: s.path || '',
+  width: s.width,
+  height: s.height,
+  fit: s.fit,
+  background: s.background,
+  density: s.density,
+  quality: s.quality,
+  compressionLevel: s.compressionLevel,
+  lossless: s.lossless,
+  progressive: s.progressive
+}));
 
 // Recognized raster inputs (will be processed via sharp)
 const RASTER_INPUT_EXTS = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff', '.webp', '.avif'];
@@ -315,7 +338,7 @@ function wrapCommandForWSL(command, cwd) {
     execSync(`wsl cp -r "${wslPath}" "${tmpDir}/"`, { stdio: 'inherit' });
     copied++;
     const percent = Math.round((copied / total) * 100);
-    process.stdout.write(`\rCopying ${GREEN}${file}${RESET} (${copied}/${total}) ${percent}%`);
+    process.stdout.write(`\rCopying ${GREEN}${file}${RESET} (${copied}/${total}) ${percent}%\n`);
   }
   process.stdout.write('\n');
   console.log(`${GREEN}Copy complete: ${cwd} → ${tmpDir}${RESET}`);
@@ -392,9 +415,67 @@ async function buildSubmodules() {
 function shouldProcess(ext, validExts) {
   return validExts.includes(ext.toLowerCase());
 }
+/**
+ * Build a Sharp transform from a config-driven target.
+ * @param {import('sharp').Sharp} image
+ * @param {RasterTarget} target
+ * @returns {import('sharp').Sharp}
+ */
+function buildTransform(image, target) {
+  let pipeline = image;
+
+  // DPI / density (vector → raster)
+  if (target.density) {
+    pipeline = pipeline.withMetadata({ density: target.density });
+  }
+
+  // Resize block
+  if (target.width || target.height) {
+    pipeline = pipeline.resize({
+      width: target.width,
+      height: target.height,
+      fit: target.fit || 'cover',
+      background: target.background
+    });
+  }
+
+  // Format-specific output options
+  const formatOptions = {
+    quality: target.quality,
+    compressionLevel: target.compressionLevel,
+    lossless: target.lossless,
+    progressive: target.progressive
+  };
+
+  switch (target.ext) {
+    case '.png':
+      return pipeline.png(formatOptions);
+    case '.jpg':
+    case '.jpeg':
+      return pipeline.jpeg(formatOptions);
+    case '.webp':
+      return pipeline.webp(formatOptions);
+    case '.avif':
+      return pipeline.avif(formatOptions);
+    case '.tiff':
+      return pipeline.tiff(formatOptions);
+    default:
+      throw new Error(`Unsupported extension: ${target.ext}`);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Image Optimization (parallelized with p-limit)
+// ---------------------------------------------------------------------------
 
 /**
- * Convert a raster file to multiple formats.
+ * Concurrency limit for Sharp operations.
+ * Tune this based on CPU count.
+ */
+const limit = pLimit(Math.max(4, os.cpus().length));
+
+/**
+ * Convert a raster file to multiple formats (parallelized).
  *
  * @param {string} inputPath
  * @param {string} baseDir
@@ -412,44 +493,32 @@ async function convertRasterFile(inputPath, baseDir, outBase) {
   await fse.copyFile(inputPath, copyDest);
   console.log(`Copied original: ${path.relative(outBase, copyDest)}`);
 
-  // Convert to all targets except same-format
+  // Load image buffer once
   const buffer = await fs.readFile(inputPath);
   const image = sharp(buffer);
 
-  for (const target of RASTER_TARGETS) {
-    if (target.ext === ext) {
-      // Skip same-format conversion
-      continue;
-    }
-    const outPath = path.join(outBase, relNoExt + target.ext);
-    await fse.ensureDir(path.dirname(outPath));
-    await target.opts(image.clone()).toFile(outPath);
-    console.log(`${rel} → ${path.relative(outBase, outPath)}`);
-  }
+  // Build all conversions in parallel
+  const tasks = RASTER_TARGETS.filter((target) => target.ext !== ext).map((target) =>
+    limit(async () => {
+      const outPath = path.join(outBase, target.path, relNoExt + target.ext);
+      await fse.ensureDir(path.dirname(outPath));
+
+      const transform = buildTransform(image.clone(), target);
+      await transform.toFile(outPath);
+
+      console.log(`${rel} → ${path.relative(outBase, outPath)}`);
+    })
+  );
+
+  await Promise.all(tasks);
 }
 
 /**
- * Copy vector file to output directory preserving structure.
+ * Rasterize vector file to multiple formats as fallbacks (parallelized).
  *
- * @param {string} inputPath - Path to the input vector file
- * @param {string} baseDir - Base directory for relative path calculation
- * @param {string} outBase - Output base directory
- * @returns {Promise<void>}
- */
-async function copyVectorOriginal(inputPath, baseDir, outBase) {
-  const rel = path.relative(baseDir, inputPath);
-  const dest = path.join(outBase, rel);
-  await fse.ensureDir(path.dirname(dest));
-  await fse.copyFile(inputPath, dest);
-  console.log(`Copied vector: ${path.relative(outBase, dest)}`);
-}
-
-/**
- * Rasterize vector file to multiple formats as fallbacks.
- *
- * @param {string} inputPath - Path to the input vector file
- * @param {string} baseDir - Base directory for relative path calculation
- * @param {string} outBase - Output base directory
+ * @param {string} inputPath
+ * @param {string} baseDir
+ * @param {string} outBase
  * @returns {Promise<void>}
  */
 async function rasterizeVectorFallbacks(inputPath, baseDir, outBase) {
@@ -460,12 +529,19 @@ async function rasterizeVectorFallbacks(inputPath, baseDir, outBase) {
   const buffer = await fs.readFile(inputPath);
   const image = sharp(buffer);
 
-  for (const target of RASTER_TARGETS) {
-    const outPath = path.join(outBase, relNoExt + target.ext);
-    await fse.ensureDir(path.dirname(outPath));
-    await target.opts(image.clone()).toFile(outPath);
-    console.log(`${rel} → ${path.relative(outBase, outPath)}`);
-  }
+  const tasks = RASTER_TARGETS.map((target) =>
+    limit(async () => {
+      const outPath = path.join(outBase, target.path, relNoExt + target.ext);
+      await fse.ensureDir(path.dirname(outPath));
+
+      const transform = buildTransform(image.clone(), target);
+      await transform.toFile(outPath);
+
+      console.log(`${rel} → ${path.relative(outBase, outPath)}`);
+    })
+  );
+
+  await Promise.all(tasks);
 }
 
 /**
@@ -506,7 +582,21 @@ async function processInputImages() {
     await convertRasterFile(file, INPUT_IMAGES, OUTPUT_OPTIMG);
   });
 }
-
+/**
+ * Copy vector file to output directory preserving structure.
+ *
+ * @param {string} inputPath
+ * @param {string} baseDir
+ * @param {string} outBase
+ * @returns {Promise<void>}
+ */
+async function copyVectorOriginal(inputPath, baseDir, outBase) {
+  const rel = path.relative(baseDir, inputPath);
+  const dest = path.join(outBase, rel);
+  await fse.ensureDir(path.dirname(dest));
+  await fse.copyFile(inputPath, dest);
+  console.log(`Copied vector: ${path.relative(outBase, dest)}`);
+}
 async function processInputVectors() {
   logSection('Processing vectors (/inputvectors \u2192 /public/outvect)');
   const exists = await fse.pathExists(INPUT_VECTORS);

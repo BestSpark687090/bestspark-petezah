@@ -32,9 +32,10 @@
     "@mercuryworkshop/epoxy-transport": "^2.1.28",
     "@mercuryworkshop/libcurl-transport": "^1.5.1",
     "@mercuryworkshop/wisp-js": "^0.3.3",
+    "@petezah-games/ultraviolet": "^3.2.12",
+    "@supabase/supabase-js": "^2.86.0",
     "@tomphttp/bare-server-node": "^2.0.6",
     "argon2": "^0.44.0",
-    "@supabase/supabase-js": "^2.86.0",
     "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.4.1",
     "cookie-parser": "^1.4.7",
@@ -44,6 +45,7 @@
     "express-fileupload": "^1.5.2",
     "express-rate-limit": "^7.5.1",
     "express-session": "^1.18.2",
+    "fs": "0.0.1-security",
     "fs-extra": "^11.3.2",
     "helmet": "^8.1.0",
     "http-proxy-middleware": "^3.0.5",
@@ -55,8 +57,11 @@
     "nodemailer": "^7.0.11",
     "p-limit": "^7.2.0",
     "pg": "^8.16.3",
+    "postcss-js": "^5.0.2",
     "sharp": "^0.33.5",
-    "utf-8-validate": "^5.0.10"
+    "utf-8-validate": "^5.0.10",
+    "uuid": "^13.0.0",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
