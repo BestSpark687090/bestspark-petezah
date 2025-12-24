@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 
 test('homepage loads and has expected elements', async ({ page }) => {
   await page.goto('/');
-  await expect(page).toHaveTitle(/PeteZah/);
+  await expect(page).toHaveTitle('PeteZah - Educational Resources and Online Learning Platform');
   // Logo image should be present
   const logo = page.locator('.header-logo img');
   await expect(logo).toBeVisible();
