@@ -1,5 +1,5 @@
-import Sortable from 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm';
 import { BareMuxConnection } from '@mercuryworkshop/bare-mux';
+import Sortable from 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm';
 import _CONFIG from '/config.js';
 const { ScramjetController } = $scramjetLoadController();
 const scramjet = new ScramjetController({
