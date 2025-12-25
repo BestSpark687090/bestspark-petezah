@@ -3,10 +3,34 @@ import request from 'supertest';
 import { app } from '../../server.js';
 
 describe('API endpoints', () => {
-  test('GET /sitemap.json returns an object', async () => {
+  test('GET /sitemap.json returns valid sitemap entries', async () => {
     const res = await request(app).get('/sitemap.json').set('User-Agent', 'Mozilla/5.0');
+
     expect(res.statusCode).toBe(200);
-    expect(res.body).toHaveProperty('length');
+    expect(Array.isArray(res.body)).toBe(true);
+    expect(res.body.length).toBeGreaterThan(0);
+
+    for (const entry of res.body) {
+      expect(entry).toHaveProperty('loc');
+      expect(entry).toHaveProperty('lastmod');
+      expect(entry).toHaveProperty('changefreq');
+      expect(entry).toHaveProperty('priority');
+      expect(entry).toHaveProperty('type');
+
+      expect(() => new URL(entry.loc)).not.toThrow();
+
+      expect(!isNaN(Date.parse(entry.lastmod))).toBe(true);
+
+      const allowedFreq = ['always', 'hourly', 'daily', 'weekly', 'monthly', 'yearly', 'never'];
+      expect(allowedFreq).toContain(entry.changefreq);
+
+      expect(typeof entry.priority).toBe('number');
+      expect(entry.priority).toBeGreaterThanOrEqual(0);
+      expect(entry.priority).toBeLessThanOrEqual(1);
+
+      const allowedTypes = ['image', 'video', 'page'];
+      expect(allowedTypes).toContain(entry.type);
+    }
   }, 10000);
 
   test('GET /sitemap.xml returns XML content', async () => {

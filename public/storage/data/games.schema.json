@@ -6,7 +6,7 @@
     "$schema": {
       "type": "string",
       "description": "Optional schema identifier for this document",
-      "pattern": "^(https?:\\/\\/[^\\s]+|(?:\\.{1,2}\\/).*|\\/.*)$"
+      "pattern": "^(https?://[^\\s]+|\\./[^\\s]+|\\.\\./[^\\s]+|/[^\\s]+|[^\\s]+\\.json)$"
     },
     "games": {
       "type": "array",
@@ -20,12 +20,12 @@
           "url": {
             "type": "string",
             "description": "Link to the game or form",
-            "pattern": "^(https?:\\/\\/[^\\s]+|(?:\\.{1,2}\\/).*|\\/.*)$"
+            "pattern": "^(https?://[^\\s]+|\\./[^\\s]+|\\.\\./[^\\s]+|/[^\\s]+|[^\\s]+\\.json)$"
           },
           "imageUrl": {
             "type": "string",
             "description": "Path or URL to the image thumbnail",
-            "pattern": "^(https?:\\/\\/[^\\s]+|(?:\\.{1,2}\\/).*|\\/.*)$"
+            "pattern": "^(https?://[^\\s]+|\\./[^\\s]+|\\.\\./[^\\s]+|/[^\\s]+|[^\\s]+\\.json)$"
           },
           "categories": {
             "type": "array",

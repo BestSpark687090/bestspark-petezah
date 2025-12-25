@@ -237,8 +237,8 @@
             };
           });
         });
-        if (localStorage.getItem('bare-mux-path') !== '/baremux/worker.js') {
-          localStorage.setItem('bare-mux-path', '/baremux/worker.js');
+        if (localStorage.getItem('bare-mux-path') !== '/baremux/worker.mjs') {
+          localStorage.setItem('bare-mux-path', '/baremux/worker.mjs');
         }
         if (deletionfailed === true) {
           window.location.href = 'fix-proxy.html?retry=true';

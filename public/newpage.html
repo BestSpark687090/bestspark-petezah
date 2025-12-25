@@ -739,10 +739,7 @@
     </div>
 
     <div id="time"></div>
-
-    <script src="https://cdn.jsdelivr.net/npm/dreamland"></script>
-    <script src="/baremux/index.js"></script>
-    <script>
+    <script type="module">
       (function () {
         const rewrite = (url) => {
           try {
@@ -754,7 +751,6 @@
           if (url === '/scramjet.all.js') return '/scram/scramjet.all.js';
           return url;
         };
-
         const _fetch = window.fetch;
         window.fetch = function (input, init) {
           try {
@@ -776,6 +772,7 @@
     <script src="/scram/scramjet.all.js"></script>
     <script id="config-script" src="config.js"></script>
     <script type="module">
+      import { BareMuxConnection } from '@mercuryworkshop/bare-mux';
       import vpn from '/storage/js/vpn.js';
       class SearchSuggestions {
         constructor() {
@@ -1079,7 +1076,7 @@
       });
       window.addEventListener('load', loadSavedPins);
       navigator.serviceWorker.register('./sw.js');
-      const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
+      const connection = new BareMuxConnection('/baremux/worker.js');
       const _storeData = {
         url: 'https://',
         wispurl: _CONFIG?.wispurl || (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/',

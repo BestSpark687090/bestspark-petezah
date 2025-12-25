@@ -1,5 +1,6 @@
-import { Sortable } from 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
-import { _CONFIG } from '/static/config.js';
+import Sortable from 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/+esm';
+import { BareMuxConnection } from '@mercuryworkshop/bare-mux';
+import _CONFIG from '/config.js';
 const { ScramjetController } = $scramjetLoadController();
 const scramjet = new ScramjetController({
   prefix: '/scramjet/',
@@ -12,7 +13,7 @@ const scramjet = new ScramjetController({
 scramjet.init();
 navigator.serviceWorker.register('/sw.js');
 
-const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
+const connection = new BareMuxConnection('/baremux/worker.js');
 
 const regionConfig = {
   default: { wisp: '/wisp/', config: 'config.js' },

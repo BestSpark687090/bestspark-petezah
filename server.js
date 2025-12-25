@@ -613,11 +613,6 @@ const isVerified = (req) => {
   return cookies.verified === 'ok' || req.headers['x-bot-token'] === process.env.BOT_TOKEN;
 };
 
-const isBrowser = (req) => {
-  const ua = req.headers['user-agent'] || '';
-  return /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
-};
-
 const handleHttpVerification = (req, res, next) => {
   const acceptsHtml = req.headers.accept?.includes('text/html');
   if (!acceptsHtml) return next();

@@ -60,12 +60,6 @@ export default defineConfig([
       'public/storage/ag/g/**/*',
       'public/storage/ag/g2/**/*',
       'public/storage/ag/a/emulatorjs/**/*',
-      'public/scram/**/*',
-      'public/petezah/**/*',
-      'public/epoxy/**/*',
-      'public/baremux/**/*',
-      'public/youtube/**/*.js',
-      'public/static/uv/**/*',
       '.sitemap-base.json',
       '.sitemap-cache.json',
       'public/pages/other/ai/**/*'

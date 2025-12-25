@@ -20,7 +20,6 @@
       href="https://fonts.googleapis.com/css2?family=Hind:wght@300;400;500;600;700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
       rel="stylesheet"
     />
-    <script src="https://cdn.jsdelivr.net/npm/dreamland"></script>
     <style>
       body,
       html {
@@ -42,7 +41,6 @@
         background-color: #fff;
       }
     </style>
-    <script src="/baremux/index.js"></script>
     <script src="/scram/scramjet.all.js"></script>
     <script src="/config.js"></script>
   </head>
@@ -50,6 +48,7 @@
     <div id="iframe-container"></div>
     <script type="module">
       import _CONFIG from '/config.js';
+      import { BareMuxConnection } from '@mercuryworkshop/bare-mux';
       const { ScramjetController } = $scramjetLoadController();
       const scramjet = new ScramjetController({
         prefix: '/scramjet/',
@@ -61,7 +60,7 @@
       });
       scramjet.init();
       navigator.serviceWorker.register('./sw.js');
-      const connection = new BareMux.BareMuxConnection('/baremux/worker.js');
+      const connection = new BareMuxConnection('/baremux/worker.js');
       const store = {
         wispurl: _CONFIG?.wispurl || (location.protocol === 'https:' ? 'wss' : 'ws') + '://' + location.host + '/wisp/',
         bareurl: _CONFIG?.bareurl || (location.protocol === 'https:' ? 'https' : 'http') + '://' + location.host + '/bare/'
