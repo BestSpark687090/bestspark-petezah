@@ -133,6 +133,6 @@
   // --- CMake ---
   "cmake.ignoreCMakeListsMissing": true,
   "editor.formatOnPaste": true,
-  "editor.experimentalGpuAcceleration": "on",
+  "editor.experimentalGpuAcceleration": "off",
   "gitlens.hovers.annotations.over": "annotation"
 }

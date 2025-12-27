@@ -17,8 +17,8 @@
     "lint:styles": "stylelint \"**/*.{css,html,js,jsx,ts,tsx}\" --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "node build.js",
-    "build:debug": "node build.js --env=debug",
+    "build": "ts-node build.ts",
+    "build:debug": "ts-node build.ts --env=debug",
     "test:unit": "cross-env NODE_OPTIONS=\"--experimental-vm-modules\" jest",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install",
@@ -59,6 +59,7 @@
     "pg": "^8.16.3",
     "postcss-js": "^5.0.2",
     "sharp": "^0.33.5",
+    "ts-node": "^10.9.2",
     "utf-8-validate": "^5.0.10",
     "uuid": "^13.0.0",
     "ws": "^8.18.3"

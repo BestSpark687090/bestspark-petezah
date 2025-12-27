@@ -84,31 +84,31 @@
           <tbody>
             <xsl:for-each select="sitemap:url">
               <tr>
-                <td><a href="{sitemap:loc}"><xsl:value-of select="sitemap:loc"/></a></td>
                 <td>
-                  <xsl:choose>
-                    <xsl:when test="normalize-space(sitemap:priority)">
-                      <xsl:value-of select="sitemap:priority"/>
-                    </xsl:when>
-                    <xsl:otherwise>N/A</xsl:otherwise>
-                  </xsl:choose>
+                  <div class="thumb-container">
+                    <xsl:choose>
+                      <xsl:when test="image:image[1]/image:loc">
+                        <img src="{image:image[1]/image:loc}" alt="Main Thumb" loading="lazy"/>
+                      </xsl:when>
+                      <xsl:when test="video:video[1]/video:thumbnail_loc">
+                        <img src="{video:video[1]/video:thumbnail_loc}" alt="Video Thumb" loading="lazy"/>
+                      </xsl:when>
+                      <xsl:otherwise><span style="font-size: 10px;">NO MEDIA</span></xsl:otherwise>
+                    </xsl:choose>
+                  </div>
                 </td>
                 <td>
-                  <xsl:choose>
-                    <xsl:when test="normalize-space(sitemap:changefreq)">
-                      <xsl:value-of select="sitemap:changefreq"/>
-                    </xsl:when>
-                    <xsl:otherwise>Unknown</xsl:otherwise>
-                  </xsl:choose>
+                  <a href="{sitemap:loc}"><xsl:value-of select="sitemap:loc"/></a>
+                  <xsl:if test="count(image:image) > 0">
+                    <span class="type-badge">IMAGES: <xsl:value-of select="count(image:image)"/></span>
+                  </xsl:if>
+                  <xsl:if test="count(video:video) > 0">
+                    <span class="type-badge">VIDEO</span>
+                  </xsl:if>
                 </td>
-                <td>
-                  <xsl:choose>
-                    <xsl:when test="string-length(sitemap:lastmod) &gt; 0">
-                      <xsl:value-of select="substring(sitemap:lastmod,1,10)" />
-                    </xsl:when>
-                    <xsl:otherwise>N/A</xsl:otherwise>
-                  </xsl:choose>
-                </td>
+                <td><xsl:value-of select="sitemap:priority"/></td>
+                <td><xsl:value-of select="sitemap:changefreq"/></td>
+                <td><xsl:value-of select="substring(sitemap:lastmod,1,10)"/></td>
               </tr>
             </xsl:for-each>
           </tbody>
