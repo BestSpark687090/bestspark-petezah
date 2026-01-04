@@ -277,7 +277,14 @@ if(v.ok)location.reload();
   next();
 };
 
-app.use(gateMiddleware);
+const authRoutes = ['/api/signin', '/api/signup', '/api/bot-challenge', '/api/bot-verify'];
+const conditionalGate = (req, res, next) => {
+  if (authRoutes.includes(req.path)) {
+    return next();
+  }
+  return gateMiddleware(req, res, next);
+};
+app.use(conditionalGate);
 
 const apiLimiter = rateLimit({
   windowMs: 15000,

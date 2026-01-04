@@ -131,6 +131,7 @@ class DDoSShield {
 
   checkAttackConditions(ip, systemState = null) {
     if (this.isUnderAttack || this.startupGracePeriod) return;
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) return;
     
     const now = Date.now();
     if (now - this.lastAlertTime < ALERT_COOLDOWN) return;
@@ -242,13 +243,15 @@ class DDoSShield {
   }
 
   trackRequest(ip) {
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) return;
+
     const now = Date.now();
-    const data = this.ipRequests.get(ip) || { count: 0, lastSeen: now, blocks: 0 };
+    const data = this.ipRequests.get(ip) || { count: 0, lastSeen: now, blocks: 0, firstSeen: now };
     data.count++;
     data.lastSeen = now;
     this.ipRequests.set(ip, data);
 
-    const timeWindow = now - (data.firstSeen || now);
+    const timeWindow = now - data.firstSeen;
     const rate = timeWindow > 0 ? (data.count / (timeWindow / 1000)) : 0;
 
     if (data.count > 50000 || rate > 10000) {
@@ -257,6 +260,8 @@ class DDoSShield {
   }
 
   trackWS(ip, delta) {
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) return;
+
     const current = this.ipRequests.get(ip)?.ws || 0;
     const updated = Math.max(0, current + delta);
     
