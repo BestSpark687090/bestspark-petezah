@@ -1,4 +1,3 @@
-
 import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
 import { epoxyPath } from '@mercuryworkshop/epoxy-transport';
 import { scramjetPath } from '@mercuryworkshop/scramjet/path';
@@ -7,7 +6,7 @@ import bareServerPkg from '@tomphttp/bare-server-node';
 import bcrypt from 'bcrypt';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { randomUUID } from 'crypto';
+import { createHmac, randomBytes, randomUUID, timingSafeEqual } from 'crypto';
 import dotenv from 'dotenv';
 import express from 'express';
 import fileUpload from 'express-fileupload';
@@ -65,6 +64,82 @@ discordClient.login(process.env.BOT_TOKEN).catch(err => {
 
 shield.registerCommands(discordClient);
 
+const TOKEN_SECRET = process.env.TOKEN_SECRET || randomBytes(32).toString('hex');
+const TOKEN_VALIDITY = 86400000;
+const PROOF_CHALLENGE_SIZE = 16;
+
+const systemState = {
+  cpuHigh: false,
+  activeConnections: 0,
+  totalRequests: 0,
+  lastCheck: Date.now()
+};
+
+function createToken(features = { http: true, ws: true }) {
+  const now = Date.now();
+  const expiry = now + TOKEN_VALIDITY;
+  const payload = JSON.stringify({
+    iat: now,
+    exp: expiry,
+    features
+  });
+  const hmac = createHmac('sha256', TOKEN_SECRET);
+  hmac.update(payload);
+  const signature = hmac.digest('base64url');
+  return `${Buffer.from(payload).toString('base64url')}.${signature}`;
+}
+
+function verifyToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 2) return null;
+  
+  try {
+    const payload = Buffer.from(parts[0], 'base64url').toString('utf8');
+    const signature = parts[1];
+    
+    const hmac = createHmac('sha256', TOKEN_SECRET);
+    hmac.update(payload);
+    const expected = hmac.digest('base64url');
+    
+    if (signature !== expected) return null;
+    
+    const data = JSON.parse(payload);
+    if (data.exp < Date.now()) return null;
+    
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function checkSystemPressure() {
+  const now = Date.now();
+  if (now - systemState.lastCheck < 1000) return systemState.cpuHigh;
+  
+  systemState.lastCheck = now;
+  const load = systemState.totalRequests / 10;
+  systemState.cpuHigh = load > 5000 || systemState.activeConnections > 25000;
+  systemState.totalRequests = 0;
+  
+  return systemState.cpuHigh;
+}
+
+function extractToken(req) {
+  const authHeader = req.headers['authorization'];
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice(7);
+  }
+  
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const match = cookieHeader.match(/bot_token=([^;]+)/);
+    if (match) return match[1];
+  }
+  
+  return null;
+}
+
 app.use(cookieParser());
 app.use(express.static(publicPath));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
@@ -92,36 +167,103 @@ app.get('/scramjet.all.js.map', (req, res) => res.sendFile(path.join(scramjetPat
 app.use('/baremux/', express.static(baremuxPath));
 app.use('/epoxy/', express.static(epoxyPath));
 
-const verifyMiddleware = (req, res, next) => {
-  const verified = req.cookies?.verified === 'ok' || req.headers['x-bot-token'] === process.env.BOT_TOKEN;
+app.get('/api/bot-challenge', (req, res) => {
+  const challenge = randomBytes(PROOF_CHALLENGE_SIZE).toString('base64url');
+  res.json({ challenge });
+});
+
+app.post('/api/bot-verify', express.json(), (req, res) => {
+  const { challenge, proof, timing } = req.body;
+  
+  if (!challenge || !proof || !timing) {
+    return res.status(400).json({ error: 'Invalid proof' });
+  }
+  
+  if (checkSystemPressure()) {
+    return res.status(503).json({ error: 'System under load' });
+  }
+  
+  const expectedProof = createHmac('sha256', challenge).update('client-proof').digest('hex');
+  const timingValid = timing > 0 && timing < 1000;
+  
+  if (proof === expectedProof && timingValid) {
+    const token = createToken();
+    res.cookie('bot_token', token, {
+      maxAge: TOKEN_VALIDITY,
+      httpOnly: true,
+      sameSite: 'Lax',
+      secure: false
+    });
+    return res.json({ success: true, token });
+  }
+  
+  res.status(403).json({ error: 'Verification failed' });
+});
+
+const gateMiddleware = (req, res, next) => {
+  systemState.totalRequests++;
+  
   const ua = req.headers['user-agent'] || '';
   const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
+  
+  if (!isBrowser && req.path !== '/api/bot-challenge' && req.path !== '/api/bot-verify') {
+    return res.status(403).send('Forbidden');
+  }
+  
+  const token = extractToken(req);
+  const tokenData = verifyToken(token);
+  
+  if (tokenData?.features?.http) {
+    return next();
+  }
+  
+  if (checkSystemPressure()) {
+    return res.status(503).send('Service temporarily unavailable');
+  }
+  
   const acceptsHtml = req.headers.accept?.includes('text/html');
-
-  if (!isBrowser) return res.status(403).send('Forbidden');
-
-  if (verified && isBrowser) return next();
-
-  if (!acceptsHtml) return next();
-
-  res.cookie('verified', 'ok', { maxAge: 86400000, httpOnly: true, sameSite: 'Lax' });
-  res.status(200).send(`<!DOCTYPE html><html><body><script>document.cookie = "verified=ok; Max-Age=86400; SameSite=Lax";setTimeout(() => window.location.replace(window.location.pathname), 100);</script><noscript>Enable JavaScript to continue.</noscript></body></html>`);
+  if (acceptsHtml && isBrowser) {
+    return res.send(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Loading...</title></head>
+<body>
+<script>
+(async()=>{
+const r=await fetch('/api/bot-challenge');
+const {challenge}=await r.json();
+const start=performance.now();
+const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(challenge),{name:'HMAC',hash:'SHA-256'},false,['sign']);
+const sig=await crypto.subtle.sign('HMAC',key,new TextEncoder().encode('client-proof'));
+const proof=Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+const timing=performance.now()-start;
+const v=await fetch('/api/bot-verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge,proof,timing})});
+if(v.ok)location.reload();
+})();
+</script>
+</body>
+</html>`);
+  }
+  
+  next();
 };
 
-app.use(verifyMiddleware);
+app.use(gateMiddleware);
 
 const apiLimiter = rateLimit({
   windowMs: 15000,
-  max: 100,
+  max: (req) => {
+    const token = extractToken(req);
+    return verifyToken(token) ? 200 : 50;
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Too many requests from this IP, slow down'
+  message: 'Too many requests, slow down'
 });
 
 app.use('/bare/', apiLimiter);
 app.use('/api/', apiLimiter);
 
-app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'], allowedHeaders: ['Content-Type'] }));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -146,6 +288,7 @@ function cleanupWS(ip) {
   const count = wsConnections.get(ip) || 0;
   if (count <= 1) wsConnections.delete(ip);
   else wsConnections.set(ip, count - 1);
+  systemState.activeConnections--;
   shield.trackWS(ip, -1);
 }
 
@@ -426,42 +569,6 @@ app.post('/api/change-password', async (req, res) => {
 
 app.use((req, res) => res.status(404).sendFile(join(__dirname, publicPath, '404.html')));
 
-function parseCookies(header) {
-  if (!header) return {};
-  return header.split(';').reduce((acc, cookie) => {
-    const [name, value = ''] = cookie.trim().split('=');
-    if (name) acc[name] = value;
-    return acc;
-  }, {});
-}
-
-const isVerified = req => {
-  const cookies = parseCookies(req.headers.cookie);
-  return cookies.verified === 'ok' || req.headers['x-bot-token'] === process.env.BOT_TOKEN;
-};
-
-const isBrowser = req => /Mozilla|Chrome|Safari|Firefox|Edge/i.test(req.headers['user-agent'] || '');
-
-const handleHttpVerification = (req, res, next) => {
-  const acceptsHtml = req.headers.accept?.includes('text/html');
-  if (!acceptsHtml) return next();
-  if (isVerified(req) && isBrowser(req)) return next();
-  if (!isBrowser(req)) return res.writeHead(403, { 'Content-Type': 'text/plain' }).end('Forbidden');
-  res.writeHead(200, { 'Content-Type': 'text/html', 'Set-Cookie': 'verified=ok; Max-Age=86400; Path=/; HttpOnly; SameSite=Lax' });
-  res.end(`<!DOCTYPE html><html><body><script>document.cookie = "verified=ok; Max-Age=86400; SameSite=Lax";setTimeout(() => window.location.replace(window.location.pathname), 100);</script><noscript>Enable JavaScript to continue.</noscript></body></html>`);
-};
-
-const handleUpgradeVerification = (req, ip) => {
-  const wispPaths = ['/wisp/', '/api/wisp-premium/', '/api/alt-wisp-1/', '/api/alt-wisp-2/', '/api/alt-wisp-3/', '/api/alt-wisp-4/'];
-  const isWisp = wispPaths.some(p => req.url.startsWith(p));
-  if (isWisp) return true;
-  const verified = isVerified(req);
-  const isWsBrowser = isBrowser(req);
-  if (verified && isWsBrowser) return true;
-  console.log(`WebSocket Rejected: IP=${ip}, URL=${req.url}, Verified=${verified}, Browser=${isWsBrowser}`);
-  return false;
-};
-
 const server = createServer((req, res) => {
   const ip = toIPv4(req.socket.remoteAddress);
   shield.trackRequest(ip);
@@ -473,8 +580,8 @@ const server = createServer((req, res) => {
     }
   };
 
-  if (bare.shouldRoute(req)) handleHttpVerification(req, res, () => handleBareRequest(bare));
-  else if (barePremium.shouldRoute(req)) handleHttpVerification(req, res, () => handleBareRequest(barePremium));
+  if (bare.shouldRoute(req)) handleBareRequest(bare);
+  else if (barePremium.shouldRoute(req)) handleBareRequest(barePremium);
   else app.handle(req, res);
 });
 
@@ -488,14 +595,21 @@ server.on('upgrade', (req, socket, head) => {
     return socket.destroy();
   }
 
-  shield.trackWS(ip, 1);
-
-  if (!handleUpgradeVerification(req, ip)) {
-    shield.trackWS(ip, -1);
-    return socket.destroy();
+  const token = extractToken(req);
+  const tokenData = verifyToken(token);
+  
+  const wispPaths = ['/wisp/', '/api/wisp-premium/', '/api/alt-wisp-1/', '/api/alt-wisp-2/', '/api/alt-wisp-3/', '/api/alt-wisp-4/'];
+  const isWisp = wispPaths.some(p => req.url.startsWith(p));
+  
+  if (isWisp && !tokenData?.features?.ws) {
+    if (checkSystemPressure()) {
+      return socket.destroy();
+    }
   }
 
+  shield.trackWS(ip, 1);
   wsConnections.set(ip, current + 1);
+  systemState.activeConnections++;
 
   socket.on('close', () => cleanupWS(ip));
   socket.on('error', () => cleanupWS(ip));
@@ -510,7 +624,7 @@ server.on('upgrade', (req, socket, head) => {
 
   if (bare.shouldRoute(req)) handleBareUpgrade(bare);
   else if (barePremium.shouldRoute(req)) handleBareUpgrade(barePremium);
-  else if (['/wisp/', '/api/wisp-premium/', '/api/alt-wisp-1/', '/api/alt-wisp-2/', '/api/alt-wisp-3/', '/api/alt-wisp-4/'].some(p => req.url.startsWith(p))) {
+  else if (isWisp) {
     if (req.url.startsWith('/api/wisp-premium/')) req.url = req.url.replace('/api/wisp-premium/', '/wisp/');
     if (req.url.startsWith('/api/alt-wisp-1/')) req.url = req.url.replace('/api/alt-wisp-1/', '/wisp/');
     if (req.url.startsWith('/api/alt-wisp-2/')) req.url = req.url.replace('/api/alt-wisp-2/', '/wisp/');
