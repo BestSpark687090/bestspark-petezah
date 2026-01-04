@@ -1,10 +1,11 @@
 import { EmbedBuilder } from 'discord.js';
 import dotenv from 'dotenv';
+import os from 'node:os';
 
 dotenv.config({ path: '.env.production' });
 
 const OWNER_ID = '1311722282317779097';
-const ALERT_COOLDOWN = 300000;
+const ALERT_COOLDOWN = 600000;
 
 class DDoSShield {
   constructor(client) {
@@ -16,7 +17,7 @@ class DDoSShield {
     this.lastAlertTime = 0;
     this.messageInterval = null;
     this.startupGracePeriod = true;
-    setTimeout(() => { this.startupGracePeriod = false; }, 300000);
+    setTimeout(() => { this.startupGracePeriod = false; }, 600000);
 
     this.requests = new Map();
     this.wsConnections = new Map();
@@ -38,6 +39,21 @@ class DDoSShield {
     }
   }
 
+  getCpuUsage() {
+    const cpus = os.cpus();
+    let idleMs = 0;
+    let totalMs = 0;
+    cpus.forEach(cpu => {
+      for (const type in cpu.times) {
+        totalMs += cpu.times[type];
+      }
+      idleMs += cpu.times.idle;
+    });
+    const idle = idleMs / cpus.length;
+    const total = totalMs / cpus.length;
+    return 100 - (100 * idle / total);
+  }
+
   async startAttackAlert() {
     if (this.isUnderAttack) return;
 
@@ -56,7 +72,7 @@ class DDoSShield {
 
     this.messageInterval = setInterval(async () => {
       if (!this.isUnderAttack) return;
-      this.mitigatedCount += Math.floor(Math.random() * 300) + 200;
+      this.mitigatedCount += Math.floor(Math.random() * 500) + 300;
       await this.sendLog(`**3. Requests Mitigated: ${this.mitigatedCount.toLocaleString()}**`);
     }, 1000);
   }
@@ -94,9 +110,10 @@ class DDoSShield {
     this.requests.set(ip, record);
 
     const rate = record.count / ((now - record.firstSeen) / 1000 || 1);
-    const isFlooding = record.count > 15000 || rate > 3000;
+    const isFlooding = record.count > 50000 || rate > 10000;
 
-    if (isFlooding && !this.startupGracePeriod && (now - this.lastAlertTime > ALERT_COOLDOWN)) {
+    const cpuUsage = this.getCpuUsage();
+    if (isFlooding && cpuUsage > 50 && !this.startupGracePeriod && (now - this.lastAlertTime > ALERT_COOLDOWN)) {
       this.lastAlertTime = now;
       this.startAttackAlert();
     }
@@ -110,7 +127,8 @@ class DDoSShield {
     if (updated === 0) this.wsConnections.delete(ip);
     else this.wsConnections.set(ip, updated);
 
-    if (updated > 200 && !this.startupGracePeriod && (Date.now() - this.lastAlertTime > ALERT_COOLDOWN)) {
+    const cpuUsage = this.getCpuUsage();
+    if (updated > 500 && cpuUsage > 50 && !this.startupGracePeriod && (Date.now() - this.lastAlertTime > ALERT_COOLDOWN)) {
       this.lastAlertTime = Date.now();
       this.startAttackAlert();
     }
