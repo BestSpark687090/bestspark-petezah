@@ -1,6 +1,8 @@
 import { EmbedBuilder } from 'discord.js';
 import dotenv from 'dotenv';
 import os from 'node:os';
+import v8 from 'v8';
+import process from 'process';
 
 dotenv.config({ path: '.env.production' });
 
@@ -9,6 +11,10 @@ const ALERT_COOLDOWN = 600000;
 const ATTACK_END_TIMEOUT = 180000;
 const WINDOW_SIZE = 10000;
 const CPU_THRESHOLD = 75;
+const MEMORY_THRESHOLD = 1024 * 1024 * 1024 * 2;
+const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
+const PATTERN_DETECTION_WINDOW = 30000;
+const ATTACK_PATTERN_THRESHOLD = 50;
 
 class DDoSShield {
   constructor(client) {
@@ -27,8 +33,17 @@ class DDoSShield {
     this.blockTypes = new Map();
     this.challengeHits = new Map();
     this.ipRequests = new Map();
+    this.recentBlocks = [];
+    this.attackPatterns = new Map();
+    this.memoryStats = { heapUsed: 0, rss: 0, active: false, timestamp: 0 };
+    this.wsFlushHistory = [];
+    this.autoMitigationActive = false;
+    this.attackVector = null;
+    this.mitigationActions = [];
 
     this.cleanupInterval = setInterval(() => this.cleanupOldEntries(), 30000);
+    this.memoryMonitorInterval = setInterval(() => this.monitorMemory(), 5000);
+    this.patternDetectionInterval = setInterval(() => this.detectAttackPatterns(), 10000);
   }
 
   setLogChannel(channelId) {
@@ -74,6 +89,9 @@ class DDoSShield {
 
     this.blockTypes.set(type, (this.blockTypes.get(type) || 0) + 1);
 
+    this.recentBlocks.push(now);
+    this.recentBlocks = this.recentBlocks.filter(t => now - t < 60000);
+
     this.checkAttackConditions(ip);
 
     if (this.isUnderAttack && this.attackEndTimer) {
@@ -94,6 +112,12 @@ class DDoSShield {
     if (!ipData) return 0;
     const now = Date.now();
     return ipData.blocks.filter(t => now - t < windowMs).length;
+  }
+
+  getRecentBlockRate() {
+    const now = Date.now();
+    const blocksInLastMinute = this.recentBlocks.filter(t => now - t < 60000).length;
+    return blocksInLastMinute;
   }
 
   getTotalBlocks(ip) {
@@ -240,6 +264,8 @@ class DDoSShield {
         this.ipRequests.delete(ip);
       }
     }
+
+    this.recentBlocks = this.recentBlocks.filter(t => now - t < 60000);
   }
 
   trackRequest(ip) {
@@ -277,6 +303,277 @@ class DDoSShield {
     }
   }
 
+  monitorMemory() {
+    const mem = process.memoryUsage();
+    const heapUsed = mem.heapUsed;
+    const rss = mem.rss;
+    const active = heapUsed > MEMORY_CRITICAL || rss > MEMORY_THRESHOLD;
+    
+    this.memoryStats = { heapUsed, rss, active, timestamp: Date.now() };
+    
+    if (active && !this.memoryStats.active) {
+      this.sendLog('🚨 Memory pressure detected!', null);
+    }
+    
+    if (heapUsed > MEMORY_THRESHOLD * 1.2) {
+      this.sendLog(`💀 CRITICAL: Memory usage at ${(heapUsed / 1024 / 1024 / 1024).toFixed(2)}GB`, null);
+      if (global.gc) {
+        global.gc();
+        this.sendLog('🧹 Forced garbage collection', null);
+      }
+    }
+  }
+
+  detectAttackPatterns() {
+    const now = Date.now();
+    const patterns = new Map();
+    
+    for (const [ip, data] of this.ipBlocks.entries()) {
+      const recent = data.blocks.filter(t => now - t < PATTERN_DETECTION_WINDOW);
+      if (recent.length < ATTACK_PATTERN_THRESHOLD) continue;
+      
+      const types = data.types;
+      const topType = Object.entries(types).sort((a, b) => b[1] - a[1])[0]?.[0] || 'unknown';
+      
+      const patternKey = `${topType}:${recent.length}`;
+      if (!patterns.has(patternKey)) {
+        patterns.set(patternKey, { type: topType, count: 0, ips: [] });
+      }
+      const pattern = patterns.get(patternKey);
+      pattern.count += recent.length;
+      pattern.ips.push(ip);
+    }
+    
+    for (const [key, pattern] of patterns.entries()) {
+      if (pattern.count > 200 && pattern.ips.length > 10) {
+        this.attackPatterns.set(key, { ...pattern, detected: now });
+        
+        if (!this.isUnderAttack && !this.startupGracePeriod) {
+          this.autoMitigationActive = true;
+          this.attackVector = pattern.type;
+          this.sendLog(`🔍 Attack pattern detected: ${pattern.type} (${pattern.count} blocks from ${pattern.ips.length} IPs)`, null);
+        }
+      }
+    }
+    
+    this.attackPatterns.forEach((pattern, key) => {
+      if (now - pattern.detected > 600000) {
+        this.attackPatterns.delete(key);
+      }
+    });
+  }
+
+  trackMemoryPressure(ip) {
+    const now = Date.now();
+    const data = this.ipRequests.get(ip) || { count: 0, lastSeen: now, memoryPressure: 0 };
+    data.memoryPressure = (data.memoryPressure || 0) + 1;
+    this.ipRequests.set(ip, data);
+    
+    if (data.memoryPressure > 10) {
+      this.incrementBlocked(ip, 'memory_abuse');
+    }
+  }
+
+  updateMemoryStats(mem, pressure, activeRequests) {
+    this.memoryStats = {
+      heapUsed: mem.heapUsed,
+      rss: mem.rss,
+      heapTotal: mem.heapTotal,
+      external: mem.external,
+      arrayBuffers: mem.arrayBuffers,
+      active: pressure,
+      activeRequests,
+      timestamp: Date.now()
+    };
+    
+    if (pressure && this.isUnderAttack && !this.mitigationActions.includes('memory_mitigation')) {
+      this.mitigationActions.push('memory_mitigation');
+      this.sendLog(`⚡ Memory mitigation activated (${(mem.heapUsed / 1024 / 1024 / 1024).toFixed(2)}GB used)`, null);
+    }
+  }
+
+  trackRequest(ip) {
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) return;
+
+    const now = Date.now();
+    const data = this.ipRequests.get(ip) || { count: 0, lastSeen: now, blocks: 0, firstSeen: now, burstCount: 0, lastBurst: now };
+    data.count++;
+    data.lastSeen = now;
+    
+    if (now - data.lastBurst < 1000) {
+      data.burstCount++;
+      if (data.burstCount > 100) {
+        this.incrementBlocked(ip, 'burst_attack');
+        data.burstCount = 0;
+      }
+    } else {
+      data.burstCount = 1;
+      data.lastBurst = now;
+    }
+    
+    this.ipRequests.set(ip, data);
+
+    const timeWindow = now - data.firstSeen;
+    const rate = timeWindow > 0 ? (data.count / (timeWindow / 1000)) : 0;
+
+    if (data.count > 50000 || rate > 10000) {
+      this.incrementBlocked(ip, 'request_flood');
+    }
+  }
+
+  trackWS(ip, delta) {
+    if (ip === '127.0.0.1' || ip === '::1' || ip.startsWith('192.168.') || ip.startsWith('10.')) return;
+
+    const existing = this.ipRequests.get(ip);
+    const current = existing?.ws || 0;
+    const updated = Math.max(0, current + delta);
+    
+    const data = existing || { count: 0, lastSeen: Date.now(), ws: 0, wsHistory: [] };
+    data.ws = updated;
+    data.lastSeen = Date.now();
+    
+    if (!data.wsHistory) {
+      data.wsHistory = [];
+    }
+    
+    if (delta > 0) {
+      data.wsHistory.push(Date.now());
+      data.wsHistory = data.wsHistory.filter(t => Date.now() - t < 60000);
+      
+      if (data.wsHistory.length > 500) {
+        this.incrementBlocked(ip, 'ws_burst');
+        data.wsHistory = [];
+      }
+    }
+    
+    this.ipRequests.set(ip, data);
+
+    if (delta < 0) return;
+
+    const cpuUsage = this.getCpuUsage();
+    const mem = process.memoryUsage();
+    
+    if (updated > 500 && (cpuUsage > CPU_THRESHOLD || mem.heapUsed > MEMORY_CRITICAL)) {
+      this.incrementBlocked(ip, 'ws_flood');
+    }
+  }
+
+  async startAttackAlert(systemState = null) {
+    if (this.isUnderAttack) return;
+
+    this.isUnderAttack = true;
+    this.attackStartTime = Date.now();
+    this.mitigationActions = [];
+    const initialCount = this.mitigatedCount;
+
+    const topAbusers = this.getTopAbusers(5);
+    const cpuUsage = this.getCpuUsage().toFixed(1);
+    const mem = process.memoryUsage();
+    const memUsage = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
+    
+    const blockTypesSummary = Array.from(this.blockTypes.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([type, count]) => `${type}: ${count}`)
+      .join('\n') || 'N/A';
+
+    const attackPatterns = Array.from(this.attackPatterns.entries())
+      .slice(0, 3)
+      .map(([key, pattern]) => `${pattern.type}: ${pattern.count} from ${pattern.ips.length} IPs`)
+      .join('\n') || 'None detected';
+
+    const systemStatus = systemState 
+      ? `CPU: ${cpuUsage}%\nMemory: ${memUsage}GB\nConnections: ${systemState.activeConnections}\nWS: ${systemState.totalWS}\nTotal Blocks: ${this.mitigatedCount}`
+      : `CPU: ${cpuUsage}%\nMemory: ${memUsage}GB\nTotal Blocks: ${this.mitigatedCount}`;
+
+    const embed = new EmbedBuilder()
+      .setTitle('🛡️ DDoS Attack Detected!')
+      .setDescription('High volume of malicious traffic identified.\nStarting automated mitigation...')
+      .addFields(
+        { name: 'Top Abusers', value: topAbusers.map(a => `${a.ip} — ${a.count} blocks (${a.primaryType})`).join('\n') || 'N/A', inline: false },
+        { name: 'Block Reasons', value: blockTypesSummary, inline: true },
+        { name: 'System Status', value: systemStatus, inline: true },
+        { name: 'Attack Patterns', value: attackPatterns, inline: false }
+      )
+      .setColor('#ff0000')
+      .setTimestamp();
+
+    await this.sendLog(null, embed);
+
+    this.attackEndTimer = setTimeout(() => this.endAttackAlert(), ATTACK_END_TIMEOUT);
+  }
+
+  async endAttackAlert() {
+    if (!this.isUnderAttack) return;
+
+    this.isUnderAttack = false;
+    this.autoMitigationActive = false;
+    this.attackVector = null;
+    if (this.attackEndTimer) {
+      clearTimeout(this.attackEndTimer);
+      this.attackEndTimer = null;
+    }
+
+    const duration = Math.floor((Date.now() - this.attackStartTime) / 1000);
+    const topAbusers = this.getTopAbusers(5);
+    const mem = process.memoryUsage();
+    const memUsage = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
+    
+    const mitigationSummary = this.mitigationActions.length > 0 
+      ? this.mitigationActions.join(', ')
+      : 'Standard protections';
+    
+    const embed = new EmbedBuilder()
+      .setTitle('✅ Attack Mitigated Successfully')
+      .setDescription(`DDoS attack neutralized after ${duration} seconds.\nTotal requests blocked: **${this.mitigatedCount.toLocaleString()}**\nMitigation actions: ${mitigationSummary}`)
+      .addFields(
+        { name: 'Top Attackers', value: topAbusers.map(a => `${a.ip} — ${a.count} blocks`).join('\n') || 'N/A' },
+        { name: 'Memory Status', value: `${memUsage}GB heap used`, inline: true }
+      )
+      .setColor('#00ff00')
+      .setTimestamp();
+
+    await this.sendLog(null, embed);
+    
+    this.mitigationActions = [];
+  }
+
+  cleanupOldEntries() {
+    const now = Date.now();
+    
+    for (const [ip, data] of this.ipBlocks.entries()) {
+      data.blocks = data.blocks.filter(t => now - t < 60000);
+      if (data.blocks.length === 0) {
+        this.ipBlocks.delete(ip);
+      }
+    }
+
+    for (const [ip, hits] of this.challengeHits.entries()) {
+      const recent = hits.filter(t => now - t < 30000);
+      if (recent.length === 0) {
+        this.challengeHits.delete(ip);
+      } else {
+        this.challengeHits.set(ip, recent);
+      }
+    }
+
+    for (const [ip, data] of this.ipRequests.entries()) {
+      if (now - data.lastSeen > 60000) {
+        this.ipRequests.delete(ip);
+      } else {
+        if (data.wsHistory) {
+          data.wsHistory = data.wsHistory.filter(t => now - t < 60000);
+        }
+      }
+    }
+
+    this.recentBlocks = this.recentBlocks.filter(t => now - t < 60000);
+    
+    if (this.wsFlushHistory.length > 100) {
+      this.wsFlushHistory = this.wsFlushHistory.slice(-50);
+    }
+  }
+
   registerCommands(client) {
     client.once('ready', () => {
       const commands = [
@@ -287,6 +584,14 @@ class DDoSShield {
         {
           name: 'test-attack',
           description: 'Simulate a DDoS attack to test the system',
+        },
+        {
+          name: 'security-stats',
+          description: 'View current security statistics',
+        },
+        {
+          name: 'memory-status',
+          description: 'View current memory usage and statistics',
         },
       ];
 
@@ -319,6 +624,54 @@ class DDoSShield {
         }
 
         setTimeout(() => this.endAttackAlert(), 15000);
+      }
+
+      if (interaction.commandName === 'security-stats') {
+        const topAbusers = this.getTopAbusers(10);
+        const blockRate = this.getRecentBlockRate();
+        const cpuUsage = this.getCpuUsage().toFixed(1);
+        const { totalHits, uniqueIps } = this.getChallengeSpike();
+        
+        const embed = new EmbedBuilder()
+          .setTitle('📊 Security Statistics')
+          .addFields(
+            { name: 'Status', value: this.isUnderAttack ? '🟥 Under Attack' : '🟩 Normal', inline: true },
+            { name: 'CPU Usage', value: `${cpuUsage}%`, inline: true },
+            { name: 'Block Rate', value: `${blockRate}/min`, inline: true },
+            { name: 'Total Blocks', value: this.mitigatedCount.toLocaleString(), inline: true },
+            { name: 'Challenge Hits', value: `${totalHits} from ${uniqueIps} IPs`, inline: true },
+            { name: 'Attack Patterns', value: this.attackPatterns.size.toString(), inline: true },
+            { name: 'Top Abusers', value: topAbusers.map(a => `${a.ip}: ${a.count} (${a.primaryType})`).join('\n') || 'None', inline: false }
+          )
+          .setColor(this.isUnderAttack ? '#ff0000' : '#00ff00')
+          .setTimestamp();
+        
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      }
+
+      if (interaction.commandName === 'memory-status') {
+        const mem = process.memoryUsage();
+        const heapUsed = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
+        const heapTotal = (mem.heapTotal / 1024 / 1024 / 1024).toFixed(2);
+        const rss = (mem.rss / 1024 / 1024 / 1024).toFixed(2);
+        const external = (mem.external / 1024 / 1024 / 1024).toFixed(2);
+        
+        const status = this.memoryStats.active ? '🟥 High Pressure' : '🟩 Normal';
+        
+        const embed = new EmbedBuilder()
+          .setTitle('💾 Memory Status')
+          .addFields(
+            { name: 'Status', value: status, inline: true },
+            { name: 'Heap Used', value: `${heapUsed}GB`, inline: true },
+            { name: 'Heap Total', value: `${heapTotal}GB`, inline: true },
+            { name: 'RSS', value: `${rss}GB`, inline: true },
+            { name: 'External', value: `${external}GB`, inline: true },
+            { name: 'Active Requests', value: this.memoryStats.activeRequests?.toString() || 'N/A', inline: true }
+          )
+          .setColor(this.memoryStats.active ? '#ff0000' : '#00ff00')
+          .setTimestamp();
+        
+        await interaction.reply({ embeds: [embed], ephemeral: true });
       }
     });
   }

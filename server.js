@@ -6,7 +6,7 @@ import bareServerPkg from '@tomphttp/bare-server-node';
 import bcrypt from 'bcrypt';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import { createHmac, randomBytes, randomUUID } from 'crypto';
+import crypto, { createHmac, randomBytes, randomUUID, createHash, timingSafeEqual } from 'crypto';
 import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 import express from 'express';
@@ -20,6 +20,9 @@ import { createServer } from 'node:http';
 import { hostname } from 'node:os';
 import path, { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { performance } from 'perf_hooks';
+import process from 'process';
+import v8 from 'v8';
 import { ddosShield } from './secure.js';
 import { adminUserActionHandler } from './server/api/admin-user-action.js';
 import { addCommentHandler, getCommentsHandler } from './server/api/comments.js';
@@ -42,6 +45,120 @@ const __dirname = path.dirname(__filename);
 
 const publicPath = 'public';
 
+const MAX_REQUEST_SIZE = 10 * 1024 * 1024;
+const MAX_JSON_SIZE = 5 * 1024 * 1024;
+const MAX_HEADER_SIZE = 16384;
+const MEMORY_THRESHOLD = 1024 * 1024 * 1024 * 2;
+const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
+const REQUEST_TIMEOUT = 30000;
+const PAYLOAD_TIMEOUT = 10000;
+
+const memoryPressure = { active: false, lastCheck: 0, consecutiveHigh: 0 };
+const requestFingerprints = new Map();
+const ipReputation = new Map();
+const circuitBreakers = new Map();
+const activeRequests = new Map();
+let requestIdCounter = 0;
+
+function getMemoryUsage() {
+  const usage = process.memoryUsage();
+  return {
+    rss: usage.rss,
+    heapTotal: usage.heapTotal,
+    heapUsed: usage.heapUsed,
+    external: usage.external,
+    arrayBuffers: usage.arrayBuffers
+  };
+}
+
+function checkMemoryPressure() {
+  const now = Date.now();
+  if (now - memoryPressure.lastCheck < 5000) return memoryPressure.active;
+  memoryPressure.lastCheck = now;
+  
+  const mem = getMemoryUsage();
+  const isHigh = mem.heapUsed > MEMORY_CRITICAL || mem.rss > MEMORY_THRESHOLD;
+  
+  if (isHigh) {
+    memoryPressure.consecutiveHigh++;
+    if (memoryPressure.consecutiveHigh >= 3) {
+      memoryPressure.active = true;
+      if (global.gc && mem.heapUsed > MEMORY_CRITICAL * 1.1) {
+        global.gc();
+      }
+    }
+  } else {
+    memoryPressure.consecutiveHigh = 0;
+    memoryPressure.active = false;
+  }
+  
+  return memoryPressure.active;
+}
+
+function createFingerprint(req) {
+  const ip = toIPv4(null, req);
+  const ua = req.headers['user-agent'] || '';
+  const accept = req.headers['accept'] || '';
+  const lang = req.headers['accept-language'] || '';
+  const encoding = req.headers['accept-encoding'] || '';
+  const data = `${ip}:${ua}:${accept}:${lang}:${encoding}`;
+  return createHash('sha256').update(data).digest('hex').slice(0, 32);
+}
+
+function updateIPReputation(ip, score) {
+  const current = ipReputation.get(ip) || { score: 0, lastSeen: 0, violations: [] };
+  current.score += score;
+  current.lastSeen = Date.now();
+  if (score < 0) {
+    current.violations.push({ time: Date.now(), score });
+    current.violations = current.violations.filter(v => Date.now() - v.time < 3600000);
+  }
+  ipReputation.set(ip, current);
+  
+  if (current.score < -100) {
+    circuitBreakers.set(ip, { open: true, until: Date.now() + 3600000, violations: current.violations.length });
+  }
+}
+
+function checkCircuitBreaker(ip) {
+  const breaker = circuitBreakers.get(ip);
+  if (!breaker) return false;
+  if (breaker.open && Date.now() > breaker.until) {
+    circuitBreakers.delete(ip);
+    return false;
+  }
+  return breaker.open;
+}
+
+function toIPv4(ip, req = null) {
+  if (req) {
+    const xForwardedFor = req.headers['x-forwarded-for'];
+    const xRealIP = req.headers['x-real-ip'];
+    const cfConnectingIP = req.headers['cf-connecting-ip'];
+    const trueClientIP = req.headers['true-client-ip'];
+    
+    if (xForwardedFor) {
+      ip = xForwardedFor.split(',')[0].trim();
+    } else if (cfConnectingIP) {
+      ip = cfConnectingIP;
+    } else if (trueClientIP) {
+      ip = trueClientIP;
+    } else if (xRealIP) {
+      ip = xRealIP;
+    } else if (req.socket?.remoteAddress) {
+      ip = req.socket.remoteAddress;
+    } else if (req.connection?.remoteAddress) {
+      ip = req.connection.remoteAddress;
+    }
+  }
+  
+  if (!ip) return '127.0.0.1';
+  if (typeof ip === 'string' && ip.includes(',')) ip = ip.split(',')[0].trim();
+  if (typeof ip === 'string' && ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
+  const match = typeof ip === 'string' ? ip.match(/^(\d{1,3}\.){3}\d{1,3}$/) : null;
+  return match ? match[0] : '127.0.0.1';
+}
+
 const bare = createBareServer('/bare/', {
   websocket: { maxPayloadLength: 4096 }
 });
@@ -51,6 +168,8 @@ const barePremium = createBareServer('/api/bare-premium/', {
 });
 
 const app = express();
+
+app.set('trust proxy', true);
 
 const discordClient = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -69,15 +188,146 @@ if (!process.env.TOKEN_SECRET) {
 }
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
 const TOKEN_VALIDITY = 3600000;
-const POW_DIFFICULTY = 18;
+const BASE_POW_DIFFICULTY = 16;
+const MAX_POW_DIFFICULTY = 22;
 
 const systemState = {
   cpuHigh: false,
   activeConnections: 0,
   totalWS: 0,
   totalRequests: 0,
-  lastCheck: Date.now()
+  lastCheck: Date.now(),
+  currentPowDifficulty: BASE_POW_DIFFICULTY,
+  recentBlockRate: 0,
+  lastDifficultyAdjust: Date.now()
 };
+
+const botVerificationCache = new Map();
+const VERIFICATION_CACHE_TTL = 3600000;
+
+function adjustPowDifficulty() {
+  const now = Date.now();
+  if (now - systemState.lastDifficultyAdjust < 5000) return;
+  
+  systemState.lastDifficultyAdjust = now;
+  
+  const blockRate = shield.getRecentBlockRate();
+  const cpuUsage = shield.getCpuUsage();
+  const { uniqueIps } = shield.getChallengeSpike();
+  
+  let targetDifficulty = BASE_POW_DIFFICULTY;
+  
+  if (shield.isUnderAttack || blockRate > 100 || uniqueIps > 150) {
+    targetDifficulty = MAX_POW_DIFFICULTY;
+  } else if (blockRate > 50 || cpuUsage > 70 || uniqueIps > 80) {
+    targetDifficulty = 20;
+  } else if (blockRate > 20 || cpuUsage > 50 || uniqueIps > 40) {
+    targetDifficulty = 18;
+  }
+  
+  if (targetDifficulty > systemState.currentPowDifficulty) {
+    systemState.currentPowDifficulty = Math.min(targetDifficulty, MAX_POW_DIFFICULTY);
+  } else if (targetDifficulty < systemState.currentPowDifficulty) {
+    systemState.currentPowDifficulty = Math.max(
+      systemState.currentPowDifficulty - 1,
+      BASE_POW_DIFFICULTY
+    );
+  }
+}
+
+async function verifyLegitimateBot(ua, ip) {
+  const cacheKey = `${ip}:${ua}`;
+  const cached = botVerificationCache.get(cacheKey);
+  
+  if (cached && Date.now() - cached.timestamp < VERIFICATION_CACHE_TTL) {
+    return cached.isLegit;
+  }
+
+  let isLegit = false;
+  let expectedDomains = [];
+
+  try {
+    if (/googlebot/i.test(ua)) {
+      expectedDomains = ['.googlebot.com.', '.google.com.'];
+    } else if (/bingbot/i.test(ua)) {
+      expectedDomains = ['.search.msn.com.'];
+    } else if (/duckduckbot/i.test(ua)) {
+      expectedDomains = ['.duckduckgo.com.'];
+    } else if (/slurp/i.test(ua)) {
+      expectedDomains = ['.crawl.yahoo.net.'];
+    } else if (/baiduspider/i.test(ua)) {
+      expectedDomains = ['.crawl.baidu.com.', '.crawl.baidu.jp.'];
+    } else if (/yandexbot/i.test(ua)) {
+      expectedDomains = ['.yandex.com.', '.yandex.ru.', '.yandex.net.'];
+    } else if (/facebookexternalhit/i.test(ua)) {
+      expectedDomains = ['.facebook.com.', '.fbsv.net.'];
+    } else if (/twitterbot/i.test(ua)) {
+      expectedDomains = ['.twitter.com.'];
+    } else if (/discordbot/i.test(ua)) {
+      expectedDomains = ['.discord.com.'];
+    } else if (/telegrambot/i.test(ua)) {
+      expectedDomains = ['.telegram.org.'];
+    } else if (/whatsapp/i.test(ua)) {
+      expectedDomains = ['.facebook.com.', '.whatsapp.net.'];
+    } else if (/linkedinbot/i.test(ua)) {
+      expectedDomains = ['.linkedin.com.'];
+    } else if (/slackbot/i.test(ua)) {
+      expectedDomains = ['.slack.com.'];
+    } else if (/archive\.org_bot|ia_archiver/i.test(ua)) {
+      expectedDomains = ['.archive.org.'];
+    } else if (/semrushbot/i.test(ua)) {
+      expectedDomains = ['.semrush.com.'];
+    } else if (/ahrefsbot/i.test(ua)) {
+      expectedDomains = ['.ahrefs.com.'];
+    } else if (/mj12bot/i.test(ua)) {
+      expectedDomains = ['.mj12bot.com.'];
+    } else if (/dotbot/i.test(ua)) {
+      expectedDomains = ['.opensiteexplorer.org.', '.moz.com.'];
+    } else {
+      isLegit = false;
+      botVerificationCache.set(cacheKey, { isLegit, timestamp: Date.now() });
+      return isLegit;
+    }
+
+    const response = await fetch(
+      `https://dns.google/resolve?name=${ip.split('.').reverse().join('.')}.in-addr.arpa&type=PTR`,
+      { timeout: 2000 }
+    );
+    
+    const data = await response.json();
+    
+    if (data.Answer) {
+      const ptr = data.Answer.find(a => a.type === 12)?.data;
+      if (ptr) {
+        isLegit = expectedDomains.some(domain => ptr.includes(domain));
+      }
+    }
+
+    if (!isLegit) {
+      console.log(`[SECURITY] Fake bot detected: UA="${ua.substring(0, 50)}" IP=${ip} PTR=${data.Answer?.[0]?.data || 'none'}`);
+    }
+
+  } catch (err) {
+    isLegit = false;
+    console.log(`[SECURITY] Bot verification failed for IP=${ip}: ${err.message}`);
+  }
+
+  botVerificationCache.set(cacheKey, {
+    isLegit,
+    timestamp: Date.now()
+  });
+
+  return isLegit;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of botVerificationCache.entries()) {
+    if (now - value.timestamp > VERIFICATION_CACHE_TTL) {
+      botVerificationCache.delete(key);
+    }
+  }
+}, 300000);
 
 function createToken(features = { http: true, ws: true }) {
   const now = Date.now();
@@ -94,30 +344,40 @@ function createToken(features = { http: true, ws: true }) {
 }
 
 function verifyToken(token, req) {
-  if (!token || typeof token !== 'string') return null;
+  if (!token || typeof token !== 'string' || token.length > 512) return null;
   const parts = token.split('.');
   if (parts.length !== 2) return null;
 
   try {
+    if (parts[0].length > 512 || parts[1].length > 128) return null;
+    
     const payload = Buffer.from(parts[0], 'base64url').toString('utf8');
     const signature = parts[1];
+
+    if (payload.length > 1024) return null;
 
     const hmac = createHmac('sha256', TOKEN_SECRET);
     hmac.update(payload);
     const expected = hmac.digest('base64url');
 
-    if (signature !== expected) return null;
+    if (signature.length !== expected.length) return null;
+    if (!timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
 
     const data = JSON.parse(payload);
+    if (!data.iat || !data.exp || typeof data.iat !== 'number' || typeof data.exp !== 'number') return null;
     if (data.exp < Date.now()) return null;
+    if (data.iat > Date.now() + 1000) return null;
+    if (data.exp - data.iat > TOKEN_VALIDITY + 1000) return null;
 
     if (req && data.fp) {
-      const ip = toIPv4(req.socket.remoteAddress);
+      const ip = toIPv4(null, req);
+      const ua = req.headers['user-agent'] || '';
       const currentFP = createHmac('sha256', TOKEN_SECRET)
-        .update(ip + (req.headers['user-agent'] || ''))
+        .update(ip + ua)
         .digest('hex')
         .slice(0, 16);
-      if (data.fp !== currentFP) return null;
+      if (data.fp.length !== currentFP.length) return null;
+      if (!timingSafeEqual(Buffer.from(data.fp), Buffer.from(currentFP))) return null;
     }
 
     return data;
@@ -134,6 +394,8 @@ function checkSystemPressure() {
   const load = systemState.totalRequests / 10;
   systemState.cpuHigh = load > 5000 || systemState.activeConnections > 25000;
   systemState.totalRequests = 0;
+
+  adjustPowDifficulty();
 
   return systemState.cpuHigh;
 }
@@ -180,9 +442,14 @@ app.get('/scramjet.all.js.map', (req, res) => res.sendFile(path.join(scramjetPat
 app.use('/baremux/', express.static(baremuxPath));
 app.use('/epoxy/', express.static(epoxyPath));
 
-app.get('/api/bot-challenge', rateLimit({ windowMs: 60000, max: 10 }), (req, res) => {
+app.get('/api/bot-challenge', rateLimit({ 
+  windowMs: 60000, 
+  max: 10,
+  keyGenerator: (req) => toIPv4(null, req)
+}), (req, res) => {
   const challenge = randomBytes(16).toString('hex');
-  const difficulty = POW_DIFFICULTY;
+  const difficulty = systemState.currentPowDifficulty;
+  shield.trackChallengeHit(toIPv4(null, req));
   res.json({ challenge, difficulty });
 });
 
@@ -199,10 +466,11 @@ app.post('/api/bot-verify', express.json(), (req, res) => {
 
   const hash = createHmac('sha256', challenge).update(nonce).digest('hex');
   const leadingZeros = hash.match(/^0+/)?.[0].length || 0;
-  const timingValid = timing > 10 && timing < 30000;
+  const requiredZeros = Math.floor(systemState.currentPowDifficulty / 4);
+  const timingValid = timing > 10 && timing < 60000;
 
-  if (leadingZeros >= Math.floor(POW_DIFFICULTY / 4) && timingValid) {
-    const ip = toIPv4(req.socket.remoteAddress);
+  if (leadingZeros >= requiredZeros && timingValid) {
+    const ip = toIPv4(null, req);
     const fingerprint = createHmac('sha256', TOKEN_SECRET)
       .update(ip + (req.headers['user-agent'] || ''))
       .digest('hex')
@@ -213,25 +481,26 @@ app.post('/api/bot-verify', express.json(), (req, res) => {
       maxAge: TOKEN_VALIDITY,
       httpOnly: true,
       sameSite: 'Lax',
-      secure: true
+      secure: process.env.NODE_ENV === 'production'
     });
     return res.json({ success: true, token });
   }
 
+  shield.incrementBlocked(toIPv4(null, req), 'pow_fail');
   res.status(403).json({ error: 'Verification failed' });
 });
 
-const gateMiddleware = (req, res, next) => {
+const gateMiddleware = async (req, res, next) => {
   systemState.totalRequests++;
 
   const ua = req.headers['user-agent'] || '';
+  const ip = toIPv4(null, req);
   const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
 
-  // Whitelist legitimate bots
   const goodBots = [
     /googlebot/i,
     /bingbot/i,
-    /slurp/i, // Yahoo
+    /slurp/i,
     /duckduckbot/i,
     /baiduspider/i,
     /yandexbot/i,
@@ -243,21 +512,39 @@ const gateMiddleware = (req, res, next) => {
     /linkedinbot/i,
     /slackbot/i,
     /archive\.org_bot/i,
-    /ia_archiver/i, 
+    /ia_archiver/i,
     /semrushbot/i,
     /ahrefsbot/i,
-    /mj12bot/i, 
+    /mj12bot/i,
     /dotbot/i
   ];
 
-  const isGoodBot = goodBots.some((pattern) => pattern.test(ua));
+  const botMatch = goodBots.find(pattern => pattern.test(ua));
+  const isClaimingBot = !!botMatch;
 
-  if (!isBrowser && !isGoodBot && req.path !== '/api/bot-challenge' && req.path !== '/api/bot-verify') {
+  if (!isBrowser && isClaimingBot && req.path !== '/api/bot-challenge' && req.path !== '/api/bot-verify') {
+    const isVerified = await verifyLegitimateBot(ua, ip);
+    
+    if (!isVerified) {
+      shield.incrementBlocked(ip, 'fake_bot');
+      return res.status(403).send('Forbidden');
+    }
+    
+    return next();
+  }
+
+  if (!isBrowser && !isClaimingBot && req.path !== '/api/bot-challenge' && req.path !== '/api/bot-verify') {
+    shield.incrementBlocked(ip, 'no_ua');
     return res.status(403).send('Forbidden');
   }
 
-  if (isGoodBot) {
-    return next();
+  if (isBrowser && isClaimingBot) {
+    const isVerified = await verifyLegitimateBot(ua, ip);
+    if (!isVerified) {
+      shield.incrementBlocked(ip, 'fake_bot');
+    } else {
+      return next(); 
+    }
   }
 
   const token = extractToken(req);
@@ -268,6 +555,7 @@ const gateMiddleware = (req, res, next) => {
   }
 
   if (checkSystemPressure()) {
+    shield.incrementBlocked(ip, 'pressure');
     return res.status(503).send('Service temporarily unavailable');
   }
 
@@ -292,23 +580,104 @@ hash=Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,'0')).
 const zeros=hash.match(/^0+/)?.[0].length||0;
 if(zeros>=Math.floor(difficulty/4))break;
 nonce++;
-if(nonce>1000000)break;
+if(nonce>2000000)break;
 }
 const timing=performance.now()-start;
 const v=await fetch('/api/bot-verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge,nonce,timing})});
 if(v.ok)location.reload();
+else document.body.innerHTML='<p>Verification failed. Please refresh.</p>';
 })();
 </script>
 </body>
 </html>`);
   }
 
+  shield.incrementBlocked(ip, 'no_token');
+  return res.status(403).send('Forbidden');
+};
+
+const authRoutes = ['/api/signin', '/api/signup', '/api/bot-challenge', '/api/bot-verify', '/api/verify-email'];
+const apiRoutes = [
+  '/api/signin', '/api/signup', '/api/bot-challenge', '/api/bot-verify', '/api/verify-email',
+  '/api/signout', '/api/profile', '/api/update-profile', '/api/load-localstorage', '/api/delete-account',
+  '/api/changelog', '/api/feedback', '/api/comment', '/api/comments', '/api/like', '/api/likes',
+  '/api/upload-profile-pic', '/api/save-localstorage', '/api/change-password',
+  '/api/admin/user-action', '/api/admin/feedback', '/api/admin/stats', '/api/admin/users'
+];
+const authPaths = new Set(authRoutes);
+const apiPaths = new Set(apiRoutes);
+
+const memoryProtection = (req, res, next) => {
+  if (checkMemoryPressure()) {
+    const ip = toIPv4(null, req);
+    updateIPReputation(ip, -5);
+    shield.trackMemoryPressure(ip);
+    if (!apiPaths.has(req.path)) {
+      return res.status(503).json({ error: 'Service temporarily unavailable' });
+    }
+  }
+  
+  const reqId = ++requestIdCounter;
+  const startTime = performance.now();
+  activeRequests.set(reqId, { ip: toIPv4(null, req), path: req.path, startTime });
+  
+  req.on('close', () => activeRequests.delete(reqId));
+  req.on('end', () => activeRequests.delete(reqId));
+  
+  res.on('finish', () => {
+    activeRequests.delete(reqId);
+    const duration = performance.now() - startTime;
+    if (duration > REQUEST_TIMEOUT) {
+      const ip = toIPv4(null, req);
+      updateIPReputation(ip, -2);
+    }
+  });
+  
+  const contentLength = parseInt(req.headers['content-length'] || '0');
+  if (contentLength > MAX_REQUEST_SIZE) {
+    const ip = toIPv4(null, req);
+    updateIPReputation(ip, -10);
+    shield.incrementBlocked(ip, 'payload_oversized');
+    return res.status(413).json({ error: 'Request too large' });
+  }
+  
+  const totalHeaderSize = Object.entries(req.headers).reduce((sum, [k, v]) => sum + k.length + (Array.isArray(v) ? v.join('').length : String(v).length), 0);
+  if (totalHeaderSize > MAX_HEADER_SIZE) {
+    const ip = toIPv4(null, req);
+    updateIPReputation(ip, -15);
+    shield.incrementBlocked(ip, 'header_oversized');
+    return res.status(431).json({ error: 'Headers too large' });
+  }
+  
+  const fingerprint = createFingerprint(req);
+  const ip = toIPv4(null, req);
+  const fpData = requestFingerprints.get(fingerprint) || { count: 0, lastSeen: 0, ip };
+  fpData.count++;
+  fpData.lastSeen = Date.now();
+  requestFingerprints.set(fingerprint, fpData);
+  
+  if (fpData.count > 1000 && Date.now() - fpData.lastSeen < 60000) {
+    updateIPReputation(ip, -20);
+    shield.incrementBlocked(ip, 'fingerprint_abuse');
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+  
   next();
 };
 
-const authRoutes = ['/api/signin', '/api/signup', '/api/bot-challenge', '/api/bot-verify'];
 const conditionalGate = (req, res, next) => {
-  if (authRoutes.includes(req.path)) {
+  const ip = toIPv4(null, req);
+  
+  if (checkCircuitBreaker(ip)) {
+    shield.incrementBlocked(ip, 'circuit_open');
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+  
+  if (apiPaths.has(req.path)) {
+    return next();
+  }
+
+  if (req.path.startsWith('/api/')) {
     return next();
   }
 
@@ -322,28 +691,107 @@ const conditionalGate = (req, res, next) => {
 
   return gateMiddleware(req, res, next);
 };
+
+app.use(memoryProtection);
 app.use(conditionalGate);
+
+const authLimiter = rateLimit({
+  windowMs: 60000,
+  max: 20,
+  keyGenerator: (req) => toIPv4(null, req),
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    const ip = toIPv4(null, req);
+    const reputation = ipReputation.get(ip);
+    return reputation && reputation.score < -50;
+  },
+  handler: (req, res) => {
+    const ip = toIPv4(null, req);
+    updateIPReputation(ip, -5);
+    res.status(429).json({ error: 'Too many authentication attempts' });
+  }
+});
 
 const apiLimiter = rateLimit({
   windowMs: 15000,
   max: (req) => {
     const token = extractToken(req);
+    const ip = toIPv4(null, req);
+    const reputation = ipReputation.get(ip);
+    if (reputation && reputation.score < -50) return 10;
+    if (authPaths.has(req.path)) return 20;
     return verifyToken(token, req) ? 200 : 50;
+  },
+  keyGenerator: (req) => {
+    const token = extractToken(req);
+    if (verifyToken(token, req)) return `token:${token.slice(0, 16)}`;
+    const ip = toIPv4(null, req);
+    if (req.session?.user?.id) return `user:${req.session.user.id}`;
+    return ip;
   },
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Too many requests, slow down'
+  skip: (req) => false,
+  handler: (req, res) => {
+    const ip = toIPv4(null, req);
+    updateIPReputation(ip, -3);
+    shield.incrementBlocked(ip, 'rate_limit');
+    res.status(429).json({ error: 'Too many requests, slow down' });
+  }
 });
 
 app.use('/bare/', apiLimiter);
-app.use('/api/', apiLimiter);
+app.use('/api/', (req, res, next) => {
+  if (authPaths.has(req.path)) {
+    return authLimiter(req, res, next);
+  }
+  return apiLimiter(req, res, next);
+});
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(fileUpload());
-app.use(session({ secret: process.env.SESSION_SECRET, resave: false, saveUninitialized: false, cookie: { secure: false } }));
+app.use(express.json({ limit: MAX_JSON_SIZE, verify: (req, res, buf, encoding) => {
+  if (buf && buf.length > MAX_JSON_SIZE) {
+    const ip = toIPv4(req.socket.remoteAddress);
+    updateIPReputation(ip, -10);
+    shield.incrementBlocked(ip, 'json_oversized');
+    throw new Error('JSON payload too large');
+  }
+  const startTime = Date.now();
+  try {
+    JSON.parse(buf.toString());
+  } catch {
+    const ip = toIPv4(req.socket.remoteAddress);
+    if (Date.now() - startTime > 100) {
+      updateIPReputation(ip, -5);
+      shield.incrementBlocked(ip, 'json_parse_attack');
+    }
+  }
+}}));
+
+app.use(express.urlencoded({ extended: true, limit: MAX_JSON_SIZE, parameterLimit: 100 }));
+
+app.use(fileUpload({ limits: { fileSize: 10 * 1024 * 1024, files: 1 }, abortOnLimit: true, limitHandler: (req, res) => {
+  const ip = toIPv4(req.socket.remoteAddress);
+  updateIPReputation(ip, -10);
+  shield.incrementBlocked(ip, 'file_oversized');
+  res.status(413).json({ error: 'File too large' });
+}}));
+
+app.use(session({ 
+  secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'), 
+  resave: false, 
+  saveUninitialized: false,
+  name: 'session',
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+    maxAge: 86400000
+  },
+  rolling: true
+}));
 
 app.use(
   '/api/gn-math/covers',
@@ -358,24 +806,18 @@ app.use(
   createProxyMiddleware({ target: 'https://cdn.jsdelivr.net/gh/gn-math/html@main', changeOrigin: true, pathRewrite: { '^/api/gn-math/html': '' } })
 );
 
-function toIPv4(ip) {
-  if (!ip) return '127.0.0.1';
-  if (ip.includes(',')) ip = ip.split(',')[0].trim();
-  if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
-  return ip.match(/^(\d{1,3}\.){3}\d{1,3}$/) ? ip : '127.0.0.1';
-}
-
 const wsConnections = new Map();
 const MAX_WS_PER_IP = 180;
 const MAX_TOTAL_WS = 30000;
 
-function cleanupWS(ip) {
-  const count = wsConnections.get(ip) || 0;
-  if (count <= 1) wsConnections.delete(ip);
-  else wsConnections.set(ip, count - 1);
+function cleanupWS(ip, req = null) {
+  const actualIP = req ? toIPv4(null, req) : ip;
+  const count = wsConnections.get(actualIP) || 0;
+  if (count <= 1) wsConnections.delete(actualIP);
+  else wsConnections.set(actualIP, count - 1);
   systemState.activeConnections--;
   systemState.totalWS--;
-  shield.trackWS(ip, -1);
+  shield.trackWS(actualIP, -1);
 }
 
 app.get('/ip', (req, res) => res.sendFile(path.join(__dirname, 'public/pages/other/roblox/ip.html')));
@@ -465,11 +907,7 @@ app.get('/api/verify-email', (req, res) => {
     if (!user) return res.status(400).send('<html><body><h1>Invalid or expired verification link</h1></body></html>');
     const now = Date.now();
     db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL, updated_at = ? WHERE id = ?').run(now, user.id);
-    res
-      .status(200)
-      .send(
-        '<html><body style="background:#0a1d37;color:#fff;font-family:Arial;text-align:center;padding:50px;"><h1>Email verified successfully!</h1><p>You can now log in to your account.</p><a href="/pages/settings/p.html" style="color:#3b82f6;">Go to Login</a></body></html>'
-      );
+    res.status(200).send('<html><body style="background:#0a1d37;color:#fff;font-family:Arial;text-align:center;padding:50px;"><h1>Email verified successfully!</h1><p>You can now log in to your account.</p><a href="/pages/settings/p.html" style="color:#3b82f6;">Go to Login</a></body></html>');
   } catch (error) {
     console.error('Verification error:', error);
     res.status(500).send('<html><body><h1>Verification failed</h1></body></html>');
@@ -508,13 +946,7 @@ app.post('/api/update-profile', (req, res) => {
   try {
     const { username, bio, age, school, favgame, mood } = req.body;
     const now = Date.now();
-    db.prepare('UPDATE users SET username = ?, bio = ?, age = ?, school = ? WHERE id = ?').run(
-      username || null,
-      bio || null,
-      age || null,
-      school || null,
-      req.session.user.id
-    );
+    db.prepare('UPDATE users SET username = ?, bio = ?, age = ?, school = ? WHERE id = ?').run(username || null, bio || null, age || null, school || null, req.session.user.id);
     req.session.user.username = username;
     req.session.user.bio = bio;
     res.status(200).json({ message: 'Profile updated' });
@@ -548,9 +980,7 @@ app.delete('/api/delete-account', (req, res) => {
 
 app.get('/api/changelog', (req, res) => {
   try {
-    const changelogs = db
-      .prepare(`SELECT c.*, u.username as author_name FROM changelog c LEFT JOIN users u ON c.author_id = u.id ORDER BY c.created_at DESC LIMIT 50`)
-      .all();
+    const changelogs = db.prepare(`SELECT c.*, u.username as author_name FROM changelog c LEFT JOIN users u ON c.author_id = u.id ORDER BY c.created_at DESC LIMIT 50`).all();
     res.status(200).json({ changelogs });
   } catch (error) {
     console.error('Changelog error:', error);
@@ -560,21 +990,15 @@ app.get('/api/changelog', (req, res) => {
 
 app.get('/api/feedback', (req, res) => {
   try {
-    const isAdmin = req.session.user
-      ? (() => {
-          try {
-            const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
-            return user && ((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3);
-          } catch {
-            return false;
-          }
-        })()
-      : false;
-    const feedback = db
-      .prepare(
-        `SELECT f.*, u.username${isAdmin ? ', u.email' : ''} FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`
-      )
-      .all();
+    const isAdmin = req.session.user ? (() => {
+      try {
+        const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
+        return user && ((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3);
+      } catch {
+        return false;
+      }
+    })() : false;
+    const feedback = db.prepare(`SELECT f.*, u.username${isAdmin ? ', u.email' : ''} FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`).all();
     const sanitizedFeedback = feedback.map((f) => {
       const safe = { id: f.id, content: f.content, created_at: f.created_at, username: f.username || 'Anonymous' };
       if (isAdmin && f.email) safe.email = f.email;
@@ -596,13 +1020,7 @@ app.post('/api/changelog', (req, res) => {
     if (!title || !content) return res.status(400).json({ error: 'Title and content are required' });
     const id = randomUUID();
     const now = Date.now();
-    db.prepare('INSERT INTO changelog (id, title, content, author_id, created_at) VALUES (?, ?, ?, ?, ?)').run(
-      id,
-      title,
-      content,
-      req.session.user.id,
-      now
-    );
+    db.prepare('INSERT INTO changelog (id, title, content, author_id, created_at) VALUES (?, ?, ?, ?, ?)').run(id, title, content, req.session.user.id, now);
     res.status(201).json({ message: 'Changelog created', id });
   } catch (error) {
     console.error('Changelog create error:', error);
@@ -630,9 +1048,7 @@ app.get('/api/admin/feedback', (req, res) => {
   try {
     const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
     if (!user || !user.is_admin) return res.status(403).json({ error: 'Admin access required' });
-    const feedback = db
-      .prepare(`SELECT f.*, u.email, u.username FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`)
-      .all();
+    const feedback = db.prepare(`SELECT f.*, u.email, u.username FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`).all();
     res.status(200).json({ feedback });
   } catch (error) {
     console.error('Admin feedback error:', error);
@@ -659,11 +1075,8 @@ app.get('/api/admin/users', (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
-    if (!user || !((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3))
-      return res.status(403).json({ error: 'Admin access required' });
-    const users = db
-      .prepare(`SELECT id, email, username, created_at, is_admin, avatar_url, bio, school, age, ip FROM users ORDER BY created_at DESC LIMIT 10000`)
-      .all();
+    if (!user || !((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3)) return res.status(403).json({ error: 'Admin access required' });
+    const users = db.prepare(`SELECT id, email, username, created_at, is_admin, avatar_url, bio, school, age, ip FROM users ORDER BY created_at DESC LIMIT 10000`).all();
     const usersWithExtras = users.map((u) => {
       let ip = 'N/A';
       if (user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) ip = u.ip || 'N/A';
@@ -704,7 +1117,7 @@ app.post('/api/change-password', async (req, res) => {
 app.use((req, res) => res.status(404).sendFile(join(__dirname, publicPath, '404.html')));
 
 const server = createServer((req, res) => {
-  const ip = toIPv4(req.socket.remoteAddress);
+  const ip = toIPv4(null, req);
   shield.trackRequest(ip);
 
   const handleBareRequest = (bareServer) => {
@@ -722,11 +1135,24 @@ const server = createServer((req, res) => {
 });
 
 server.on('upgrade', (req, socket, head) => {
-  const ip = toIPv4(req.socket.remoteAddress);
+  const ip = toIPv4(null, req);
+  
+  if (checkCircuitBreaker(ip)) {
+    shield.incrementBlocked(ip, 'circuit_open');
+    return socket.destroy();
+  }
+  
+  if (checkMemoryPressure() && systemState.totalWS > 1000) {
+    shield.incrementBlocked(ip, 'memory_pressure');
+    return socket.destroy();
+  }
+  
   const current = wsConnections.get(ip) || 0;
 
   if (systemState.totalWS >= MAX_TOTAL_WS || current >= MAX_WS_PER_IP) {
     shield.trackWS(ip, 1);
+    shield.incrementBlocked(ip, 'ws_limit');
+    updateIPReputation(ip, -5);
     return socket.destroy();
   }
 
@@ -738,6 +1164,8 @@ server.on('upgrade', (req, socket, head) => {
 
   if (isWisp && !tokenData?.features?.ws) {
     if (checkSystemPressure()) {
+      shield.incrementBlocked(ip, 'ws_pressure');
+      updateIPReputation(ip, -3);
       return socket.destroy();
     }
   }
@@ -747,8 +1175,31 @@ server.on('upgrade', (req, socket, head) => {
   systemState.activeConnections++;
   systemState.totalWS++;
 
-  socket.on('close', () => cleanupWS(ip));
-  socket.on('error', () => cleanupWS(ip));
+  socket.setNoDelay(true);
+  socket.setKeepAlive(true, 30000);
+  socket.setTimeout(REQUEST_TIMEOUT);
+  
+  const payloadSize = parseInt(req.headers['sec-websocket-protocol'] || '0');
+  if (payloadSize > 8192) {
+    cleanupWS(ip, req);
+    return socket.destroy();
+  }
+
+  wsFlushSockets.add(socket);
+  
+  socket.on('close', () => {
+    cleanupWS(ip, req);
+    wsFlushSockets.delete(socket);
+  });
+  socket.on('error', () => {
+    cleanupWS(ip, req);
+    wsFlushSockets.delete(socket);
+  });
+  socket.on('timeout', () => {
+    cleanupWS(ip, req);
+    wsFlushSockets.delete(socket);
+    socket.destroy();
+  });
 
   const handleBareUpgrade = (bareServer) => {
     try {
@@ -756,7 +1207,7 @@ server.on('upgrade', (req, socket, head) => {
     } catch (error) {
       console.error('Bare server upgrade error:', error.message);
       socket.destroy();
-      cleanupWS(ip);
+      cleanupWS(ip, req);
     }
   };
 
@@ -773,10 +1224,10 @@ server.on('upgrade', (req, socket, head) => {
     } catch (error) {
       console.error('WISP server error:', error.message);
       socket.destroy();
-      cleanupWS(ip);
+      cleanupWS(ip, req);
     }
   } else {
-    cleanupWS(ip);
+    cleanupWS(ip, req);
     socket.destroy();
   }
 });
@@ -784,8 +1235,114 @@ server.on('upgrade', (req, socket, head) => {
 const port = parseInt(process.env.PORT || '3000');
 server.keepAliveTimeout = 30000;
 server.headersTimeout = 31000;
-server.requestTimeout = 30000;
-server.timeout = 30000;
+server.requestTimeout = REQUEST_TIMEOUT;
+server.timeout = REQUEST_TIMEOUT;
+server.maxHeadersCount = 100;
+server.maxHeaderSize = MAX_HEADER_SIZE;
+
+const wsFlushSockets = new Set();
+let wsFlushPending = false;
+let memoryMonitorInterval = null;
+let cleanupInterval = null;
+
+function flushWebSockets() {
+  if (wsFlushPending || wsFlushSockets.size === 0) return;
+  
+  const mem = getMemoryUsage();
+  if (mem.heapUsed < MEMORY_CRITICAL * 0.8 && !memoryPressure.active) return;
+  
+  wsFlushPending = true;
+  shield.sendLog('⚡ WebSocket flush initiated due to memory pressure', null);
+  
+  let flushed = 0;
+  const maxFlush = Math.floor(systemState.totalWS * 0.3);
+  
+  for (const socket of wsFlushSockets) {
+    if (flushed >= maxFlush) break;
+    try {
+      if (socket.readyState === 1) {
+        socket.close(1001, 'Memory management');
+        flushed++;
+      }
+    } catch {}
+  }
+  
+  wsFlushSockets.clear();
+  wsFlushPending = false;
+  
+  if (global.gc && mem.heapUsed > MEMORY_CRITICAL) {
+    global.gc();
+  }
+  
+  shield.sendLog(`✅ WebSocket flush complete: ${flushed} connections closed`, null);
+}
+
+function startMemoryMonitoring() {
+  if (memoryMonitorInterval) return;
+  
+  memoryMonitorInterval = setInterval(() => {
+    const mem = getMemoryUsage();
+    checkMemoryPressure();
+    
+    shield.updateMemoryStats(mem, memoryPressure.active, activeRequests.size);
+    
+    if (memoryPressure.active && systemState.totalWS > 1000) {
+      flushWebSockets();
+    }
+    
+    if (mem.heapUsed > MEMORY_CRITICAL * 1.2) {
+      shield.sendLog('🚨 CRITICAL: Memory usage extremely high, forcing cleanup', null);
+      flushWebSockets();
+      if (global.gc) global.gc();
+      
+      requestFingerprints.clear();
+      const now = Date.now();
+      for (const [key, value] of requestFingerprints.entries()) {
+        if (now - value.lastSeen > 300000) requestFingerprints.delete(key);
+      }
+    }
+  }, 5000);
+}
+
+function startCleanupInterval() {
+  if (cleanupInterval) return;
+  
+  cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    
+    for (const [key, value] of requestFingerprints.entries()) {
+      if (now - value.lastSeen > 300000) requestFingerprints.delete(key);
+    }
+    
+    for (const [ip, rep] of ipReputation.entries()) {
+      if (now - rep.lastSeen > 86400000) {
+        ipReputation.delete(ip);
+        circuitBreakers.delete(ip);
+      }
+    }
+    
+    for (const [reqId, req] of activeRequests.entries()) {
+      if (now - req.startTime > REQUEST_TIMEOUT * 2) {
+        activeRequests.delete(reqId);
+      }
+    }
+  }, 60000);
+}
+
+if (process.env.NODE_OPTIONS && process.env.NODE_OPTIONS.includes('--expose-gc')) {
+  v8.setFlagsFromString('--expose-gc');
+}
+
+process.setMaxListeners(0);
+process.on('uncaughtException', (err) => {
+  shield.sendLog(`💥 Uncaught Exception: ${err.message}`, null);
+  console.error('Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  shield.sendLog(`⚠️ Unhandled Rejection: ${reason}`, null);
+  console.error('Unhandled Rejection:', reason);
+});
 
 server.listen({ port }, () => {
   const address = server.address();
@@ -793,6 +1350,9 @@ server.listen({ port }, () => {
   console.log(`\thttp://localhost:${address.port}`);
   console.log(`\thttp://${hostname()}:${address.port}`);
   console.log(`\thttp://${address.family === 'IPv6' ? `[${address.address}]` : address.address}:${address.port}`);
+  
+  startMemoryMonitoring();
+  startCleanupInterval();
 });
 
 process.on('SIGINT', shutdown);
@@ -800,8 +1360,25 @@ process.on('SIGTERM', shutdown);
 
 function shutdown() {
   console.log('Shutting down...');
+  
+  if (memoryMonitorInterval) clearInterval(memoryMonitorInterval);
+  if (cleanupInterval) clearInterval(cleanupInterval);
+  
+  for (const socket of wsFlushSockets) {
+    try {
+      if (socket.readyState === 1) socket.close(1001, 'Server shutdown');
+    } catch {}
+  }
+  
   if (shield.isUnderAttack) shield.endAttackAlert();
-  server.close();
-  bare.close();
-  process.exit(0);
+  
+  server.close(() => {
+    bare.close();
+    process.exit(0);
+  });
+  
+  setTimeout(() => {
+    bare.close();
+    process.exit(1);
+  }, 5000);
 }
