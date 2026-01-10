@@ -203,6 +203,11 @@ const baselineMetrics = {
   baselineUniqueIps: 50
 };
 
+const requestRateTracker = {
+  requests: [],
+  lastMinuteStart: Date.now()
+};
+
 const systemState = {
   state: 'NORMAL',
   cpuHigh: false,
@@ -214,8 +219,11 @@ const systemState = {
   recentBlockRate: 0,
   lastDifficultyAdjust: Date.now(),
   trustedClients: new Set(),
-  lastPowSolve: new Map()
+  lastPowSolve: new Map(),
+  requestRatePerMinute: 0
 };
+
+discordClient.systemState = systemState;
 
 const botVerificationCache = new Map();
 const VERIFICATION_CACHE_TTL = 3600000;
@@ -469,6 +477,10 @@ function checkSystemPressure() {
   const previousCheck = systemState.lastCheck;
   systemState.lastCheck = now;
   updateBaseline();
+  
+  requestRateTracker.requests.push(now);
+  requestRateTracker.requests = requestRateTracker.requests.filter(t => now - t < 60000);
+  systemState.requestRatePerMinute = requestRateTracker.requests.length;
   
   const cpuUsage = shield.getCpuUsage();
   const requestRate = timeDelta > 0 ? systemState.totalRequests / timeDelta : 0;
@@ -781,7 +793,23 @@ const memoryProtection = (req, res, next) => {
   next();
 };
 
+const assetExtensions = new Set(['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.svg', '.woff', '.woff2', '.ttf', '.otf', '.eot', '.ico', '.wasm', '.map', '.json', '.xml', '.txt', '.pdf', '.mp3', '.mp4', '.ogg', '.wav', '.avi', '.mov', '.zip', '.rar', '.bin']);
+const assetPaths = ['/storage/', '/static/', '/uploads/', '/scram/', '/baremux/', '/epoxy/', '/bare/', '/api/bare-premium/', '/wisp/', '/api/wisp-premium/', '/pages/'];
+
 const conditionalGate = (req, res, next) => {
+  const path = req.path.split('?')[0].toLowerCase();
+  const extIndex = path.lastIndexOf('.');
+  const hasExtension = extIndex > 0 && extIndex < path.length - 1;
+  const extension = hasExtension ? path.substring(extIndex) : '';
+  
+  const isAsset = (hasExtension && assetExtensions.has(extension)) || 
+                  assetPaths.some(p => path.startsWith(p.toLowerCase())) ||
+                  /\.(js|css|png|jpg|jpeg|gif|webp|svg|woff|woff2|ttf|otf|ico|wasm|map|json|xml|mp3|mp4|ogg|wav|bin)$/i.test(path);
+  
+  if (isAsset) {
+    return next();
+  }
+  
   const ip = toIPv4(null, req);
   
   if (checkCircuitBreaker(ip)) {

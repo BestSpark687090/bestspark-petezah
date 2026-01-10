@@ -653,6 +653,13 @@ class DDoSShield {
         const blockRate = this.getRecentBlockRate();
         const cpuUsage = this.getCpuUsage().toFixed(1);
         const { totalHits, uniqueIps } = this.getChallengeSpike();
+        const mem = process.memoryUsage();
+        const heapUsed = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
+        const rss = (mem.rss / 1024 / 1024 / 1024).toFixed(2);
+        
+        const systemState = interaction.client.systemState || {};
+        const powDifficulty = systemState.currentPowDifficulty || 16;
+        const requestRate = systemState.requestRatePerMinute || 0;
         
         let statusText = '🟩 Normal';
         let statusColor = '#00ff00';
@@ -660,7 +667,7 @@ class DDoSShield {
         if (this.isUnderAttack) {
           statusText = '🟥 Under Attack';
           statusColor = '#ff0000';
-        } else if (interaction.client.systemState?.state === 'BUSY') {
+        } else if (systemState.state === 'BUSY') {
           statusText = '🟡 Busy (High Legitimate Load)';
           statusColor = '#ffaa00';
         }
@@ -670,7 +677,11 @@ class DDoSShield {
           .addFields(
             { name: 'Status', value: statusText, inline: true },
             { name: 'CPU Usage', value: `${cpuUsage}%`, inline: true },
+            { name: 'PoW Difficulty', value: `${powDifficulty}`, inline: true },
+            { name: 'Requests/min', value: `${Math.round(requestRate)}`, inline: true },
             { name: 'Block Rate', value: `${blockRate}/min`, inline: true },
+            { name: 'Memory (Heap)', value: `${heapUsed}GB`, inline: true },
+            { name: 'Memory (RSS)', value: `${rss}GB`, inline: true },
             { name: 'Total Blocks', value: this.mitigatedCount.toLocaleString(), inline: true },
             { name: 'Challenge Hits', value: `${totalHits} from ${uniqueIps} IPs`, inline: true },
             { name: 'Attack Patterns', value: this.attackPatterns.size.toString(), inline: true },
