@@ -191,7 +191,20 @@ const TOKEN_VALIDITY = 3600000;
 const BASE_POW_DIFFICULTY = 16;
 const MAX_POW_DIFFICULTY = 22;
 
+const baselineMetrics = {
+  cpuSamples: [],
+  requestRateSamples: [],
+  blockRateSamples: [],
+  uniqueIpSamples: [],
+  lastBaselineUpdate: Date.now(),
+  baselineCpu: 30,
+  baselineRequestRate: 100,
+  baselineBlockRate: 5,
+  baselineUniqueIps: 50
+};
+
 const systemState = {
+  state: 'NORMAL',
   cpuHigh: false,
   activeConnections: 0,
   totalWS: 0,
@@ -199,31 +212,93 @@ const systemState = {
   lastCheck: Date.now(),
   currentPowDifficulty: BASE_POW_DIFFICULTY,
   recentBlockRate: 0,
-  lastDifficultyAdjust: Date.now()
+  lastDifficultyAdjust: Date.now(),
+  trustedClients: new Set(),
+  lastPowSolve: new Map()
 };
 
 const botVerificationCache = new Map();
 const VERIFICATION_CACHE_TTL = 3600000;
 
-function adjustPowDifficulty() {
+function updateBaseline() {
   const now = Date.now();
-  if (now - systemState.lastDifficultyAdjust < 5000) return;
+  if (now - baselineMetrics.lastBaselineUpdate < 60000) return;
+  
+  baselineMetrics.lastBaselineUpdate = now;
+  const cpuUsage = shield.getCpuUsage();
+  const blockRate = shield.getRecentBlockRate();
+  const requestRate = systemState.totalRequests / ((now - systemState.lastCheck) / 1000) || 0;
+  const { uniqueIps } = shield.getChallengeSpike();
+  
+  baselineMetrics.cpuSamples.push(cpuUsage);
+  baselineMetrics.requestRateSamples.push(requestRate);
+  baselineMetrics.blockRateSamples.push(blockRate);
+  baselineMetrics.uniqueIpSamples.push(uniqueIps);
+  
+  const maxSamples = 10;
+  if (baselineMetrics.cpuSamples.length > maxSamples) {
+    baselineMetrics.cpuSamples.shift();
+    baselineMetrics.requestRateSamples.shift();
+    baselineMetrics.blockRateSamples.shift();
+    baselineMetrics.uniqueIpSamples.shift();
+  }
+  
+  if (baselineMetrics.cpuSamples.length >= 3) {
+    baselineMetrics.baselineCpu = baselineMetrics.cpuSamples.reduce((a, b) => a + b, 0) / baselineMetrics.cpuSamples.length;
+    baselineMetrics.baselineRequestRate = baselineMetrics.requestRateSamples.reduce((a, b) => a + b, 0) / baselineMetrics.requestRateSamples.length;
+    baselineMetrics.baselineBlockRate = baselineMetrics.blockRateSamples.reduce((a, b) => a + b, 0) / baselineMetrics.blockRateSamples.length;
+    baselineMetrics.baselineUniqueIps = baselineMetrics.uniqueIpSamples.reduce((a, b) => a + b, 0) / baselineMetrics.uniqueIpSamples.length;
+  }
+}
+
+function adjustPowDifficulty(req = null) {
+  const now = Date.now();
+  if (now - systemState.lastDifficultyAdjust < 10000) return;
   
   systemState.lastDifficultyAdjust = now;
+  updateBaseline();
+  
+  const token = req ? extractToken(req) : null;
+  const tokenData = req ? verifyToken(token, req) : null;
+  const isTrusted = tokenData?.features?.http || (req && req.session?.user) || false;
+  
+  if (isTrusted) {
+    systemState.currentPowDifficulty = BASE_POW_DIFFICULTY;
+    return;
+  }
+  
+  if (baselineMetrics.baselineCpu === 0 || baselineMetrics.cpuSamples.length < 3) {
+    systemState.currentPowDifficulty = BASE_POW_DIFFICULTY;
+    return;
+  }
   
   const blockRate = shield.getRecentBlockRate();
   const cpuUsage = shield.getCpuUsage();
   const { uniqueIps } = shield.getChallengeSpike();
   
+  const cpuSpike = cpuUsage > baselineMetrics.baselineCpu * 1.2;
+  const cpuBusy = cpuUsage > baselineMetrics.baselineCpu * 1.1;
+  const ipChurnHigh = uniqueIps > baselineMetrics.baselineUniqueIps * 2;
+  
+  const isAttack = shield.isUnderAttack || systemState.state === 'ATTACK';
+  const isBusy = systemState.state === 'BUSY' || (cpuBusy && !isAttack);
+  
+  if (isBusy && !isAttack) {
+    systemState.currentPowDifficulty = BASE_POW_DIFFICULTY;
+    return;
+  }
+  
   let targetDifficulty = BASE_POW_DIFFICULTY;
   
-  if (shield.isUnderAttack || blockRate > 100 || uniqueIps > 150) {
+  if (isAttack && ipChurnHigh) {
     targetDifficulty = MAX_POW_DIFFICULTY;
-  } else if (blockRate > 50 || cpuUsage > 70 || uniqueIps > 80) {
+  } else if (isAttack) {
     targetDifficulty = 20;
-  } else if (blockRate > 20 || cpuUsage > 50 || uniqueIps > 40) {
+  } else if (ipChurnHigh && blockRate > baselineMetrics.baselineBlockRate * 2) {
     targetDifficulty = 18;
   }
+  
+  targetDifficulty = Math.min(Math.max(targetDifficulty, BASE_POW_DIFFICULTY), MAX_POW_DIFFICULTY);
   
   if (targetDifficulty > systemState.currentPowDifficulty) {
     systemState.currentPowDifficulty = Math.min(targetDifficulty, MAX_POW_DIFFICULTY);
@@ -388,14 +463,32 @@ function verifyToken(token, req) {
 
 function checkSystemPressure() {
   const now = Date.now();
-  if (now - systemState.lastCheck < 1000) return systemState.cpuHigh;
+  const timeDelta = (now - systemState.lastCheck) / 1000;
+  if (timeDelta < 1) return systemState.cpuHigh;
 
+  const previousCheck = systemState.lastCheck;
   systemState.lastCheck = now;
-  const load = systemState.totalRequests / 10;
-  systemState.cpuHigh = load > 5000 || systemState.activeConnections > 25000;
+  updateBaseline();
+  
+  const cpuUsage = shield.getCpuUsage();
+  const requestRate = timeDelta > 0 ? systemState.totalRequests / timeDelta : 0;
+  const blockRate = shield.getRecentBlockRate();
+  const blockRatio = requestRate > 0 ? blockRate / requestRate : 0;
+  
+  const cpuSpike = cpuUsage > baselineMetrics.baselineCpu * 1.2;
+  const cpuBusy = cpuUsage > baselineMetrics.baselineCpu * 1.1;
+  const blockRatioHigh = blockRatio > 0.3;
+  
+  if (cpuSpike && blockRatioHigh && systemState.state !== 'ATTACK') {
+    systemState.state = 'ATTACK';
+  } else if (cpuBusy && !blockRatioHigh && systemState.state === 'NORMAL') {
+    systemState.state = 'BUSY';
+  } else if (!cpuBusy && systemState.state !== 'NORMAL') {
+    systemState.state = 'NORMAL';
+  }
+  
+  systemState.cpuHigh = cpuUsage > CPU_THRESHOLD || systemState.activeConnections > 25000;
   systemState.totalRequests = 0;
-
-  adjustPowDifficulty();
 
   return systemState.cpuHigh;
 }
@@ -447,10 +540,16 @@ app.get('/api/bot-challenge', rateLimit({
   max: 10,
   keyGenerator: (req) => toIPv4(null, req)
 }), (req, res) => {
-  const challenge = randomBytes(16).toString('hex');
-  const difficulty = systemState.currentPowDifficulty;
-  shield.trackChallengeHit(toIPv4(null, req));
-  res.json({ challenge, difficulty });
+  const ip = toIPv4(null, req);
+  const fingerprint = createFingerprint(req);
+  const lastSolve = systemState.lastPowSolve.get(ip);
+  const isRecentlySolved = lastSolve && (Date.now() - lastSolve) < 3600000;
+  const isTrusted = systemState.trustedClients.has(fingerprint);
+  
+  const difficulty = (isTrusted || isRecentlySolved) ? BASE_POW_DIFFICULTY : systemState.currentPowDifficulty;
+  
+  shield.trackChallengeHit(ip);
+  res.json({ challenge: randomBytes(16).toString('hex'), difficulty });
 });
 
 app.post('/api/bot-verify', express.json(), (req, res) => {
@@ -477,6 +576,9 @@ app.post('/api/bot-verify', express.json(), (req, res) => {
       .slice(0, 16);
 
     const token = createToken({ http: true, ws: true, fp: fingerprint });
+    systemState.lastPowSolve.set(ip, Date.now());
+    systemState.trustedClients.add(fingerprint);
+    
     res.cookie('bot_token', token, {
       maxAge: TOKEN_VALIDITY,
       httpOnly: true,
@@ -549,16 +651,30 @@ const gateMiddleware = async (req, res, next) => {
 
   const token = extractToken(req);
   const tokenData = verifyToken(token, req);
-
-  if (tokenData?.features?.http) {
+  const fingerprint = createFingerprint(req);
+  const isTrusted = tokenData?.features?.http || req.session?.user || systemState.trustedClients.has(fingerprint);
+  
+  if (isTrusted) {
     return next();
   }
 
-  if (checkSystemPressure()) {
+  const pressureState = checkSystemPressure();
+  if (pressureState && systemState.state === 'ATTACK') {
     shield.incrementBlocked(ip, 'pressure');
     return res.status(503).send('Service temporarily unavailable');
   }
+  
+  const baseline = {
+    baselineCpu: baselineMetrics.baselineCpu,
+    baselineRequestRate: baselineMetrics.baselineRequestRate,
+    baselineBlockRate: baselineMetrics.baselineBlockRate,
+    baselineUniqueIps: baselineMetrics.baselineUniqueIps
+  };
+  
+  shield.checkAttackConditions(ip, { ...systemState, ...baseline });
 
+  adjustPowDifficulty(req);
+  
   const acceptsHtml = req.headers.accept?.includes('text/html');
   if (acceptsHtml && isBrowser) {
     return res.send(`<!DOCTYPE html>
@@ -1283,22 +1399,37 @@ function startMemoryMonitoring() {
   memoryMonitorInterval = setInterval(() => {
     const mem = getMemoryUsage();
     checkMemoryPressure();
+    checkSystemPressure();
     
     shield.updateMemoryStats(mem, memoryPressure.active, activeRequests.size);
     
-    if (memoryPressure.active && systemState.totalWS > 1000) {
+    const baseline = {
+      baselineCpu: baselineMetrics.baselineCpu,
+      baselineRequestRate: baselineMetrics.baselineRequestRate,
+      baselineBlockRate: baselineMetrics.baselineBlockRate,
+      baselineUniqueIps: baselineMetrics.baselineUniqueIps
+    };
+    
+    shield.checkAttackConditions('system', { ...systemState, ...baseline });
+    
+    if (memoryPressure.active && systemState.totalWS > 1000 && systemState.state === 'ATTACK') {
       flushWebSockets();
     }
     
     if (mem.heapUsed > MEMORY_CRITICAL * 1.2) {
       shield.sendLog('🚨 CRITICAL: Memory usage extremely high, forcing cleanup', null);
-      flushWebSockets();
+      if (systemState.state === 'ATTACK') {
+        flushWebSockets();
+      }
       if (global.gc) global.gc();
       
-      requestFingerprints.clear();
       const now = Date.now();
       for (const [key, value] of requestFingerprints.entries()) {
         if (now - value.lastSeen > 300000) requestFingerprints.delete(key);
+      }
+      
+      for (const [ip, solveTime] of systemState.lastPowSolve.entries()) {
+        if (now - solveTime > 86400000) systemState.lastPowSolve.delete(ip);
       }
     }
   }, 5000);
@@ -1324,6 +1455,16 @@ function startCleanupInterval() {
     for (const [reqId, req] of activeRequests.entries()) {
       if (now - req.startTime > REQUEST_TIMEOUT * 2) {
         activeRequests.delete(reqId);
+      }
+    }
+    
+    if (systemState.trustedClients.size > 10000) {
+      systemState.trustedClients.clear();
+    }
+    
+    for (const [ip, solveTime] of systemState.lastPowSolve.entries()) {
+      if (now - solveTime > 86400000) {
+        systemState.lastPowSolve.delete(ip);
       }
     }
   }, 60000);
@@ -1370,7 +1511,15 @@ function shutdown() {
     } catch {}
   }
   
-  if (shield.isUnderAttack) shield.endAttackAlert();
+  if (shield.isUnderAttack) {
+    const baseline = {
+      baselineCpu: baselineMetrics.baselineCpu,
+      baselineRequestRate: baselineMetrics.baselineRequestRate,
+      baselineBlockRate: baselineMetrics.baselineBlockRate,
+      baselineUniqueIps: baselineMetrics.baselineUniqueIps
+    };
+    shield.endAttackAlert({ ...systemState, ...baseline });
+  }
   
   server.close(() => {
     bare.close();

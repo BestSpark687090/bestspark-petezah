@@ -160,21 +160,34 @@ class DDoSShield {
     const now = Date.now();
     if (now - this.lastAlertTime < ALERT_COOLDOWN) return;
 
-    const recentBlocks = this.getRecentBlocks(ip, WINDOW_SIZE);
-    const totalBlocks = this.getTotalBlocks(ip);
+    if (!systemState || systemState.state === 'BUSY') return;
+    
+    const blockRate = this.getRecentBlockRate();
     const cpuUsage = this.getCpuUsage();
-    const { uniqueIps } = this.getChallengeSpike();
-
-    const shouldAlert = (
-      recentBlocks > 50 ||
-      totalBlocks > 200 ||
-      (cpuUsage > CPU_THRESHOLD && totalBlocks > 100) ||
-      uniqueIps > 100 ||
-      (systemState?.cpuHigh && totalBlocks > 50) ||
-      (systemState?.totalWS > 25000 && totalBlocks > 30)
+    const { uniqueIps, totalHits } = this.getChallengeSpike();
+    
+    const baselineCpu = systemState.baselineCpu || 30;
+    const baselineBlockRate = systemState.baselineBlockRate || 5;
+    const baselineUniqueIps = systemState.baselineUniqueIps || 50;
+    
+    const cpuSpike = cpuUsage > baselineCpu * 1.2;
+    const blockRateSpike = blockRate > baselineBlockRate * 3;
+    const ipChurn = uniqueIps > baselineUniqueIps * 2;
+    
+    const blockRatio = totalHits > 0 ? blockRate / totalHits : 0;
+    const powSolveRatio = totalHits > 0 ? (totalHits - blockRate) / totalHits : 1;
+    
+    const blockRatioHigh = blockRatio > 0.3;
+    const powSolveLow = powSolveRatio < 0.3;
+    
+    const isAttack = (
+      (cpuSpike && blockRatioHigh) ||
+      (ipChurn && blockRateSpike && blockRatioHigh) ||
+      (blockRateSpike && powSolveLow && blockRatioHigh) ||
+      (blockRatio > 0.5)
     );
-
-    if (shouldAlert) {
+    
+    if (isAttack && systemState.state !== 'ATTACK') {
       this.lastAlertTime = now;
       this.startAttackAlert(systemState);
     }
@@ -185,10 +198,16 @@ class DDoSShield {
 
     this.isUnderAttack = true;
     this.attackStartTime = Date.now();
-    const initialCount = this.mitigatedCount;
+    if (systemState) systemState.state = 'ATTACK';
 
     const topAbusers = this.getTopAbusers(5);
     const cpuUsage = this.getCpuUsage().toFixed(1);
+    const blockRate = this.getRecentBlockRate();
+    const { uniqueIps, totalHits } = this.getChallengeSpike();
+    
+    const requestRate = systemState?.totalRequests || 1;
+    const blockRatio = requestRate > 0 ? (blockRate / requestRate * 100).toFixed(1) : '0';
+    const powSolveRatio = totalHits > 0 ? ((totalHits - blockRate) / totalHits * 100).toFixed(1) : '0';
     
     const blockTypesSummary = Array.from(this.blockTypes.entries())
       .sort((a, b) => b[1] - a[1])
@@ -197,12 +216,12 @@ class DDoSShield {
       .join('\n') || 'N/A';
 
     const systemStatus = systemState 
-      ? `CPU: ${cpuUsage}%\nConnections: ${systemState.activeConnections}\nWS: ${systemState.totalWS}\nTotal Blocks: ${this.mitigatedCount}`
-      : `CPU: ${cpuUsage}%\nTotal Blocks: ${this.mitigatedCount}`;
+      ? `CPU: ${cpuUsage}%\nBlock Ratio: ${blockRatio}%\nPoW Solve: ${powSolveRatio}%\nUnique IPs: ${uniqueIps}\nTotal Blocks: ${this.mitigatedCount}`
+      : `CPU: ${cpuUsage}%\nBlock Ratio: ${blockRatio}%\nTotal Blocks: ${this.mitigatedCount}`;
 
     const embed = new EmbedBuilder()
       .setTitle('🛡️ DDoS Attack Detected!')
-      .setDescription('High volume of malicious traffic identified.\nStarting automated mitigation...')
+      .setDescription('High ratio of blocked traffic detected relative to baseline.\nStarting automated mitigation...')
       .addFields(
         { name: 'Top Abusers', value: topAbusers.map(a => `${a.ip} — ${a.count} blocks (${a.primaryType})`).join('\n') || 'N/A', inline: false },
         { name: 'Block Reasons', value: blockTypesSummary, inline: true },
@@ -213,13 +232,14 @@ class DDoSShield {
 
     await this.sendLog(null, embed);
 
-    this.attackEndTimer = setTimeout(() => this.endAttackAlert(), ATTACK_END_TIMEOUT);
+    this.attackEndTimer = setTimeout(() => this.endAttackAlert(systemState), ATTACK_END_TIMEOUT);
   }
 
-  async endAttackAlert() {
+  async endAttackAlert(systemState = null) {
     if (!this.isUnderAttack) return;
 
     this.isUnderAttack = false;
+    if (systemState) systemState.state = systemState.state === 'ATTACK' ? 'BUSY' : 'NORMAL';
     if (this.attackEndTimer) {
       clearTimeout(this.attackEndTimer);
       this.attackEndTimer = null;
@@ -227,10 +247,12 @@ class DDoSShield {
 
     const duration = Math.floor((Date.now() - this.attackStartTime) / 1000);
     const topAbusers = this.getTopAbusers(5);
+    const blockRate = this.getRecentBlockRate();
+    const cpuUsage = this.getCpuUsage().toFixed(1);
     
     const embed = new EmbedBuilder()
       .setTitle('✅ Attack Mitigated Successfully')
-      .setDescription(`DDoS attack neutralized after ${duration} seconds.\nTotal requests blocked: **${this.mitigatedCount.toLocaleString()}**`)
+      .setDescription(`Attack state cleared after ${duration} seconds.\nCurrent block rate: ${blockRate}/min\nCPU: ${cpuUsage}%`)
       .addFields(
         { name: 'Top Attackers', value: topAbusers.map(a => `${a.ip} — ${a.count} blocks`).join('\n') || 'N/A' }
       )
@@ -632,10 +654,21 @@ class DDoSShield {
         const cpuUsage = this.getCpuUsage().toFixed(1);
         const { totalHits, uniqueIps } = this.getChallengeSpike();
         
+        let statusText = '🟩 Normal';
+        let statusColor = '#00ff00';
+        
+        if (this.isUnderAttack) {
+          statusText = '🟥 Under Attack';
+          statusColor = '#ff0000';
+        } else if (interaction.client.systemState?.state === 'BUSY') {
+          statusText = '🟡 Busy (High Legitimate Load)';
+          statusColor = '#ffaa00';
+        }
+        
         const embed = new EmbedBuilder()
           .setTitle('📊 Security Statistics')
           .addFields(
-            { name: 'Status', value: this.isUnderAttack ? '🟥 Under Attack' : '🟩 Normal', inline: true },
+            { name: 'Status', value: statusText, inline: true },
             { name: 'CPU Usage', value: `${cpuUsage}%`, inline: true },
             { name: 'Block Rate', value: `${blockRate}/min`, inline: true },
             { name: 'Total Blocks', value: this.mitigatedCount.toLocaleString(), inline: true },
@@ -643,7 +676,7 @@ class DDoSShield {
             { name: 'Attack Patterns', value: this.attackPatterns.size.toString(), inline: true },
             { name: 'Top Abusers', value: topAbusers.map(a => `${a.ip}: ${a.count} (${a.primaryType})`).join('\n') || 'None', inline: false }
           )
-          .setColor(this.isUnderAttack ? '#ff0000' : '#00ff00')
+          .setColor(statusColor)
           .setTimestamp();
         
         await interaction.reply({ embeds: [embed], ephemeral: true });
