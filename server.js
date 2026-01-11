@@ -6,7 +6,7 @@ import bareServerPkg from '@tomphttp/bare-server-node';
 import bcrypt from 'bcrypt';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import crypto, { createHmac, randomBytes, randomUUID, createHash, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'crypto';
 import { Client, GatewayIntentBits } from 'discord.js';
 import dotenv from 'dotenv';
 import express from 'express';
@@ -50,8 +50,8 @@ const MAX_JSON_SIZE = 5 * 1024 * 1024;
 const MAX_HEADER_SIZE = 16384;
 const MEMORY_THRESHOLD = 1024 * 1024 * 1024 * 2;
 const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
-const REQUEST_TIMEOUT = 30000;
-const PAYLOAD_TIMEOUT = 10000;
+const REQUEST_TIMEOUT = 60000;
+const PAYLOAD_TIMEOUT = 30000;
 
 const memoryPressure = { active: false, lastCheck: 0, consecutiveHigh: 0 };
 const requestFingerprints = new Map();
@@ -75,10 +75,10 @@ function checkMemoryPressure() {
   const now = Date.now();
   if (now - memoryPressure.lastCheck < 5000) return memoryPressure.active;
   memoryPressure.lastCheck = now;
-  
+
   const mem = getMemoryUsage();
   const isHigh = mem.heapUsed > MEMORY_CRITICAL || mem.rss > MEMORY_THRESHOLD;
-  
+
   if (isHigh) {
     memoryPressure.consecutiveHigh++;
     if (memoryPressure.consecutiveHigh >= 3) {
@@ -91,7 +91,7 @@ function checkMemoryPressure() {
     memoryPressure.consecutiveHigh = 0;
     memoryPressure.active = false;
   }
-  
+
   return memoryPressure.active;
 }
 
@@ -111,10 +111,10 @@ function updateIPReputation(ip, score) {
   current.lastSeen = Date.now();
   if (score < 0) {
     current.violations.push({ time: Date.now(), score });
-    current.violations = current.violations.filter(v => Date.now() - v.time < 3600000);
+    current.violations = current.violations.filter((v) => Date.now() - v.time < 3600000);
   }
   ipReputation.set(ip, current);
-  
+
   if (current.score < -100) {
     circuitBreakers.set(ip, { open: true, until: Date.now() + 3600000, violations: current.violations.length });
   }
@@ -136,7 +136,7 @@ function toIPv4(ip, req = null) {
     const xRealIP = req.headers['x-real-ip'];
     const cfConnectingIP = req.headers['cf-connecting-ip'];
     const trueClientIP = req.headers['true-client-ip'];
-    
+
     if (xForwardedFor) {
       ip = xForwardedFor.split(',')[0].trim();
     } else if (cfConnectingIP) {
@@ -151,7 +151,7 @@ function toIPv4(ip, req = null) {
       ip = req.connection.remoteAddress;
     }
   }
-  
+
   if (!ip) return '127.0.0.1';
   if (typeof ip === 'string' && ip.includes(',')) ip = ip.split(',')[0].trim();
   if (typeof ip === 'string' && ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
@@ -231,18 +231,18 @@ const VERIFICATION_CACHE_TTL = 3600000;
 function updateBaseline() {
   const now = Date.now();
   if (now - baselineMetrics.lastBaselineUpdate < 60000) return;
-  
+
   baselineMetrics.lastBaselineUpdate = now;
   const cpuUsage = shield.getCpuUsage();
   const blockRate = shield.getRecentBlockRate();
   const requestRate = systemState.totalRequests / ((now - systemState.lastCheck) / 1000) || 0;
   const { uniqueIps } = shield.getChallengeSpike();
-  
+
   baselineMetrics.cpuSamples.push(cpuUsage);
   baselineMetrics.requestRateSamples.push(requestRate);
   baselineMetrics.blockRateSamples.push(blockRate);
   baselineMetrics.uniqueIpSamples.push(uniqueIps);
-  
+
   const maxSamples = 10;
   if (baselineMetrics.cpuSamples.length > maxSamples) {
     baselineMetrics.cpuSamples.shift();
@@ -250,7 +250,7 @@ function updateBaseline() {
     baselineMetrics.blockRateSamples.shift();
     baselineMetrics.uniqueIpSamples.shift();
   }
-  
+
   if (baselineMetrics.cpuSamples.length >= 3) {
     baselineMetrics.baselineCpu = baselineMetrics.cpuSamples.reduce((a, b) => a + b, 0) / baselineMetrics.cpuSamples.length;
     baselineMetrics.baselineRequestRate = baselineMetrics.requestRateSamples.reduce((a, b) => a + b, 0) / baselineMetrics.requestRateSamples.length;
@@ -262,42 +262,42 @@ function updateBaseline() {
 function adjustPowDifficulty(req = null) {
   const now = Date.now();
   if (now - systemState.lastDifficultyAdjust < 10000) return;
-  
+
   systemState.lastDifficultyAdjust = now;
   updateBaseline();
-  
+
   const token = req ? extractToken(req) : null;
   const tokenData = req ? verifyToken(token, req) : null;
   const isTrusted = tokenData?.features?.http || (req && req.session?.user) || false;
-  
+
   if (isTrusted) {
     systemState.currentPowDifficulty = BASE_POW_DIFFICULTY;
     return;
   }
-  
+
   if (baselineMetrics.baselineCpu === 0 || baselineMetrics.cpuSamples.length < 3) {
     systemState.currentPowDifficulty = BASE_POW_DIFFICULTY;
     return;
   }
-  
+
   const blockRate = shield.getRecentBlockRate();
   const cpuUsage = shield.getCpuUsage();
   const { uniqueIps } = shield.getChallengeSpike();
-  
+
   const cpuSpike = cpuUsage > baselineMetrics.baselineCpu * 1.2;
   const cpuBusy = cpuUsage > baselineMetrics.baselineCpu * 1.1;
   const ipChurnHigh = uniqueIps > baselineMetrics.baselineUniqueIps * 2;
-  
+
   const isAttack = shield.isUnderAttack || systemState.state === 'ATTACK';
   const isBusy = systemState.state === 'BUSY' || (cpuBusy && !isAttack);
-  
+
   if (isBusy && !isAttack) {
     systemState.currentPowDifficulty = BASE_POW_DIFFICULTY;
     return;
   }
-  
+
   let targetDifficulty = BASE_POW_DIFFICULTY;
-  
+
   if (isAttack && ipChurnHigh) {
     targetDifficulty = MAX_POW_DIFFICULTY;
   } else if (isAttack) {
@@ -305,23 +305,20 @@ function adjustPowDifficulty(req = null) {
   } else if (ipChurnHigh && blockRate > baselineMetrics.baselineBlockRate * 2) {
     targetDifficulty = 18;
   }
-  
+
   targetDifficulty = Math.min(Math.max(targetDifficulty, BASE_POW_DIFFICULTY), MAX_POW_DIFFICULTY);
-  
+
   if (targetDifficulty > systemState.currentPowDifficulty) {
     systemState.currentPowDifficulty = Math.min(targetDifficulty, MAX_POW_DIFFICULTY);
   } else if (targetDifficulty < systemState.currentPowDifficulty) {
-    systemState.currentPowDifficulty = Math.max(
-      systemState.currentPowDifficulty - 1,
-      BASE_POW_DIFFICULTY
-    );
+    systemState.currentPowDifficulty = Math.max(systemState.currentPowDifficulty - 1, BASE_POW_DIFFICULTY);
   }
 }
 
 async function verifyLegitimateBot(ua, ip) {
   const cacheKey = `${ip}:${ua}`;
   const cached = botVerificationCache.get(cacheKey);
-  
+
   if (cached && Date.now() - cached.timestamp < VERIFICATION_CACHE_TTL) {
     return cached.isLegit;
   }
@@ -372,24 +369,20 @@ async function verifyLegitimateBot(ua, ip) {
       return isLegit;
     }
 
-    const response = await fetch(
-      `https://dns.google/resolve?name=${ip.split('.').reverse().join('.')}.in-addr.arpa&type=PTR`,
-      { timeout: 2000 }
-    );
-    
+    const response = await fetch(`https://dns.google/resolve?name=${ip.split('.').reverse().join('.')}.in-addr.arpa&type=PTR`, { timeout: 2000 });
+
     const data = await response.json();
-    
+
     if (data.Answer) {
-      const ptr = data.Answer.find(a => a.type === 12)?.data;
+      const ptr = data.Answer.find((a) => a.type === 12)?.data;
       if (ptr) {
-        isLegit = expectedDomains.some(domain => ptr.includes(domain));
+        isLegit = expectedDomains.some((domain) => ptr.includes(domain));
       }
     }
 
     if (!isLegit) {
       console.log(`[SECURITY] Fake bot detected: UA="${ua.substring(0, 50)}" IP=${ip} PTR=${data.Answer?.[0]?.data || 'none'}`);
     }
-
   } catch (err) {
     isLegit = false;
     console.log(`[SECURITY] Bot verification failed for IP=${ip}: ${err.message}`);
@@ -433,7 +426,7 @@ function verifyToken(token, req) {
 
   try {
     if (parts[0].length > 512 || parts[1].length > 128) return null;
-    
+
     const payload = Buffer.from(parts[0], 'base64url').toString('utf8');
     const signature = parts[1];
 
@@ -477,20 +470,20 @@ function checkSystemPressure() {
   const previousCheck = systemState.lastCheck;
   systemState.lastCheck = now;
   updateBaseline();
-  
+
   requestRateTracker.requests.push(now);
-  requestRateTracker.requests = requestRateTracker.requests.filter(t => now - t < 60000);
+  requestRateTracker.requests = requestRateTracker.requests.filter((t) => now - t < 60000);
   systemState.requestRatePerMinute = requestRateTracker.requests.length;
-  
+
   const cpuUsage = shield.getCpuUsage();
   const requestRate = timeDelta > 0 ? systemState.totalRequests / timeDelta : 0;
   const blockRate = shield.getRecentBlockRate();
   const blockRatio = requestRate > 0 ? blockRate / requestRate : 0;
-  
+
   const cpuSpike = cpuUsage > baselineMetrics.baselineCpu * 1.2;
   const cpuBusy = cpuUsage > baselineMetrics.baselineCpu * 1.1;
   const blockRatioHigh = blockRatio > 0.3;
-  
+
   if (cpuSpike && blockRatioHigh && systemState.state !== 'ATTACK') {
     systemState.state = 'ATTACK';
   } else if (cpuBusy && !blockRatioHigh && systemState.state === 'NORMAL') {
@@ -498,7 +491,7 @@ function checkSystemPressure() {
   } else if (!cpuBusy && systemState.state !== 'NORMAL') {
     systemState.state = 'NORMAL';
   }
-  
+
   systemState.cpuHigh = cpuUsage > CPU_THRESHOLD || systemState.activeConnections > 25000;
   systemState.totalRequests = 0;
 
@@ -547,22 +540,26 @@ app.get('/scramjet.all.js.map', (req, res) => res.sendFile(path.join(scramjetPat
 app.use('/baremux/', express.static(baremuxPath));
 app.use('/epoxy/', express.static(epoxyPath));
 
-app.get('/api/bot-challenge', rateLimit({ 
-  windowMs: 60000, 
-  max: 10,
-  keyGenerator: (req) => toIPv4(null, req)
-}), (req, res) => {
-  const ip = toIPv4(null, req);
-  const fingerprint = createFingerprint(req);
-  const lastSolve = systemState.lastPowSolve.get(ip);
-  const isRecentlySolved = lastSolve && (Date.now() - lastSolve) < 3600000;
-  const isTrusted = systemState.trustedClients.has(fingerprint);
-  
-  const difficulty = (isTrusted || isRecentlySolved) ? BASE_POW_DIFFICULTY : systemState.currentPowDifficulty;
-  
-  shield.trackChallengeHit(ip);
-  res.json({ challenge: randomBytes(16).toString('hex'), difficulty });
-});
+app.get(
+  '/api/bot-challenge',
+  rateLimit({
+    windowMs: 60000,
+    max: 10,
+    keyGenerator: (req) => toIPv4(null, req)
+  }),
+  (req, res) => {
+    const ip = toIPv4(null, req);
+    const fingerprint = createFingerprint(req);
+    const lastSolve = systemState.lastPowSolve.get(ip);
+    const isRecentlySolved = lastSolve && Date.now() - lastSolve < 3600000;
+    const isTrusted = systemState.trustedClients.has(fingerprint);
+
+    const difficulty = isTrusted || isRecentlySolved ? BASE_POW_DIFFICULTY : systemState.currentPowDifficulty;
+
+    shield.trackChallengeHit(ip);
+    res.json({ challenge: randomBytes(16).toString('hex'), difficulty });
+  }
+);
 
 app.post('/api/bot-verify', express.json(), (req, res) => {
   const { challenge, nonce, timing } = req.body;
@@ -590,7 +587,7 @@ app.post('/api/bot-verify', express.json(), (req, res) => {
     const token = createToken({ http: true, ws: true, fp: fingerprint });
     systemState.lastPowSolve.set(ip, Date.now());
     systemState.trustedClients.add(fingerprint);
-    
+
     res.cookie('bot_token', token, {
       maxAge: TOKEN_VALIDITY,
       httpOnly: true,
@@ -633,17 +630,17 @@ const gateMiddleware = async (req, res, next) => {
     /dotbot/i
   ];
 
-  const botMatch = goodBots.find(pattern => pattern.test(ua));
+  const botMatch = goodBots.find((pattern) => pattern.test(ua));
   const isClaimingBot = !!botMatch;
 
   if (!isBrowser && isClaimingBot && req.path !== '/api/bot-challenge' && req.path !== '/api/bot-verify') {
     const isVerified = await verifyLegitimateBot(ua, ip);
-    
+
     if (!isVerified) {
       shield.incrementBlocked(ip, 'fake_bot');
       return res.status(403).send('Forbidden');
     }
-    
+
     return next();
   }
 
@@ -657,7 +654,7 @@ const gateMiddleware = async (req, res, next) => {
     if (!isVerified) {
       shield.incrementBlocked(ip, 'fake_bot');
     } else {
-      return next(); 
+      return next();
     }
   }
 
@@ -665,7 +662,7 @@ const gateMiddleware = async (req, res, next) => {
   const tokenData = verifyToken(token, req);
   const fingerprint = createFingerprint(req);
   const isTrusted = tokenData?.features?.http || req.session?.user || systemState.trustedClients.has(fingerprint);
-  
+
   if (isTrusted) {
     return next();
   }
@@ -675,18 +672,18 @@ const gateMiddleware = async (req, res, next) => {
     shield.incrementBlocked(ip, 'pressure');
     return res.status(503).send('Service temporarily unavailable');
   }
-  
+
   const baseline = {
     baselineCpu: baselineMetrics.baselineCpu,
     baselineRequestRate: baselineMetrics.baselineRequestRate,
     baselineBlockRate: baselineMetrics.baselineBlockRate,
     baselineUniqueIps: baselineMetrics.baselineUniqueIps
   };
-  
+
   shield.checkAttackConditions(ip, { ...systemState, ...baseline });
 
   adjustPowDifficulty(req);
-  
+
   const acceptsHtml = req.headers.accept?.includes('text/html');
   if (acceptsHtml && isBrowser) {
     return res.send(`<!DOCTYPE html>
@@ -726,11 +723,29 @@ else document.body.innerHTML='<p>Verification failed. Please refresh.</p>';
 
 const authRoutes = ['/api/signin', '/api/signup', '/api/bot-challenge', '/api/bot-verify', '/api/verify-email'];
 const apiRoutes = [
-  '/api/signin', '/api/signup', '/api/bot-challenge', '/api/bot-verify', '/api/verify-email',
-  '/api/signout', '/api/profile', '/api/update-profile', '/api/load-localstorage', '/api/delete-account',
-  '/api/changelog', '/api/feedback', '/api/comment', '/api/comments', '/api/like', '/api/likes',
-  '/api/upload-profile-pic', '/api/save-localstorage', '/api/change-password',
-  '/api/admin/user-action', '/api/admin/feedback', '/api/admin/stats', '/api/admin/users'
+  '/api/signin',
+  '/api/signup',
+  '/api/bot-challenge',
+  '/api/bot-verify',
+  '/api/verify-email',
+  '/api/signout',
+  '/api/profile',
+  '/api/update-profile',
+  '/api/load-localstorage',
+  '/api/delete-account',
+  '/api/changelog',
+  '/api/feedback',
+  '/api/comment',
+  '/api/comments',
+  '/api/like',
+  '/api/likes',
+  '/api/upload-profile-pic',
+  '/api/save-localstorage',
+  '/api/change-password',
+  '/api/admin/user-action',
+  '/api/admin/feedback',
+  '/api/admin/stats',
+  '/api/admin/users'
 ];
 const authPaths = new Set(authRoutes);
 const apiPaths = new Set(apiRoutes);
@@ -744,14 +759,14 @@ const memoryProtection = (req, res, next) => {
       return res.status(503).json({ error: 'Service temporarily unavailable' });
     }
   }
-  
+
   const reqId = ++requestIdCounter;
   const startTime = performance.now();
   activeRequests.set(reqId, { ip: toIPv4(null, req), path: req.path, startTime });
-  
+
   req.on('close', () => activeRequests.delete(reqId));
   req.on('end', () => activeRequests.delete(reqId));
-  
+
   res.on('finish', () => {
     activeRequests.delete(reqId);
     const duration = performance.now() - startTime;
@@ -760,7 +775,7 @@ const memoryProtection = (req, res, next) => {
       updateIPReputation(ip, -2);
     }
   });
-  
+
   const contentLength = parseInt(req.headers['content-length'] || '0');
   if (contentLength > MAX_REQUEST_SIZE) {
     const ip = toIPv4(null, req);
@@ -768,55 +783,106 @@ const memoryProtection = (req, res, next) => {
     shield.incrementBlocked(ip, 'payload_oversized');
     return res.status(413).json({ error: 'Request too large' });
   }
-  
-  const totalHeaderSize = Object.entries(req.headers).reduce((sum, [k, v]) => sum + k.length + (Array.isArray(v) ? v.join('').length : String(v).length), 0);
+
+  const totalHeaderSize = Object.entries(req.headers).reduce(
+    (sum, [k, v]) => sum + k.length + (Array.isArray(v) ? v.join('').length : String(v).length),
+    0
+  );
   if (totalHeaderSize > MAX_HEADER_SIZE) {
     const ip = toIPv4(null, req);
     updateIPReputation(ip, -15);
     shield.incrementBlocked(ip, 'header_oversized');
     return res.status(431).json({ error: 'Headers too large' });
   }
-  
+
   const fingerprint = createFingerprint(req);
   const ip = toIPv4(null, req);
   const fpData = requestFingerprints.get(fingerprint) || { count: 0, lastSeen: 0, ip };
   fpData.count++;
   fpData.lastSeen = Date.now();
   requestFingerprints.set(fingerprint, fpData);
-  
+
   if (fpData.count > 1000 && Date.now() - fpData.lastSeen < 60000) {
     updateIPReputation(ip, -20);
     shield.incrementBlocked(ip, 'fingerprint_abuse');
     return res.status(429).json({ error: 'Too many requests' });
   }
-  
+
   next();
 };
 
-const assetExtensions = new Set(['.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.svg', '.woff', '.woff2', '.ttf', '.otf', '.eot', '.ico', '.wasm', '.map', '.json', '.xml', '.txt', '.pdf', '.mp3', '.mp4', '.ogg', '.wav', '.avi', '.mov', '.zip', '.rar', '.bin']);
-const assetPaths = ['/storage/', '/static/', '/uploads/', '/scram/', '/baremux/', '/epoxy/', '/bare/', '/api/bare-premium/', '/wisp/', '/api/wisp-premium/', '/pages/'];
+const assetExtensions = new Set([
+  '.js',
+  '.css',
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.avif',
+  '.svg',
+  '.woff',
+  '.woff2',
+  '.ttf',
+  '.otf',
+  '.eot',
+  '.ico',
+  '.wasm',
+  '.map',
+  '.json',
+  '.xml',
+  '.txt',
+  '.pdf',
+  '.mp3',
+  '.mp4',
+  '.ogg',
+  '.wav',
+  '.avi',
+  '.mov',
+  '.zip',
+  '.rar',
+  '.bin'
+]);
+const assetPaths = [
+  '/storage/',
+  '/static/',
+  '/uploads/',
+  '/scram/',
+  '/baremux/',
+  '/epoxy/',
+  '/bare/',
+  '/api/bare-premium/',
+  '/wisp/',
+  '/api/wisp-premium/',
+  '/api/alt-wisp-1/',
+  '/api/alt-wisp-2/',
+  '/api/alt-wisp-3/',
+  '/api/alt-wisp-4/',
+  '/pages/'
+];
 
 const conditionalGate = (req, res, next) => {
   const path = req.path.split('?')[0].toLowerCase();
   const extIndex = path.lastIndexOf('.');
   const hasExtension = extIndex > 0 && extIndex < path.length - 1;
   const extension = hasExtension ? path.substring(extIndex) : '';
-  
-  const isAsset = (hasExtension && assetExtensions.has(extension)) || 
-                  assetPaths.some(p => path.startsWith(p.toLowerCase())) ||
-                  /\.(js|css|png|jpg|jpeg|gif|webp|svg|woff|woff2|ttf|otf|ico|wasm|map|json|xml|mp3|mp4|ogg|wav|bin)$/i.test(path);
-  
+
+  const isAsset =
+    (hasExtension && assetExtensions.has(extension)) ||
+    assetPaths.some((p) => path.startsWith(p.toLowerCase())) ||
+    /\.(js|css|png|jpg|jpeg|gif|webp|svg|woff|woff2|ttf|otf|ico|wasm|map|json|xml|mp3|mp4|ogg|wav|bin)$/i.test(path);
+
   if (isAsset) {
     return next();
   }
-  
+
   const ip = toIPv4(null, req);
-  
+
   if (checkCircuitBreaker(ip)) {
     shield.incrementBlocked(ip, 'circuit_open');
     return res.status(429).json({ error: 'Too many requests' });
   }
-  
+
   if (apiPaths.has(req.path)) {
     return next();
   }
@@ -895,47 +961,60 @@ app.use('/api/', (req, res, next) => {
 
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'], allowedHeaders: ['Content-Type', 'Authorization'] }));
 
-app.use(express.json({ limit: MAX_JSON_SIZE, verify: (req, res, buf, encoding) => {
-  if (buf && buf.length > MAX_JSON_SIZE) {
-    const ip = toIPv4(req.socket.remoteAddress);
-    updateIPReputation(ip, -10);
-    shield.incrementBlocked(ip, 'json_oversized');
-    throw new Error('JSON payload too large');
-  }
-  const startTime = Date.now();
-  try {
-    JSON.parse(buf.toString());
-  } catch {
-    const ip = toIPv4(req.socket.remoteAddress);
-    if (Date.now() - startTime > 100) {
-      updateIPReputation(ip, -5);
-      shield.incrementBlocked(ip, 'json_parse_attack');
+app.use(
+  express.json({
+    limit: MAX_JSON_SIZE,
+    verify: (req, res, buf, encoding) => {
+      if (buf && buf.length > MAX_JSON_SIZE) {
+        const ip = toIPv4(req.socket.remoteAddress);
+        updateIPReputation(ip, -10);
+        shield.incrementBlocked(ip, 'json_oversized');
+        throw new Error('JSON payload too large');
+      }
+      const startTime = Date.now();
+      try {
+        JSON.parse(buf.toString());
+      } catch {
+        const ip = toIPv4(req.socket.remoteAddress);
+        if (Date.now() - startTime > 100) {
+          updateIPReputation(ip, -5);
+          shield.incrementBlocked(ip, 'json_parse_attack');
+        }
+      }
     }
-  }
-}}));
+  })
+);
 
 app.use(express.urlencoded({ extended: true, limit: MAX_JSON_SIZE, parameterLimit: 100 }));
 
-app.use(fileUpload({ limits: { fileSize: 10 * 1024 * 1024, files: 1 }, abortOnLimit: true, limitHandler: (req, res) => {
-  const ip = toIPv4(req.socket.remoteAddress);
-  updateIPReputation(ip, -10);
-  shield.incrementBlocked(ip, 'file_oversized');
-  res.status(413).json({ error: 'File too large' });
-}}));
+app.use(
+  fileUpload({
+    limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+    abortOnLimit: true,
+    limitHandler: (req, res) => {
+      const ip = toIPv4(req.socket.remoteAddress);
+      updateIPReputation(ip, -10);
+      shield.incrementBlocked(ip, 'file_oversized');
+      res.status(413).json({ error: 'File too large' });
+    }
+  })
+);
 
-app.use(session({ 
-  secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'), 
-  resave: false, 
-  saveUninitialized: false,
-  name: 'session',
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    sameSite: 'lax',
-    maxAge: 86400000
-  },
-  rolling: true
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'),
+    resave: false,
+    saveUninitialized: false,
+    name: 'session',
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 86400000
+    },
+    rolling: true
+  })
+);
 
 app.use(
   '/api/gn-math/covers',
@@ -951,8 +1030,8 @@ app.use(
 );
 
 const wsConnections = new Map();
-const MAX_WS_PER_IP = 180;
-const MAX_TOTAL_WS = 30000;
+const MAX_WS_PER_IP = 1000;
+const MAX_TOTAL_WS = 50000;
 
 function cleanupWS(ip, req = null) {
   const actualIP = req ? toIPv4(null, req) : ip;
@@ -1051,7 +1130,11 @@ app.get('/api/verify-email', (req, res) => {
     if (!user) return res.status(400).send('<html><body><h1>Invalid or expired verification link</h1></body></html>');
     const now = Date.now();
     db.prepare('UPDATE users SET email_verified = 1, verification_token = NULL, updated_at = ? WHERE id = ?').run(now, user.id);
-    res.status(200).send('<html><body style="background:#0a1d37;color:#fff;font-family:Arial;text-align:center;padding:50px;"><h1>Email verified successfully!</h1><p>You can now log in to your account.</p><a href="/pages/settings/p.html" style="color:#3b82f6;">Go to Login</a></body></html>');
+    res
+      .status(200)
+      .send(
+        '<html><body style="background:#0a1d37;color:#fff;font-family:Arial;text-align:center;padding:50px;"><h1>Email verified successfully!</h1><p>You can now log in to your account.</p><a href="/pages/settings/p.html" style="color:#3b82f6;">Go to Login</a></body></html>'
+      );
   } catch (error) {
     console.error('Verification error:', error);
     res.status(500).send('<html><body><h1>Verification failed</h1></body></html>');
@@ -1090,7 +1173,13 @@ app.post('/api/update-profile', (req, res) => {
   try {
     const { username, bio, age, school, favgame, mood } = req.body;
     const now = Date.now();
-    db.prepare('UPDATE users SET username = ?, bio = ?, age = ?, school = ? WHERE id = ?').run(username || null, bio || null, age || null, school || null, req.session.user.id);
+    db.prepare('UPDATE users SET username = ?, bio = ?, age = ?, school = ? WHERE id = ?').run(
+      username || null,
+      bio || null,
+      age || null,
+      school || null,
+      req.session.user.id
+    );
     req.session.user.username = username;
     req.session.user.bio = bio;
     res.status(200).json({ message: 'Profile updated' });
@@ -1124,7 +1213,9 @@ app.delete('/api/delete-account', (req, res) => {
 
 app.get('/api/changelog', (req, res) => {
   try {
-    const changelogs = db.prepare(`SELECT c.*, u.username as author_name FROM changelog c LEFT JOIN users u ON c.author_id = u.id ORDER BY c.created_at DESC LIMIT 50`).all();
+    const changelogs = db
+      .prepare(`SELECT c.*, u.username as author_name FROM changelog c LEFT JOIN users u ON c.author_id = u.id ORDER BY c.created_at DESC LIMIT 50`)
+      .all();
     res.status(200).json({ changelogs });
   } catch (error) {
     console.error('Changelog error:', error);
@@ -1134,15 +1225,21 @@ app.get('/api/changelog', (req, res) => {
 
 app.get('/api/feedback', (req, res) => {
   try {
-    const isAdmin = req.session.user ? (() => {
-      try {
-        const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
-        return user && ((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3);
-      } catch {
-        return false;
-      }
-    })() : false;
-    const feedback = db.prepare(`SELECT f.*, u.username${isAdmin ? ', u.email' : ''} FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`).all();
+    const isAdmin = req.session.user
+      ? (() => {
+          try {
+            const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
+            return user && ((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3);
+          } catch {
+            return false;
+          }
+        })()
+      : false;
+    const feedback = db
+      .prepare(
+        `SELECT f.*, u.username${isAdmin ? ', u.email' : ''} FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`
+      )
+      .all();
     const sanitizedFeedback = feedback.map((f) => {
       const safe = { id: f.id, content: f.content, created_at: f.created_at, username: f.username || 'Anonymous' };
       if (isAdmin && f.email) safe.email = f.email;
@@ -1164,7 +1261,13 @@ app.post('/api/changelog', (req, res) => {
     if (!title || !content) return res.status(400).json({ error: 'Title and content are required' });
     const id = randomUUID();
     const now = Date.now();
-    db.prepare('INSERT INTO changelog (id, title, content, author_id, created_at) VALUES (?, ?, ?, ?, ?)').run(id, title, content, req.session.user.id, now);
+    db.prepare('INSERT INTO changelog (id, title, content, author_id, created_at) VALUES (?, ?, ?, ?, ?)').run(
+      id,
+      title,
+      content,
+      req.session.user.id,
+      now
+    );
     res.status(201).json({ message: 'Changelog created', id });
   } catch (error) {
     console.error('Changelog create error:', error);
@@ -1192,7 +1295,9 @@ app.get('/api/admin/feedback', (req, res) => {
   try {
     const user = db.prepare('SELECT is_admin FROM users WHERE id = ?').get(req.session.user.id);
     if (!user || !user.is_admin) return res.status(403).json({ error: 'Admin access required' });
-    const feedback = db.prepare(`SELECT f.*, u.email, u.username FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`).all();
+    const feedback = db
+      .prepare(`SELECT f.*, u.email, u.username FROM feedback f LEFT JOIN users u ON f.user_id = u.id ORDER BY f.created_at DESC LIMIT 100`)
+      .all();
     res.status(200).json({ feedback });
   } catch (error) {
     console.error('Admin feedback error:', error);
@@ -1219,8 +1324,11 @@ app.get('/api/admin/users', (req, res) => {
   if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
   try {
     const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
-    if (!user || !((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3)) return res.status(403).json({ error: 'Admin access required' });
-    const users = db.prepare(`SELECT id, email, username, created_at, is_admin, avatar_url, bio, school, age, ip FROM users ORDER BY created_at DESC LIMIT 10000`).all();
+    if (!user || !((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3))
+      return res.status(403).json({ error: 'Admin access required' });
+    const users = db
+      .prepare(`SELECT id, email, username, created_at, is_admin, avatar_url, bio, school, age, ip FROM users ORDER BY created_at DESC LIMIT 10000`)
+      .all();
     const usersWithExtras = users.map((u) => {
       let ip = 'N/A';
       if (user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) ip = u.ip || 'N/A';
@@ -1281,37 +1389,26 @@ const server = createServer((req, res) => {
 server.on('upgrade', (req, socket, head) => {
   const ip = toIPv4(null, req);
   
-  if (checkCircuitBreaker(ip)) {
-    shield.incrementBlocked(ip, 'circuit_open');
+  const wispPaths = ['/wisp/', '/api/wisp-premium/', '/api/alt-wisp-1/', '/api/alt-wisp-2/', '/api/alt-wisp-3/', '/api/alt-wisp-4/'];
+  const isWisp = wispPaths.some((p) => req.url.startsWith(p));
+  const isBare = bare.shouldRoute(req) || barePremium.shouldRoute(req);
+  
+  if (!isWisp && !isBare) {
     return socket.destroy();
   }
   
-  if (checkMemoryPressure() && systemState.totalWS > 1000) {
-    shield.incrementBlocked(ip, 'memory_pressure');
+  if (checkCircuitBreaker(ip) && !isWisp && !isBare) {
+    shield.incrementBlocked(ip, 'circuit_open');
     return socket.destroy();
   }
   
   const current = wsConnections.get(ip) || 0;
 
-  if (systemState.totalWS >= MAX_TOTAL_WS || current >= MAX_WS_PER_IP) {
+  if (!isWisp && !isBare && systemState.totalWS >= MAX_TOTAL_WS) {
     shield.trackWS(ip, 1);
     shield.incrementBlocked(ip, 'ws_limit');
     updateIPReputation(ip, -5);
     return socket.destroy();
-  }
-
-  const token = extractToken(req);
-  const tokenData = verifyToken(token, req);
-
-  const wispPaths = ['/wisp/', '/api/wisp-premium/', '/api/alt-wisp-1/', '/api/alt-wisp-2/', '/api/alt-wisp-3/', '/api/alt-wisp-4/'];
-  const isWisp = wispPaths.some((p) => req.url.startsWith(p));
-
-  if (isWisp && !tokenData?.features?.ws) {
-    if (checkSystemPressure()) {
-      shield.incrementBlocked(ip, 'ws_pressure');
-      updateIPReputation(ip, -3);
-      return socket.destroy();
-    }
   }
 
   shield.trackWS(ip, 1);
@@ -1320,17 +1417,11 @@ server.on('upgrade', (req, socket, head) => {
   systemState.totalWS++;
 
   socket.setNoDelay(true);
-  socket.setKeepAlive(true, 30000);
-  socket.setTimeout(REQUEST_TIMEOUT);
-  
-  const payloadSize = parseInt(req.headers['sec-websocket-protocol'] || '0');
-  if (payloadSize > 8192) {
-    cleanupWS(ip, req);
-    return socket.destroy();
-  }
+  socket.setKeepAlive(true, 60000);
+  socket.setTimeout(0);
 
   wsFlushSockets.add(socket);
-  
+
   socket.on('close', () => {
     cleanupWS(ip, req);
     wsFlushSockets.delete(socket);
@@ -1338,11 +1429,6 @@ server.on('upgrade', (req, socket, head) => {
   socket.on('error', () => {
     cleanupWS(ip, req);
     wsFlushSockets.delete(socket);
-  });
-  socket.on('timeout', () => {
-    cleanupWS(ip, req);
-    wsFlushSockets.delete(socket);
-    socket.destroy();
   });
 
   const handleBareUpgrade = (bareServer) => {
@@ -1377,10 +1463,10 @@ server.on('upgrade', (req, socket, head) => {
 });
 
 const port = parseInt(process.env.PORT || '3000');
-server.keepAliveTimeout = 30000;
-server.headersTimeout = 31000;
-server.requestTimeout = REQUEST_TIMEOUT;
-server.timeout = REQUEST_TIMEOUT;
+server.keepAliveTimeout = 120000;
+server.headersTimeout = 125000;
+server.requestTimeout = 120000;
+server.timeout = 0;
 server.maxHeadersCount = 100;
 server.maxHeaderSize = MAX_HEADER_SIZE;
 
@@ -1391,16 +1477,16 @@ let cleanupInterval = null;
 
 function flushWebSockets() {
   if (wsFlushPending || wsFlushSockets.size === 0) return;
-  
+
   const mem = getMemoryUsage();
   if (mem.heapUsed < MEMORY_CRITICAL * 0.8 && !memoryPressure.active) return;
-  
+
   wsFlushPending = true;
   shield.sendLog('⚡ WebSocket flush initiated due to memory pressure', null);
-  
+
   let flushed = 0;
   const maxFlush = Math.floor(systemState.totalWS * 0.3);
-  
+
   for (const socket of wsFlushSockets) {
     if (flushed >= maxFlush) break;
     try {
@@ -1410,52 +1496,52 @@ function flushWebSockets() {
       }
     } catch {}
   }
-  
+
   wsFlushSockets.clear();
   wsFlushPending = false;
-  
+
   if (global.gc && mem.heapUsed > MEMORY_CRITICAL) {
     global.gc();
   }
-  
+
   shield.sendLog(`✅ WebSocket flush complete: ${flushed} connections closed`, null);
 }
 
 function startMemoryMonitoring() {
   if (memoryMonitorInterval) return;
-  
+
   memoryMonitorInterval = setInterval(() => {
     const mem = getMemoryUsage();
     checkMemoryPressure();
     checkSystemPressure();
-    
+
     shield.updateMemoryStats(mem, memoryPressure.active, activeRequests.size);
-    
+
     const baseline = {
       baselineCpu: baselineMetrics.baselineCpu,
       baselineRequestRate: baselineMetrics.baselineRequestRate,
       baselineBlockRate: baselineMetrics.baselineBlockRate,
       baselineUniqueIps: baselineMetrics.baselineUniqueIps
     };
-    
+
     shield.checkAttackConditions('system', { ...systemState, ...baseline });
-    
+
     if (memoryPressure.active && systemState.totalWS > 1000 && systemState.state === 'ATTACK') {
       flushWebSockets();
     }
-    
+
     if (mem.heapUsed > MEMORY_CRITICAL * 1.2) {
       shield.sendLog('🚨 CRITICAL: Memory usage extremely high, forcing cleanup', null);
       if (systemState.state === 'ATTACK') {
         flushWebSockets();
       }
       if (global.gc) global.gc();
-      
+
       const now = Date.now();
       for (const [key, value] of requestFingerprints.entries()) {
         if (now - value.lastSeen > 300000) requestFingerprints.delete(key);
       }
-      
+
       for (const [ip, solveTime] of systemState.lastPowSolve.entries()) {
         if (now - solveTime > 86400000) systemState.lastPowSolve.delete(ip);
       }
@@ -1465,31 +1551,31 @@ function startMemoryMonitoring() {
 
 function startCleanupInterval() {
   if (cleanupInterval) return;
-  
+
   cleanupInterval = setInterval(() => {
     const now = Date.now();
-    
+
     for (const [key, value] of requestFingerprints.entries()) {
       if (now - value.lastSeen > 300000) requestFingerprints.delete(key);
     }
-    
+
     for (const [ip, rep] of ipReputation.entries()) {
       if (now - rep.lastSeen > 86400000) {
         ipReputation.delete(ip);
         circuitBreakers.delete(ip);
       }
     }
-    
+
     for (const [reqId, req] of activeRequests.entries()) {
       if (now - req.startTime > REQUEST_TIMEOUT * 2) {
         activeRequests.delete(reqId);
       }
     }
-    
+
     if (systemState.trustedClients.size > 10000) {
       systemState.trustedClients.clear();
     }
-    
+
     for (const [ip, solveTime] of systemState.lastPowSolve.entries()) {
       if (now - solveTime > 86400000) {
         systemState.lastPowSolve.delete(ip);
@@ -1519,7 +1605,7 @@ server.listen({ port }, () => {
   console.log(`\thttp://localhost:${address.port}`);
   console.log(`\thttp://${hostname()}:${address.port}`);
   console.log(`\thttp://${address.family === 'IPv6' ? `[${address.address}]` : address.address}:${address.port}`);
-  
+
   startMemoryMonitoring();
   startCleanupInterval();
 });
@@ -1529,16 +1615,16 @@ process.on('SIGTERM', shutdown);
 
 function shutdown() {
   console.log('Shutting down...');
-  
+
   if (memoryMonitorInterval) clearInterval(memoryMonitorInterval);
   if (cleanupInterval) clearInterval(cleanupInterval);
-  
+
   for (const socket of wsFlushSockets) {
     try {
       if (socket.readyState === 1) socket.close(1001, 'Server shutdown');
     } catch {}
   }
-  
+
   if (shield.isUnderAttack) {
     const baseline = {
       baselineCpu: baselineMetrics.baselineCpu,
@@ -1548,14 +1634,14 @@ function shutdown() {
     };
     shield.endAttackAlert({ ...systemState, ...baseline });
   }
-  
+
   server.close(() => {
     bare.close();
     process.exit(0);
   });
-  
+
   setTimeout(() => {
     bare.close();
     process.exit(1);
-  }, 5000);
+  }, 500);
 }
