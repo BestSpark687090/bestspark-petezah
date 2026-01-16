@@ -1387,78 +1387,54 @@ const server = createServer((req, res) => {
 });
 
 server.on('upgrade', (req, socket, head) => {
-  const ip = toIPv4(null, req);
-  
-  const wispPaths = ['/wisp/', '/api/wisp-premium/', '/api/alt-wisp-1/', '/api/alt-wisp-2/', '/api/alt-wisp-3/', '/api/alt-wisp-4/'];
-  const isWisp = wispPaths.some((p) => req.url.startsWith(p));
+  const url = req.url;
   const isBare = bare.shouldRoute(req) || barePremium.shouldRoute(req);
+  const isWisp = url.startsWith('/wisp/') || url.startsWith('/api/wisp-premium/') || url.startsWith('/api/alt-wisp-');
   
   if (!isWisp && !isBare) {
     return socket.destroy();
   }
-  
-  if (checkCircuitBreaker(ip) && !isWisp && !isBare) {
-    shield.incrementBlocked(ip, 'circuit_open');
-    return socket.destroy();
-  }
-  
-  const current = wsConnections.get(ip) || 0;
 
-  if (!isWisp && !isBare && systemState.totalWS >= MAX_TOTAL_WS) {
-    shield.trackWS(ip, 1);
-    shield.incrementBlocked(ip, 'ws_limit');
-    updateIPReputation(ip, -5);
-    return socket.destroy();
-  }
-
-  shield.trackWS(ip, 1);
-  wsConnections.set(ip, current + 1);
+  const ip = toIPv4(null, req);
+  
   systemState.activeConnections++;
   systemState.totalWS++;
 
   socket.setNoDelay(true);
-  socket.setKeepAlive(true, 60000);
   socket.setTimeout(0);
 
-  wsFlushSockets.add(socket);
+  const cleanup = () => {
+    systemState.activeConnections--;
+    systemState.totalWS--;
+  };
 
-  socket.on('close', () => {
-    cleanupWS(ip, req);
-    wsFlushSockets.delete(socket);
-  });
-  socket.on('error', () => {
-    cleanupWS(ip, req);
-    wsFlushSockets.delete(socket);
-  });
+  socket.once('close', cleanup);
+  socket.once('error', cleanup);
 
-  const handleBareUpgrade = (bareServer) => {
+  if (isBare) {
     try {
-      bareServer.routeUpgrade(req, socket, head);
+      if (bare.shouldRoute(req)) {
+        bare.routeUpgrade(req, socket, head);
+      } else {
+        barePremium.routeUpgrade(req, socket, head);
+      }
     } catch (error) {
       console.error('Bare server upgrade error:', error.message);
       socket.destroy();
-      cleanupWS(ip, req);
     }
-  };
-
-  if (bare.shouldRoute(req)) handleBareUpgrade(bare);
-  else if (barePremium.shouldRoute(req)) handleBareUpgrade(barePremium);
-  else if (isWisp) {
-    if (req.url.startsWith('/api/wisp-premium/')) req.url = req.url.replace('/api/wisp-premium/', '/wisp/');
-    if (req.url.startsWith('/api/alt-wisp-1/')) req.url = req.url.replace('/api/alt-wisp-1/', '/wisp/');
-    if (req.url.startsWith('/api/alt-wisp-2/')) req.url = req.url.replace('/api/alt-wisp-2/', '/wisp/');
-    if (req.url.startsWith('/api/alt-wisp-3/')) req.url = req.url.replace('/api/alt-wisp-3/', '/wisp/');
-    if (req.url.startsWith('/api/alt-wisp-4/')) req.url = req.url.replace('/api/alt-wisp-4/', '/wisp/');
+  } else {
+    if (url.startsWith('/api/wisp-premium/')) req.url = '/wisp/' + url.slice(18);
+    else if (url.startsWith('/api/alt-wisp-1/')) req.url = '/wisp/' + url.slice(16);
+    else if (url.startsWith('/api/alt-wisp-2/')) req.url = '/wisp/' + url.slice(16);
+    else if (url.startsWith('/api/alt-wisp-3/')) req.url = '/wisp/' + url.slice(16);
+    else if (url.startsWith('/api/alt-wisp-4/')) req.url = '/wisp/' + url.slice(16);
+    
     try {
       wisp.routeRequest(req, socket, head);
     } catch (error) {
       console.error('WISP server error:', error.message);
       socket.destroy();
-      cleanupWS(ip, req);
     }
-  } else {
-    cleanupWS(ip, req);
-    socket.destroy();
   }
 });
 
