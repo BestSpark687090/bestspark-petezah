@@ -31,6 +31,13 @@ class DDoSShield {
       this.startupGracePeriod = false;
     }, 600000);
 
+    this.MAX_IP_TRACKING = 2000;
+    this.MAX_BLOCKS_PER_IP = 50;
+    this.MAX_RECENT_BLOCKS = 1000;
+    this.MAX_ATTACK_PATTERNS = 100;
+    this.MAX_CHALLENGE_HITS = 500;
+    this.MAX_WS_HISTORY = 20;
+
     this.ipBlocks = new Map();
     this.blockTypes = new Map();
     this.challengeHits = new Map();
@@ -45,8 +52,9 @@ class DDoSShield {
     this.trustedFingerprints = new Set();
 
     this.cleanupInterval = setInterval(() => this.cleanupOldEntries(), 30000);
-    this.memoryMonitorInterval = setInterval(() => this.monitorMemory(), 5000);
-    this.patternDetectionInterval = setInterval(() => this.detectAttackPatterns(), 10000);
+    this.memoryMonitorInterval = setInterval(() => this.monitorMemory(), 15000);
+    this.patternDetectionInterval = setInterval(() => this.detectAttackPatterns(), 30000);
+    this.aggressiveCleanupInterval = setInterval(() => this.aggressiveCleanup(), 60000);
   }
 
   setLogChannel(channelId) {
@@ -142,13 +150,19 @@ class DDoSShield {
     ipData.blocks.push(now);
     ipData.types[type] = (ipData.types[type] || 0) + 1;
 
+    if (ipData.blocks.length > this.MAX_BLOCKS_PER_IP) {
+      ipData.blocks = ipData.blocks.slice(-this.MAX_BLOCKS_PER_IP);
+    }
+
     ipData.blocks = ipData.blocks.filter((t) => now - t < 60000);
     this.ipBlocks.set(ip, ipData);
 
     this.blockTypes.set(type, (this.blockTypes.get(type) || 0) + 1);
 
     this.recentBlocks.push(now);
-    this.recentBlocks = this.recentBlocks.filter((t) => now - t < 60000);
+    if (this.recentBlocks.length > this.MAX_RECENT_BLOCKS) {
+      this.recentBlocks = this.recentBlocks.slice(-this.MAX_RECENT_BLOCKS);
+    }
 
     this.checkAttackConditions(ip);
 
@@ -162,10 +176,13 @@ class DDoSShield {
     const now = Date.now();
     const hits = this.challengeHits.get(ip) || [];
     hits.push(now);
-    this.challengeHits.set(
-      ip,
-      hits.filter((t) => now - t < 30000)
-    );
+    
+    const filtered = hits.filter((t) => now - t < 30000);
+    if (filtered.length > this.MAX_WS_HISTORY) {
+      this.challengeHits.set(ip, filtered.slice(-this.MAX_WS_HISTORY));
+    } else {
+      this.challengeHits.set(ip, filtered);
+    }
   }
 
   getRecentBlocks(ip, windowMs = WINDOW_SIZE) {
@@ -358,6 +375,9 @@ class DDoSShield {
       } else {
         if (data.wsHistory) {
           data.wsHistory = data.wsHistory.filter((t) => now - t < 60000);
+          if (data.wsHistory.length > this.MAX_WS_HISTORY) {
+            data.wsHistory = data.wsHistory.slice(-this.MAX_WS_HISTORY);
+          }
         }
       }
     }
@@ -366,6 +386,58 @@ class DDoSShield {
 
     if (this.wsFlushHistory.length > 100) {
       this.wsFlushHistory = this.wsFlushHistory.slice(-50);
+    }
+
+    if (this.ipBlocks.size > this.MAX_IP_TRACKING) {
+      const entries = Array.from(this.ipBlocks.entries());
+      entries.sort((a, b) => {
+        const aRecent = a[1].blocks.filter(t => now - t < 30000).length;
+        const bRecent = b[1].blocks.filter(t => now - t < 30000).length;
+        return aRecent - bRecent;
+      });
+      const toRemove = entries.slice(0, Math.floor(this.MAX_IP_TRACKING * 0.3));
+      toRemove.forEach(([ip]) => this.ipBlocks.delete(ip));
+    }
+
+    if (this.challengeHits.size > this.MAX_CHALLENGE_HITS) {
+      const entries = Array.from(this.challengeHits.entries());
+      entries.sort((a, b) => a[1].length - b[1].length);
+      const toRemove = entries.slice(0, Math.floor(this.MAX_CHALLENGE_HITS * 0.3));
+      toRemove.forEach(([ip]) => this.challengeHits.delete(ip));
+    }
+
+    if (this.ipRequests.size > this.MAX_IP_TRACKING) {
+      const entries = Array.from(this.ipRequests.entries());
+      entries.sort((a, b) => a[1].lastSeen - b[1].lastSeen);
+      const toRemove = entries.slice(0, Math.floor(this.MAX_IP_TRACKING * 0.3));
+      toRemove.forEach(([ip]) => this.ipRequests.delete(ip));
+    }
+  }
+
+  aggressiveCleanup() {
+    const now = Date.now();
+
+    if (this.blockTypes.size > 50) {
+      const entries = Array.from(this.blockTypes.entries()).sort((a, b) => a[1] - b[1]);
+      const toRemove = entries.slice(0, Math.floor(entries.length * 0.5));
+      toRemove.forEach(([type]) => this.blockTypes.delete(type));
+    }
+
+    if (this.attackPatterns.size > this.MAX_ATTACK_PATTERNS) {
+      const entries = Array.from(this.attackPatterns.entries());
+      entries.sort((a, b) => a[1].detected - b[1].detected);
+      const toRemove = entries.slice(0, Math.floor(this.MAX_ATTACK_PATTERNS * 0.3));
+      toRemove.forEach(([key]) => this.attackPatterns.delete(key));
+    }
+
+    this.attackPatterns.forEach((pattern, key) => {
+      if (now - pattern.detected > 300000) {
+        this.attackPatterns.delete(key);
+      }
+    });
+
+    if (global.gc && this.memoryStats.heapUsed > MEMORY_CRITICAL) {
+      global.gc();
     }
   }
 
@@ -417,6 +489,10 @@ class DDoSShield {
       data.wsHistory.push(Date.now());
       data.wsHistory = data.wsHistory.filter((t) => Date.now() - t < 60000);
 
+      if (data.wsHistory.length > this.MAX_WS_HISTORY) {
+        data.wsHistory = data.wsHistory.slice(-this.MAX_WS_HISTORY);
+      }
+
       if (data.wsHistory.length > 500) {
         this.incrementBlocked(ip, 'ws_burst');
         data.wsHistory = [];
@@ -460,7 +536,10 @@ class DDoSShield {
     const now = Date.now();
     const patterns = new Map();
 
+    let count = 0;
     for (const [ip, data] of this.ipBlocks.entries()) {
+      if (count++ > 500) break;
+
       const recent = data.blocks.filter((t) => now - t < PATTERN_DETECTION_WINDOW);
       if (recent.length < ATTACK_PATTERN_THRESHOLD) continue;
 
@@ -532,7 +611,8 @@ class DDoSShield {
         { name: 'security-stats', description: 'View current security statistics' },
         { name: 'memory-status', description: 'View current memory usage and statistics' },
         { name: 'kill-switch', description: 'Emergency shutdown of the server' },
-        { name: 'startup', description: 'Deactivate kill switch and allow server to run' }
+        { name: 'startup', description: 'Deactivate kill switch and allow server to run' },
+        { name: 'force-cleanup', description: 'Force aggressive memory cleanup now' }
       ];
 
       client.application.commands.set(commands);
@@ -608,6 +688,8 @@ class DDoSShield {
             { name: 'Total Blocks', value: this.mitigatedCount.toLocaleString(), inline: true },
             { name: 'Challenge Hits', value: `${totalHits} from ${uniqueIps} IPs`, inline: true },
             { name: 'Attack Patterns', value: this.attackPatterns.size.toString(), inline: true },
+            { name: 'Tracked IPs', value: `${this.ipBlocks.size}/${this.MAX_IP_TRACKING}`, inline: true },
+            { name: 'Tracked Requests', value: `${this.ipRequests.size}/${this.MAX_IP_TRACKING}`, inline: true },
             { name: 'Top Abusers', value: topAbusers.map((a) => `${a.ip}: ${a.count} (${a.primaryType})`).join('\n') || 'None', inline: false }
           )
           .setColor(statusColor)
@@ -633,9 +715,44 @@ class DDoSShield {
             { name: 'Heap Total', value: `${heapTotal}GB`, inline: true },
             { name: 'RSS', value: `${rss}GB`, inline: true },
             { name: 'External', value: `${external}GB`, inline: true },
-            { name: 'Active Requests', value: this.memoryStats.activeRequests?.toString() || 'N/A', inline: true }
+            { name: 'Active Requests', value: this.memoryStats.activeRequests?.toString() || 'N/A', inline: true },
+            { name: 'Tracked IPs', value: this.ipBlocks.size.toString(), inline: true },
+            { name: 'IP Requests', value: this.ipRequests.size.toString(), inline: true },
+            { name: 'Challenge Hits', value: this.challengeHits.size.toString(), inline: true }
           )
           .setColor(this.memoryStats.active ? '#ff0000' : '#00ff00')
+          .setTimestamp();
+
+        await interaction.reply({ embeds: [embed], ephemeral: true });
+      }
+
+      if (interaction.commandName === 'force-cleanup') {
+        const beforeMem = process.memoryUsage();
+        const beforeIpBlocks = this.ipBlocks.size;
+        const beforeIpRequests = this.ipRequests.size;
+        const beforeChallengeHits = this.challengeHits.size;
+
+        this.aggressiveCleanup();
+        this.cleanupOldEntries();
+
+        if (global.gc) {
+          global.gc();
+        }
+
+        const afterMem = process.memoryUsage();
+        const freed = ((beforeMem.heapUsed - afterMem.heapUsed) / 1024 / 1024).toFixed(2);
+
+        const embed = new EmbedBuilder()
+          .setTitle('🧹 Forced Cleanup Complete')
+          .addFields(
+            { name: 'Memory Freed', value: `${freed}MB`, inline: true },
+            { name: 'IP Blocks', value: `${beforeIpBlocks} → ${this.ipBlocks.size}`, inline: true },
+            { name: 'IP Requests', value: `${beforeIpRequests} → ${this.ipRequests.size}`, inline: true },
+            { name: 'Challenge Hits', value: `${beforeChallengeHits} → ${this.challengeHits.size}`, inline: true },
+            { name: 'Heap Before', value: `${(beforeMem.heapUsed / 1024 / 1024 / 1024).toFixed(2)}GB`, inline: true },
+            { name: 'Heap After', value: `${(afterMem.heapUsed / 1024 / 1024 / 1024).toFixed(2)}GB`, inline: true }
+          )
+          .setColor('#00ff00')
           .setTimestamp();
 
         await interaction.reply({ embeds: [embed], ephemeral: true });
@@ -685,6 +802,24 @@ class DDoSShield {
 
   isKillSwitchActive() {
     return this.killSwitchActive;
+  }
+
+  destroy() {
+    if (this.cleanupInterval) clearInterval(this.cleanupInterval);
+    if (this.memoryMonitorInterval) clearInterval(this.memoryMonitorInterval);
+    if (this.patternDetectionInterval) clearInterval(this.patternDetectionInterval);
+    if (this.aggressiveCleanupInterval) clearInterval(this.aggressiveCleanupInterval);
+    if (this.attackEndTimer) clearTimeout(this.attackEndTimer);
+
+    this.ipBlocks.clear();
+    this.blockTypes.clear();
+    this.challengeHits.clear();
+    this.ipRequests.clear();
+    this.attackPatterns.clear();
+    this.trustedFingerprints.clear();
+    this.recentBlocks = [];
+    this.wsFlushHistory = [];
+    this.mitigationActions = [];
   }
 }
 
