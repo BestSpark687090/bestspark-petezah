@@ -1397,6 +1397,25 @@ server.on('upgrade', (req, socket, head) => {
 
   const ip = toIPv4(null, req);
   
+  if (checkCircuitBreaker(ip)) {
+    shield.incrementBlocked(ip, 'circuit_open');
+    return socket.destroy();
+  }
+  
+  const current = wsConnections.get(ip) || 0;
+  
+  if (current > MAX_WS_PER_IP) {
+    shield.incrementBlocked(ip, 'ws_cap');
+    updateIPReputation(ip, -10);
+    return socket.destroy();
+  }
+  
+  if (systemState.totalWS >= MAX_TOTAL_WS) {
+    shield.incrementBlocked(ip, 'ws_limit');
+    return socket.destroy();
+  }
+
+  wsConnections.set(ip, current + 1);
   systemState.activeConnections++;
   systemState.totalWS++;
 
@@ -1404,6 +1423,9 @@ server.on('upgrade', (req, socket, head) => {
   socket.setTimeout(0);
 
   const cleanup = () => {
+    const count = wsConnections.get(ip) || 1;
+    if (count <= 1) wsConnections.delete(ip);
+    else wsConnections.set(ip, count - 1);
     systemState.activeConnections--;
     systemState.totalWS--;
   };
