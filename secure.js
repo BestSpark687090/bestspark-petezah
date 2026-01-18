@@ -656,6 +656,7 @@ class DDoSShield {
         const mem = process.memoryUsage();
         const heapUsed = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
         const rss = (mem.rss / 1024 / 1024 / 1024).toFixed(2);
+        const xdpBlockCount = getXDPBlockCount ? getXDPBlockCount() : 0;
 
         const systemState = interaction.client.systemState || {};
         const powDifficulty = systemState.currentPowDifficulty || 16;
@@ -688,6 +689,9 @@ class DDoSShield {
             { name: 'Total Blocks', value: this.mitigatedCount.toLocaleString(), inline: true },
             { name: 'Challenge Hits', value: `${totalHits} from ${uniqueIps} IPs`, inline: true },
             { name: 'Attack Patterns', value: this.attackPatterns.size.toString(), inline: true },
+            { name: 'Status', value: statusText, inline: true },
+            { name: 'CPU Usage', value: `${cpuUsage}%`, inline: true },
+            { name: 'XDP Blocks', value: `${xdpBlockCount}/100`, inline: true },
             { name: 'Tracked IPs', value: `${this.ipBlocks.size}/${this.MAX_IP_TRACKING}`, inline: true },
             { name: 'Tracked Requests', value: `${this.ipRequests.size}/${this.MAX_IP_TRACKING}`, inline: true },
             { name: 'Top Abusers', value: topAbusers.map((a) => `${a.ip}: ${a.count} (${a.primaryType})`).join('\n') || 'None', inline: false }
