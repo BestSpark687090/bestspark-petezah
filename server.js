@@ -26,6 +26,7 @@ import { performance } from 'perf_hooks';
 import process from 'process';
 import { minify as minifyJS } from 'terser';
 import v8 from 'v8';
+import { blockIPKernel, getXDPStats, getXDPBlockCount } from './xdp-integration.js';
 import { ddosShield } from './secure.js';
 import { adminUserActionHandler } from './server/api/admin-user-action.js';
 import { addCommentHandler, getCommentsHandler } from './server/api/comments.js';
@@ -256,10 +257,31 @@ function updateIPReputation(ip, score) {
 function checkCircuitBreaker(ip) {
   const breaker = circuitBreakers.get(ip);
   if (!breaker) return false;
+  
   if (breaker.open && Date.now() > breaker.until) {
     circuitBreakers.delete(ip);
     return false;
   }
+  
+  const shouldXDPBlock = 
+    breaker.open && 
+    !breaker.xdpBlocked && 
+    breaker.violations > 100 &&  
+    systemState.state === 'ATTACK' &&  
+    !systemState.cpuHigh;  
+  
+  if (shouldXDPBlock) {
+    breaker.xdpBlocked = true;
+    
+    blockIPKernel(ip, shield).then((success) => {
+      if (success) {
+        shield.sendLog(`🛡️ **XDP ENGAGED**: ${ip} (${breaker.violations} violations)`, null);
+      }
+    }).catch(err => {
+      console.error('[XDP] Block failed:', err);
+    });
+  }
+  
   return breaker.open;
 }
 
