@@ -302,7 +302,12 @@ const barePremium = createBareServer('/api/bare-premium/', {
 
 const app = express();
 
-app.set('trust proxy', true);
+app.set("trust proxy", [
+  "127.0.0.1",
+  "::1",
+  "51.222.141.36"
+]);
+
 
 const discordClient = new Client({
   intents: [GatewayIntentBits.Guilds]
