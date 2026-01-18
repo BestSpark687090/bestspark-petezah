@@ -680,7 +680,9 @@ const gateMiddleware = async (req, res, next) => {
     baselineUniqueIps: baselineMetrics.baselineUniqueIps
   };
 
-  shield.checkAttackConditions(ip, { ...systemState, ...baseline });
+  if (Math.random() < 0.1) {
+    shield.checkAttackConditions(ip, { ...systemState, ...baseline });
+  }
 
   adjustPowDifficulty(req);
 
