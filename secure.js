@@ -823,11 +823,6 @@ class DDoSShield {
   }
 }
 
-this.cleanupInterval = setInterval(() => this.cleanupOldEntries(), 60000);
-this.memoryMonitorInterval = setInterval(() => this.monitorMemory(), 30000);
-this.patternDetectionInterval = setInterval(() => this.detectAttackPatterns(), 60000);
-this.aggressiveCleanupInterval = setInterval(() => this.aggressiveCleanup(), 120000);
-
 export const ddosShield = (client) => {
   return new DDoSShield(client);
 };
