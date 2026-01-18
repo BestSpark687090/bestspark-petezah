@@ -4,6 +4,7 @@ import { scramjetPath } from '@mercuryworkshop/scramjet/path';
 import { server as wisp } from '@mercuryworkshop/wisp-js/server';
 import bareServerPkg from '@tomphttp/bare-server-node';
 import bcrypt from 'bcrypt';
+import CleanCSS from 'clean-css';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'crypto';
@@ -14,6 +15,7 @@ import fileUpload from 'express-fileupload';
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import session from 'express-session';
 import fs from 'fs';
+import { minify as minifyHTML } from 'html-minifier-terser';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import fetch from 'node-fetch';
 import { createServer } from 'node:http';
@@ -22,6 +24,7 @@ import path, { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { performance } from 'perf_hooks';
 import process from 'process';
+import { minify as minifyJS } from 'terser';
 import v8 from 'v8';
 import { ddosShield } from './secure.js';
 import { adminUserActionHandler } from './server/api/admin-user-action.js';
@@ -45,6 +48,9 @@ const __dirname = path.dirname(__filename);
 
 const publicPath = 'public';
 
+const minificationCache = new Map();
+let minificationInProgress = false;
+
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024;
 const MAX_JSON_SIZE = 5 * 1024 * 1024;
 const MAX_HEADER_SIZE = 16384;
@@ -59,6 +65,102 @@ const ipReputation = new Map();
 const circuitBreakers = new Map();
 const activeRequests = new Map();
 let requestIdCounter = 0;
+
+async function minifyFiles() {
+  if (minificationInProgress) return;
+  minificationInProgress = true;
+
+  console.log('Starting file minification...');
+
+  const cssMinifier = new CleanCSS({ level: 2 });
+  let minified = 0;
+
+  async function minifyFile(filePath, type) {
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const stat = fs.statSync(filePath);
+      const cacheKey = `${filePath}:${stat.mtimeMs}`;
+
+      if (minificationCache.has(cacheKey)) return;
+
+      let result;
+      if (type === 'js') {
+        const minResult = await minifyJS(content, { compress: true, mangle: true });
+        result = minResult.code;
+      } else if (type === 'css') {
+        result = cssMinifier.minify(content).styles;
+      } else if (type === 'html') {
+        result = await minifyHTML(content, {
+          collapseWhitespace: true,
+          removeComments: true,
+          minifyCSS: true,
+          minifyJS: true
+        });
+      }
+
+      if (result && result !== content) {
+        fs.writeFileSync(filePath, result, 'utf8');
+        minificationCache.set(cacheKey, true);
+        minified++;
+      }
+    } catch (err) {
+      console.error(`Minification error for ${filePath}:`, err.message);
+    }
+  }
+
+  function walkDir(dir, type) {
+    if (!fs.existsSync(dir)) {
+      console.log(`Directory not found: ${dir}`);
+      return;
+    }
+
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      const filePath = path.join(dir, file);
+      const stat = fs.statSync(filePath);
+      if (stat.isDirectory()) {
+        walkDir(filePath, type);
+      } else if (stat.isFile()) {
+        if (type === 'js' && file.endsWith('.js') && !file.endsWith('.min.js')) {
+          minifyFile(filePath, 'js');
+        } else if (type === 'css' && file.endsWith('.css') && !file.endsWith('.min.css')) {
+          minifyFile(filePath, 'css');
+        } else if (type === 'html' && file.endsWith('.html')) {
+          minifyFile(filePath, 'html');
+        }
+      }
+    }
+  }
+
+  const storageJsPath = path.join(__dirname, 'public', 'storage', 'js');
+  if (fs.existsSync(storageJsPath)) {
+    walkDir(storageJsPath, 'js');
+  } else {
+    console.log('public/storage/js directory not found, skipping...');
+  }
+
+  const storageCssPath = path.join(__dirname, 'public', 'storage', 'css');
+  if (fs.existsSync(storageCssPath)) {
+    walkDir(storageCssPath, 'css');
+  } else {
+    console.log('public/storage/css directory not found, skipping...');
+  }
+
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    await minifyFile(indexPath, 'html');
+  }
+
+  const pagesPath = path.join(__dirname, 'public', 'pages');
+  if (fs.existsSync(pagesPath)) {
+    walkDir(pagesPath, 'html');
+  } else {
+    console.log('public/pages directory not found, skipping...');
+  }
+
+  console.log(`Minified ${minified} files`);
+  minificationInProgress = false;
+}
 
 function getMemoryUsage() {
   const usage = process.memoryUsage();
@@ -1392,26 +1494,26 @@ server.on('upgrade', (req, socket, head) => {
   const url = req.url;
   const isBare = bare.shouldRoute(req) || barePremium.shouldRoute(req);
   const isWisp = url.startsWith('/wisp/') || url.startsWith('/api/wisp-premium/') || url.startsWith('/api/alt-wisp-');
-  
+
   if (!isWisp && !isBare) {
     return socket.destroy();
   }
 
   const ip = toIPv4(null, req);
-  
+
   if (checkCircuitBreaker(ip)) {
     shield.incrementBlocked(ip, 'circuit_open');
     return socket.destroy();
   }
-  
+
   const current = wsConnections.get(ip) || 0;
-  
+
   if (current > MAX_WS_PER_IP) {
     shield.incrementBlocked(ip, 'ws_cap');
     updateIPReputation(ip, -10);
     return socket.destroy();
   }
-  
+
   if (systemState.totalWS >= MAX_TOTAL_WS) {
     shield.incrementBlocked(ip, 'ws_limit');
     return socket.destroy();
@@ -1452,7 +1554,7 @@ server.on('upgrade', (req, socket, head) => {
     else if (url.startsWith('/api/alt-wisp-2/')) req.url = '/wisp/' + url.slice(16);
     else if (url.startsWith('/api/alt-wisp-3/')) req.url = '/wisp/' + url.slice(16);
     else if (url.startsWith('/api/alt-wisp-4/')) req.url = '/wisp/' + url.slice(16);
-    
+
     try {
       wisp.routeRequest(req, socket, head);
     } catch (error) {
@@ -1598,6 +1700,8 @@ process.on('unhandledRejection', (reason, promise) => {
   shield.sendLog(`⚠️ Unhandled Rejection: ${reason}`, null);
   console.error('Unhandled Rejection:', reason);
 });
+
+minifyFiles().catch((err) => console.error('Minification failed:', err));
 
 server.listen({ port }, () => {
   const address = server.address();
