@@ -60,6 +60,7 @@ const MEMORY_THRESHOLD = 1024 * 1024 * 1024 * 2;
 const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
 const REQUEST_TIMEOUT = 60000;
 const PAYLOAD_TIMEOUT = 30000;
+const CPU_THRESHOLD = 75;
 
 const memoryPressure = { active: false, lastCheck: 0, consecutiveHigh: 0 };
 const requestFingerprints = new Map();
