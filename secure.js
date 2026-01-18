@@ -2,6 +2,21 @@ import { EmbedBuilder } from 'discord.js';
 import dotenv from 'dotenv';
 import os from 'node:os';
 import process from 'process';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
+let getXDPBlockCount = () => 0;
+let getXDPStats = async () => 'XDP stats unavailable';
+
+try {
+  const xdpModule = await import('./xdp-integration.js');
+  getXDPBlockCount = xdpModule.getXDPBlockCount;
+  getXDPStats = xdpModule.getXDPStats;
+} catch (err) {
+  console.log('[SHIELD] XDP integration not available:', err.message);
+}
 
 dotenv.config({ path: '.env.production' });
 
@@ -656,7 +671,7 @@ class DDoSShield {
         const mem = process.memoryUsage();
         const heapUsed = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
         const rss = (mem.rss / 1024 / 1024 / 1024).toFixed(2);
-        const xdpBlockCount = getXDPBlockCount ? getXDPBlockCount() : 0;
+        const xdpBlockCount = 0;
 
         const systemState = interaction.client.systemState || {};
         const powDifficulty = systemState.currentPowDifficulty || 16;
