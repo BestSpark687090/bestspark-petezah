@@ -120,7 +120,7 @@ async function minifyFiles() {
       console.log(`Directory not found: ${dir}`);
       return;
     }
-    
+
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const filePath = path.join(dir, file);
@@ -152,12 +152,12 @@ async function minifyFiles() {
   } else {
     console.log('public/storage/css directory not found, skipping...');
   }
-  
+
   const indexPath = path.join(__dirname, 'public', 'index.html');
   if (fs.existsSync(indexPath)) {
     await minifyFile(indexPath, 'html');
   }
-  
+
   const pagesPath = path.join(__dirname, 'public', 'pages');
   if (fs.existsSync(pagesPath)) {
     walkDir(pagesPath, 'html');
@@ -172,11 +172,11 @@ async function minifyFiles() {
 function restoreOriginalFiles() {
   console.log('Restoring original files...');
   let restored = 0;
-  
+
   for (const [filePath, content] of originalFiles.entries()) {
     try {
       const shouldRestore = wasMinified.get(filePath) === false;
-      
+
       if (shouldRestore) {
         fs.writeFileSync(filePath, content, 'utf8');
         restored++;
@@ -185,10 +185,22 @@ function restoreOriginalFiles() {
       console.error(`Failed to restore ${filePath}:`, err.message);
     }
   }
-  
+
   console.log(`Restored ${restored} files to original state`);
   originalFiles.clear();
   wasMinified.clear();
+}
+
+function getMemoryUsage() {
+  const mem = process.memoryUsage();
+
+  return {
+    rss: mem.rss,
+    heapTotal: mem.heapTotal,
+    heapUsed: mem.heapUsed,
+    external: mem.external,
+    arrayBuffers: mem.arrayBuffers || 0
+  };
 }
 
 function checkMemoryPressure() {
