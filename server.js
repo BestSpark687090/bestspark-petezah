@@ -49,6 +49,7 @@ const __dirname = path.dirname(__filename);
 const publicPath = 'public';
 
 const minificationCache = new Map();
+const originalFiles = new Map();
 let minificationInProgress = false;
 
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024;
@@ -83,6 +84,8 @@ async function minifyFiles() {
 
       if (minificationCache.has(cacheKey)) return;
 
+      originalFiles.set(filePath, content);
+
       let result;
       if (type === 'js') {
         const minResult = await minifyJS(content, { compress: true, mangle: true });
@@ -113,7 +116,7 @@ async function minifyFiles() {
       console.log(`Directory not found: ${dir}`);
       return;
     }
-
+    
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const filePath = path.join(dir, file);
@@ -145,12 +148,12 @@ async function minifyFiles() {
   } else {
     console.log('public/storage/css directory not found, skipping...');
   }
-
+  
   const indexPath = path.join(__dirname, 'public', 'index.html');
   if (fs.existsSync(indexPath)) {
     await minifyFile(indexPath, 'html');
   }
-
+  
   const pagesPath = path.join(__dirname, 'public', 'pages');
   if (fs.existsSync(pagesPath)) {
     walkDir(pagesPath, 'html');
@@ -160,6 +163,23 @@ async function minifyFiles() {
 
   console.log(`Minified ${minified} files`);
   minificationInProgress = false;
+}
+
+function restoreOriginalFiles() {
+  console.log('Restoring original files...');
+  let restored = 0;
+  
+  for (const [filePath, content] of originalFiles.entries()) {
+    try {
+      fs.writeFileSync(filePath, content, 'utf8');
+      restored++;
+    } catch (err) {
+      console.error(`Failed to restore ${filePath}:`, err.message);
+    }
+  }
+  
+  console.log(`Restored ${restored} files`);
+  originalFiles.clear();
 }
 
 function getMemoryUsage() {
@@ -1719,6 +1739,8 @@ process.on('SIGTERM', shutdown);
 
 function shutdown() {
   console.log('Shutting down...');
+
+  restoreOriginalFiles();
 
   if (memoryMonitorInterval) clearInterval(memoryMonitorInterval);
   if (cleanupInterval) clearInterval(cleanupInterval);
