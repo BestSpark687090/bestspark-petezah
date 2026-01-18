@@ -31,12 +31,12 @@ class DDoSShield {
       this.startupGracePeriod = false;
     }, 600000);
 
-    this.MAX_IP_TRACKING = 2000;
-    this.MAX_BLOCKS_PER_IP = 50;
-    this.MAX_RECENT_BLOCKS = 1000;
-    this.MAX_ATTACK_PATTERNS = 100;
-    this.MAX_CHALLENGE_HITS = 500;
-    this.MAX_WS_HISTORY = 20;
+    this.MAX_IP_TRACKING = 500;
+    this.MAX_BLOCKS_PER_IP = 20;
+    this.MAX_RECENT_BLOCKS = 500;
+    this.MAX_ATTACK_PATTERNS = 50;
+    this.MAX_CHALLENGE_HITS = 200;
+    this.MAX_WS_HISTORY = 10;
 
     this.ipBlocks = new Map();
     this.blockTypes = new Map();
@@ -822,6 +822,11 @@ class DDoSShield {
     this.mitigationActions = [];
   }
 }
+
+this.cleanupInterval = setInterval(() => this.cleanupOldEntries(), 60000);
+this.memoryMonitorInterval = setInterval(() => this.monitorMemory(), 30000);
+this.patternDetectionInterval = setInterval(() => this.detectAttackPatterns(), 60000);
+this.aggressiveCleanupInterval = setInterval(() => this.aggressiveCleanup(), 120000);
 
 export const ddosShield = (client) => {
   return new DDoSShield(client);
