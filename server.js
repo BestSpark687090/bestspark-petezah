@@ -50,6 +50,7 @@ const publicPath = 'public';
 
 const minificationCache = new Map();
 const originalFiles = new Map();
+const wasMinified = new Map();
 let minificationInProgress = false;
 
 const MAX_REQUEST_SIZE = 10 * 1024 * 1024;
@@ -102,9 +103,12 @@ async function minifyFiles() {
       }
 
       if (result && result !== content) {
+        wasMinified.set(filePath, false);
         fs.writeFileSync(filePath, result, 'utf8');
         minificationCache.set(cacheKey, true);
         minified++;
+      } else {
+        wasMinified.set(filePath, true);
       }
     } catch (err) {
       console.error(`Minification error for ${filePath}:`, err.message);
@@ -171,26 +175,20 @@ function restoreOriginalFiles() {
   
   for (const [filePath, content] of originalFiles.entries()) {
     try {
-      fs.writeFileSync(filePath, content, 'utf8');
-      restored++;
+      const shouldRestore = wasMinified.get(filePath) === false;
+      
+      if (shouldRestore) {
+        fs.writeFileSync(filePath, content, 'utf8');
+        restored++;
+      }
     } catch (err) {
       console.error(`Failed to restore ${filePath}:`, err.message);
     }
   }
   
-  console.log(`Restored ${restored} files`);
+  console.log(`Restored ${restored} files to original state`);
   originalFiles.clear();
-}
-
-function getMemoryUsage() {
-  const usage = process.memoryUsage();
-  return {
-    rss: usage.rss,
-    heapTotal: usage.heapTotal,
-    heapUsed: usage.heapUsed,
-    external: usage.external,
-    arrayBuffers: usage.arrayBuffers
-  };
+  wasMinified.clear();
 }
 
 function checkMemoryPressure() {
