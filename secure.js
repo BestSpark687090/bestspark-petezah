@@ -689,8 +689,6 @@ class DDoSShield {
             { name: 'Total Blocks', value: this.mitigatedCount.toLocaleString(), inline: true },
             { name: 'Challenge Hits', value: `${totalHits} from ${uniqueIps} IPs`, inline: true },
             { name: 'Attack Patterns', value: this.attackPatterns.size.toString(), inline: true },
-            { name: 'Status', value: statusText, inline: true },
-            { name: 'CPU Usage', value: `${cpuUsage}%`, inline: true },
             { name: 'XDP Blocks', value: `${xdpBlockCount}/100`, inline: true },
             { name: 'Tracked IPs', value: `${this.ipBlocks.size}/${this.MAX_IP_TRACKING}`, inline: true },
             { name: 'Tracked Requests', value: `${this.ipRequests.size}/${this.MAX_IP_TRACKING}`, inline: true },
