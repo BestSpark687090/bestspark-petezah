@@ -75,6 +75,20 @@ function setupFrameInterception(frame) {
         
         if (!iframeDoc || !iframeWin) return;
         
+        iframeDoc.addEventListener('mousedown', function() {
+            const menu = document.getElementById("menu-dropdown");
+            if (menu) menu.classList.remove("show");
+            
+            const suggestionList = document.getElementById("suggestion-list");
+            if (suggestionList) suggestionList.style.display = "none";
+            
+            const contextMenu = document.getElementById("tab-context-menu");
+            if (contextMenu) contextMenu.remove();
+            
+            const securePopup = document.getElementById("secure-popup");
+            if (securePopup) securePopup.remove();
+        });
+        
         if (iframeWin.__interceptionSetup) return;
         iframeWin.__interceptionSetup = true;
         
@@ -109,6 +123,46 @@ function setupFrameInterception(frame) {
                 }
             }
         }, true);
+        
+        iframeDoc.addEventListener('auxclick', function(e) {
+            if (e.button === 1) { // Middle mouse button
+                var link = e.target.closest('a');
+                if (link && link.href) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.postMessage({
+                        action: 'openInNewTab',
+                        url: link.href
+                    }, '*');
+                    return false;
+                }
+            }
+        }, true);
+        
+        iframeDoc.addEventListener('submit', function(e) {
+            var form = e.target;
+            if (form && (form.target === '_top' || form.target === '_parent' || form.target === '_blank')) {
+                e.preventDefault();
+                window.postMessage({
+                    action: 'openInNewTab',
+                    url: form.action || iframeWin.location.href
+                }, '*');
+            }
+        }, true);
+        
+        var observer = new MutationObserver(function(mutations) {
+            var allFrames = iframeDoc.querySelectorAll('iframe');
+            allFrames.forEach(function(childFrame) {
+                try { 
+                    setupFrameInterception({ frame: childFrame }); 
+                } catch(e) {}
+            });
+        });
+        
+        observer.observe(iframeDoc.body || iframeDoc.documentElement, {
+            childList: true,
+            subtree: true
+        });
         
     } catch (e) {}
 }
