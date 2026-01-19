@@ -211,30 +211,6 @@ function getMemoryUsage() {
   };
 }
 
-function checkMemoryPressure() {
-  const now = Date.now();
-  if (now - memoryPressure.lastCheck < 5000) return memoryPressure.active;
-  memoryPressure.lastCheck = now;
-
-  const mem = getMemoryUsage();
-  const isHigh = mem.heapUsed > MEMORY_CRITICAL || mem.rss > MEMORY_THRESHOLD;
-
-  if (isHigh) {
-    memoryPressure.consecutiveHigh++;
-    if (memoryPressure.consecutiveHigh >= 3) {
-      memoryPressure.active = true;
-      if (global.gc && mem.heapUsed > MEMORY_CRITICAL * 1.1) {
-        global.gc();
-      }
-    }
-  } else {
-    memoryPressure.consecutiveHigh = 0;
-    memoryPressure.active = false;
-  }
-
-  return memoryPressure.active;
-}
-
 function createFingerprint(req) {
   const ip = toIPv4(null, req);
   const ua = req.headers['user-agent'] || '';
