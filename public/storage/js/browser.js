@@ -64,6 +64,54 @@ function getFaviconUrl(e) {
     return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(e)}`;
   }
 }
+function setupFrameInterception(frame) {
+    if (!frame || !frame.frame) return;
+    
+    const iframe = frame.frame;
+    
+    try {
+        const iframeWin = iframe.contentWindow;
+        const iframeDoc = iframe.contentDocument;
+        
+        if (!iframeDoc || !iframeWin) return;
+        
+        if (iframeWin.__interceptionSetup) return;
+        iframeWin.__interceptionSetup = true;
+        
+        const originalWindowOpen = iframeWin.open;
+        iframeWin.open = function(url, target, features) {
+            if (url) {
+                try {
+                    var fullUrl = new URL(url, iframeWin.location.href).href;
+                    window.postMessage({
+                        action: 'openInNewTab',
+                        url: fullUrl
+                    }, '*');
+                    return null;
+                } catch(e) {}
+            }
+            return originalWindowOpen.call(iframeWin, url, target, features);
+        };
+        
+        iframeDoc.addEventListener('click', function(e) {
+            var link = e.target.closest('a');
+            if (link && link.href) {
+                var target = link.target;
+                if (target === '_blank' || target === '_top' || target === '_parent') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    window.postMessage({
+                        action: 'openInNewTab',
+                        url: link.href
+                    }, '*');
+                    return false;
+                }
+            }
+        }, true);
+        
+    } catch (e) {}
+}
 function createTab(e = store.homepage) {
   const t = scramjet.createFrame(),
     n = { id: nextTabId++, title: 'New Tab', url: e, frame: t, favicon: getFaviconUrl(e), zoomLevel: store.zoomLevel, muted: !1, pinned: !1 };
@@ -74,6 +122,8 @@ function createTab(e = store.homepage) {
         const e = t.frame.contentDocument;
         e && (e.title.includes('Just a moment') || e.title.includes('Checking your browser')) && (t.frame.src = '/static/google-embed.html#' + n.url);
       } catch (e) {}
+
+      setupFrameInterception(t);
     }),
     (t.frame.style.transform = `scale(${n.zoomLevel})`),
     (t.frame.style.transformOrigin = '0 0'),
@@ -93,6 +143,8 @@ function createTab(e = store.homepage) {
           localStorage.setItem('browserHistory', JSON.stringify(store.history))),
           updateTabsUI(),
           updateAddressBar());
+
+          setTimeout(() => setupFrameInterception(t), 500);
       }
     }),
     tabs.push(n),
@@ -415,6 +467,26 @@ function showSecurePopup() {
   };
   document.addEventListener('click', s);
 }
+window.open = (function(originalOpen) {
+    return function(url, target, features) {
+        if (url && typeof url === 'string' && url.includes("?webfix")) {
+            return originalOpen.call(window, url, target, features);
+        }
+
+        if (url && (target === '_blank' || target === '_top' || target === '_parent' || !target)) {
+            const realUrl = url; // You can add getDecodedUrl here if needed
+
+            const newTab = createTab(realUrl);
+            const iframeContainer = document.getElementById("iframe-container");
+            if (iframeContainer) {
+                iframeContainer.appendChild(newTab.frame.frame);
+            }
+            switchTab(newTab.id);
+            return null;
+        }
+        return originalOpen.call(window, url, target, features);
+    };
+})(window.open);
 class Search {
   constructor(e, t) {
     ((this.scramjet = e),
