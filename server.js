@@ -66,6 +66,8 @@ const MAX_FINGERPRINTS = 10000;
 const MAX_IP_REPUTATION = 5000;   
 const MAX_CIRCUIT_BREAKERS = 1000; 
 const MAX_ACTIVE_REQUESTS = 5000; 
+const MAX_BOT_CACHE = 1000;
+const MAX_WS_CONNECTIONS = 5000;
 
 const memoryPressure = { active: false, lastCheck: 0, consecutiveHigh: 0 };
 const requestFingerprints = new Map();
