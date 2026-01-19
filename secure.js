@@ -29,6 +29,7 @@ const MEMORY_THRESHOLD = 1024 * 1024 * 1024 * 2;
 const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
 const PATTERN_DETECTION_WINDOW = 30000;
 const ATTACK_PATTERN_THRESHOLD = 50;
+const RESTART_HOUR_ET = 0;
 
 class DDoSShield {
   constructor(client) {
@@ -42,6 +43,8 @@ class DDoSShield {
     this.attackEndTimer = null;
     this.startupGracePeriod = true;
     this.killSwitchActive = false;
+    this.forceAttackMode = false;
+    this.scheduleDailyRestart();
     setTimeout(() => {
       this.startupGracePeriod = false;
     }, 600000);
@@ -252,6 +255,14 @@ class DDoSShield {
 
     const now = Date.now();
     if (now - this.lastAlertTime < ALERT_COOLDOWN) return;
+
+    if (this.forceAttackMode) {
+      if (!this.isUnderAttack) {
+        this.lastAlertTime = now;
+        this.startAttackAlert(systemState);
+      }
+      return;
+    }
 
     if (!systemState || systemState.state === 'BUSY' || systemState.state === 'NORMAL') return;
     const blockRate = this.getRecentBlockRate();
@@ -618,6 +629,38 @@ class DDoSShield {
     }
   }
 
+  scheduleDailyRestart() {
+  const checkRestart = () => {
+    const etOffset = -5;
+    const now = new Date();
+    const etHour = (now.getUTCHours() + etOffset + 24) % 24;
+    
+    if (etHour === RESTART_HOUR_ET && now.getMinutes() === 0) {
+      this.performGracefulRestart();
+    }
+  };
+  
+  setInterval(checkRestart, 60000);
+}
+
+async performGracefulRestart() {
+  const embed = new EmbedBuilder()
+    .setTitle('🔄 Graceful Restart Initiated')
+    .setDescription('Server is performing scheduled restart.\nAll connections will be gracefully terminated.')
+    .setColor('#ffaa00')
+    .setTimestamp();
+
+  await this.sendLog(null, embed);
+
+  if (this.client.ws) {
+    this.client.ws.destroy();
+  }
+
+  setTimeout(() => {
+    process.exit(0);
+  }, 5000);
+}
+
   registerCommands(client) {
     client.once('ready', () => {
       const commands = [
@@ -627,7 +670,10 @@ class DDoSShield {
         { name: 'memory-status', description: 'View current memory usage and statistics' },
         { name: 'kill-switch', description: 'Emergency shutdown of the server' },
         { name: 'startup', description: 'Deactivate kill switch and allow server to run' },
-        { name: 'force-cleanup', description: 'Force aggressive memory cleanup now' }
+        { name: 'force-cleanup', description: 'Force aggressive memory cleanup now' },
+        { name: 'graceful-restart', description: 'Gracefully restart the server' },
+        { name: 'attack-mode', description: 'Force attack mode activation' },
+        { name: 'attack-mode-off', description: 'Disable forced attack mode' }
       ];
 
       client.application.commands.set(commands);
@@ -689,6 +735,11 @@ class DDoSShield {
         } else if (systemState.state === 'BUSY') {
           statusText = '🟡 Busy (High Legitimate Load)';
           statusColor = '#ffaa00';
+        }
+
+        if (this.forceAttackMode) {
+          statusText = '⚔️ Force Attack Mode';
+          statusColor = '#ff0000';
         }
 
         const embed = new EmbedBuilder()
@@ -813,6 +864,48 @@ class DDoSShield {
 
         await interaction.reply({ embeds: [embed] });
         await this.sendLog(null, embed);
+      }
+      
+      if (interaction.commandName === 'graceful-restart') {
+        await interaction.reply({ content: '🔄 Initiating graceful restart...', ephemeral: false });
+        await this.performGracefulRestart();
+      }
+
+      if (interaction.commandName === 'attack-mode') {
+        this.forceAttackMode = true;
+  
+        const embed = new EmbedBuilder()
+          .setTitle('⚔️ Attack Mode Activated')
+          .setDescription('Server is now in forced attack mode.\nAll traffic will be treated as hostile.\nUse /attack-mode-off to restore normal operations.')
+          .setColor('#ff0000')
+          .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+        await this.sendLog(null, embed);
+      }
+
+      if (interaction.commandName === 'attack-mode-off') {
+        if (!this.forceAttackMode) {
+          return interaction.reply({ 
+            content: '✅ Attack mode is not active.', 
+            ephemeral: true 
+          });
+        }
+
+        this.forceAttackMode = false;
+  
+        const embed = new EmbedBuilder()
+          .setTitle('✅ Attack Mode Deactivated')
+          .setDescription('Server has returned to normal threat assessment mode.')
+          .setColor('#00ff00')
+          .setTimestamp();
+
+        await interaction.reply({ embeds: [embed] });
+        await this.sendLog(null, embed);
+        
+        if (this.isUnderAttack) {
+          await this.endAttackAlert();
+        }
       }
     });
   }
