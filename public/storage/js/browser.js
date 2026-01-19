@@ -1,3 +1,4 @@
+
 const { ScramjetController: ScramjetController } = $scramjetLoadController(),
   scramjet = new ScramjetController({
     prefix: '/scramjet/',
@@ -73,7 +74,6 @@ function getFaviconUrl(e) {
     return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(e)}`;
   }
 }
-// Replace your setupFrameInterception function with this:
 function setupFrameInterception(frame) {
     if (!frame || !frame.frame) return;
     
@@ -83,10 +83,7 @@ function setupFrameInterception(frame) {
         const iframeWin = iframe.contentWindow;
         const iframeDoc = iframe.contentDocument;
         
-        if (!iframeDoc || !iframeWin) {
-            console.log('Cross-origin frame - interception limited');
-            return;
-        }
+        if (!iframeDoc || !iframeWin) return;
         
         iframeDoc.addEventListener('mousedown', function() {
             const menu = document.getElementById("menu-dropdown");
@@ -110,18 +107,12 @@ function setupFrameInterception(frame) {
             if (url) {
                 try {
                     var fullUrl = new URL(url, iframeWin.location.href).href;
-                    
-                    // Directly create tab instead of postMessage
-                    const newTab = createTab(fullUrl);
-                    const iframeContainer = document.getElementById("iframe-container");
-                    if (iframeContainer) {
-                        iframeContainer.appendChild(newTab.frame.frame);
-                    }
-                    switchTab(newTab.id);
+                    window.postMessage({
+                        action: 'openInNewTab',
+                        url: fullUrl
+                    }, '*');
                     return null;
-                } catch(e) {
-                    console.error('window.open error:', e);
-                }
+                } catch(e) {}
             }
             return originalWindowOpen.call(iframeWin, url, target, features);
         };
@@ -134,33 +125,25 @@ function setupFrameInterception(frame) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-                    
-                    // Directly create tab instead of postMessage
-                    const newTab = createTab(link.href);
-                    const iframeContainer = document.getElementById("iframe-container");
-                    if (iframeContainer) {
-                        iframeContainer.appendChild(newTab.frame.frame);
-                    }
-                    switchTab(newTab.id);
+                    window.postMessage({
+                        action: 'openInNewTab',
+                        url: link.href
+                    }, '*');
                     return false;
                 }
             }
         }, true);
         
         iframeDoc.addEventListener('auxclick', function(e) {
-            if (e.button === 1) {
+            if (e.button === 1) { // Middle mouse button
                 var link = e.target.closest('a');
                 if (link && link.href) {
                     e.preventDefault();
                     e.stopPropagation();
-                    
-                    // Directly create tab instead of postMessage
-                    const newTab = createTab(link.href);
-                    const iframeContainer = document.getElementById("iframe-container");
-                    if (iframeContainer) {
-                        iframeContainer.appendChild(newTab.frame.frame);
-                    }
-                    switchTab(newTab.id);
+                    window.postMessage({
+                        action: 'openInNewTab',
+                        url: link.href
+                    }, '*');
                     return false;
                 }
             }
@@ -170,14 +153,10 @@ function setupFrameInterception(frame) {
             var form = e.target;
             if (form && (form.target === '_top' || form.target === '_parent' || form.target === '_blank')) {
                 e.preventDefault();
-                
-                // Directly create tab instead of postMessage
-                const newTab = createTab(form.action || iframeWin.location.href);
-                const iframeContainer = document.getElementById("iframe-container");
-                if (iframeContainer) {
-                    iframeContainer.appendChild(newTab.frame.frame);
-                }
-                switchTab(newTab.id);
+                window.postMessage({
+                    action: 'openInNewTab',
+                    url: form.action || iframeWin.location.href
+                }, '*');
             }
         }, true);
         
@@ -195,64 +174,8 @@ function setupFrameInterception(frame) {
             subtree: true
         });
         
-    } catch (e) {
-        console.log('Frame interception blocked (CORS):', e.message);
-    }
+    } catch (e) {}
 }
-
-// Keep your existing window.open override exactly as is
-
-// Replace your window message listener with this simpler version:
-window.addEventListener('message', (event) => {
-    const data = event.data;
-    if (!data) return;
-    
-    let url = data.url;
-    let shouldOpenNewTab = false;
-    
-    if (data.action === 'openInNewTab' || 
-        data.action === 'openInTop' || 
-        data.action === 'openInParent' ||
-        data.action === 'newTab' ||
-        data.type === 'OPEN_IN_TOP' || 
-        data.type === 'openNewTab' ||
-        data.type === 'newTab' ||
-        data.type === 'open') {
-        shouldOpenNewTab = true;
-    }
-    
-    if (shouldOpenNewTab && url) {
-        let proxyUrl = url;
-        if (!url.startsWith('/scramjet/') && url.startsWith('http')) {
-            proxyUrl = scramjet.encodeUrl(url);
-        }
-        const newTab = createTab(proxyUrl);
-        const iframeContainer = document.getElementById("iframe-container");
-        if (iframeContainer) {
-            iframeContainer.appendChild(newTab.frame.frame);
-        }
-        switchTab(newTab.id);
-    }
-    
-    if (data.action === 'navigate' && url) {
-        const activeTab = getActiveTab();
-        if (activeTab) {
-            if (url.startsWith('/scramjet/')) {
-                activeTab.frame.frame.src = url;
-                activeTab.url = url;
-                updateTabsUI();
-                updateAddressBar();
-            } else if (url.startsWith('http')) {
-                activeTab.frame.go(url);
-            } else {
-                activeTab.frame.frame.src = url;
-                activeTab.url = url;
-                updateTabsUI();
-                updateAddressBar();
-            }
-        }
-    }
-});
 function createTab(e = store.homepage) {
   const t = scramjet.createFrame(),
     n = { id: nextTabId++, title: 'New Tab', url: e, frame: t, favicon: getFaviconUrl(e), zoomLevel: store.zoomLevel, muted: !1, pinned: !1 };
