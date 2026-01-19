@@ -43,15 +43,24 @@ async function waitForTransport() {
       }
     }
 }
-(waitForTransport(),
-  window.addEventListener('storage', (e) => {
-    if ('selectedVpnRegion' === e.key && e.newValue) {
-      const t = regionConfig[e.newValue];
-      t &&
-        ((store.wispurl = ('https:' === location.protocol ? 'wss' : 'ws') + '://' + location.host + t.wisp),
-        connection.setTransport('/epoxy/index.mjs', [{ wisp: store.wispurl }]));
-    }
-  }));
+waitForTransport();
+
+let debounceTimer;
+function debounce(func, timeout = 300) {
+  return (...args) => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => { func.apply(this, args); }, timeout);
+  };
+}
+
+window.addEventListener('storage', (e) => {
+  if ('selectedVpnRegion' === e.key && e.newValue) {
+    const t = regionConfig[e.newValue];
+    t &&
+      ((store.wispurl = ('https:' === location.protocol ? 'wss' : 'ws') + '://' + location.host + t.wisp),
+      connection.setTransport('/epoxy/index.mjs', [{ wisp: store.wispurl }]));
+  }
+});
 let tabs = [],
   activeTabId = 1,
   nextTabId = 2,
