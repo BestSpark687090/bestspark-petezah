@@ -613,4 +613,54 @@ window.addEventListener('load', async () => {
       )});\n        color: transparent;\n        padding-left: 200px;\n        padding-bottom: 100px;\n        background-size: contain;\n        background-position: center center;\n        background-repeat: no-repeat;\n      `
     );
   } catch (e) {}
+  window.addEventListener('message', (event) => {
+    const data = event.data;
+    if (!data) return;
+    
+    let url = data.url;
+    let shouldOpenNewTab = false;
+    
+    if (data.action === 'openInNewTab' || 
+        data.action === 'openInTop' || 
+        data.action === 'openInParent' ||
+        data.action === 'newTab' ||
+        data.type === 'OPEN_IN_TOP' || 
+        data.type === 'openNewTab' ||
+        data.type === 'newTab' ||
+        data.type === 'open') {
+        shouldOpenNewTab = true;
+    }
+    
+    if (shouldOpenNewTab && url) {
+        let proxyUrl = url;
+        if (!url.startsWith('/scramjet/') && url.startsWith('http')) {
+            proxyUrl = scramjet.encodeUrl(url);
+        }
+        const newTab = createTab(proxyUrl);
+        const iframeContainer = document.getElementById("iframe-container");
+        if (iframeContainer) {
+            iframeContainer.appendChild(newTab.frame.frame);
+        }
+        switchTab(newTab.id);
+    }
+    
+    if (data.action === 'navigate' && url) {
+        const activeTab = getActiveTab();
+        if (activeTab) {
+            if (url.startsWith('/scramjet/')) {
+                activeTab.frame.frame.src = url;
+                activeTab.url = url;
+                updateTabsUI();
+                updateAddressBar();
+            } else if (url.startsWith('http')) {
+                activeTab.frame.go(url);
+            } else {
+                activeTab.frame.frame.src = url;
+                activeTab.url = url;
+                updateTabsUI();
+                updateAddressBar();
+            }
+        }
+    }
+});
 });
