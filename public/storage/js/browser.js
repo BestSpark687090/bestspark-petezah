@@ -82,7 +82,10 @@ function setupFrameInterception(frame) {
         const iframeWin = iframe.contentWindow;
         const iframeDoc = iframe.contentDocument;
         
-        if (!iframeDoc || !iframeWin) return;
+        if (!iframeDoc || !iframeWin) {
+            console.log('Cross-origin frame - interception limited');
+            return;
+        }
         
         iframeDoc.addEventListener('mousedown', function() {
             const menu = document.getElementById("menu-dropdown");
@@ -134,7 +137,7 @@ function setupFrameInterception(frame) {
         }, true);
         
         iframeDoc.addEventListener('auxclick', function(e) {
-            if (e.button === 1) { // Middle mouse button
+            if (e.button === 1) {
                 var link = e.target.closest('a');
                 if (link && link.href) {
                     e.preventDefault();
@@ -173,7 +176,9 @@ function setupFrameInterception(frame) {
             subtree: true
         });
         
-    } catch (e) {}
+    } catch (e) {
+        console.log('Frame interception blocked (CORS):', e.message);
+    }
 }
 function createTab(e = store.homepage) {
   const t = scramjet.createFrame(),
