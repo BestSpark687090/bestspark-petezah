@@ -62,6 +62,10 @@ const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
 const REQUEST_TIMEOUT = 60000;
 const PAYLOAD_TIMEOUT = 30000;
 const CPU_THRESHOLD = 75;
+const MAX_FINGERPRINTS = 10000;  
+const MAX_IP_REPUTATION = 5000;   
+const MAX_CIRCUIT_BREAKERS = 1000; 
+const MAX_ACTIVE_REQUESTS = 5000; 
 
 const memoryPressure = { active: false, lastCheck: 0, consecutiveHigh: 0 };
 const requestFingerprints = new Map();
@@ -1203,6 +1207,115 @@ function cleanupWS(ip, req = null) {
   systemState.activeConnections--;
   systemState.totalWS--;
   shield.trackWS(actualIP, -1);
+}
+
+function cleanupOldEntries() {
+  const now = Date.now();
+
+  if (requestFingerprints.size > MAX_FINGERPRINTS) {
+    const entries = Array.from(requestFingerprints.entries());
+    entries.sort((a, b) => a[1].lastSeen - b[1].lastSeen);
+    const toRemove = entries.slice(0, Math.floor(MAX_FINGERPRINTS * 0.3));
+    toRemove.forEach(([key]) => requestFingerprints.delete(key));
+  }
+
+  if (ipReputation.size > MAX_IP_REPUTATION) {
+    const entries = Array.from(ipReputation.entries());
+    entries.sort((a, b) => a[1].lastSeen - b[1].lastSeen);
+    const toRemove = entries.slice(0, Math.floor(MAX_IP_REPUTATION * 0.3));
+    toRemove.forEach(([key]) => ipReputation.delete(key));
+  }
+
+  if (circuitBreakers.size > MAX_CIRCUIT_BREAKERS) {
+    const entries = Array.from(circuitBreakers.entries());
+    entries.sort((a, b) => (b[1].until || 0) - (a[1].until || 0));
+    const toRemove = entries.slice(MAX_CIRCUIT_BREAKERS);
+    toRemove.forEach(([key]) => circuitBreakers.delete(key));
+  }
+
+  if (activeRequests.size > MAX_ACTIVE_REQUESTS) {
+    const entries = Array.from(activeRequests.entries());
+    entries.sort((a, b) => a[1].startTime - b[1].startTime);
+    const toRemove = entries.slice(0, Math.floor(MAX_ACTIVE_REQUESTS * 0.5));
+    toRemove.forEach(([key]) => activeRequests.delete(key));
+  }
+
+  for (const [key, value] of requestFingerprints.entries()) {
+    if (now - value.lastSeen > 300000) { // 5 minutes
+      requestFingerprints.delete(key);
+    }
+  }
+
+  for (const [ip, rep] of ipReputation.entries()) {
+    if (now - rep.lastSeen > 3600000) { // 1 hour
+      ipReputation.delete(ip);
+    }
+  }
+
+  for (const [ip, breaker] of circuitBreakers.entries()) {
+    if (breaker.open && now > breaker.until) {
+      circuitBreakers.delete(ip);
+    }
+  }
+
+  for (const [reqId, req] of activeRequests.entries()) {
+    if (now - req.startTime > REQUEST_TIMEOUT * 2) {
+      activeRequests.delete(reqId);
+    }
+  }
+}
+
+setInterval(cleanupOldEntries, 30000); 
+
+function emergencyCleanup() {
+  console.log('[EMERGENCY] Aggressive memory cleanup triggered');
+  
+  const clearHalf = (map) => {
+    const entries = Array.from(map.entries());
+    const toRemove = entries.slice(0, Math.floor(entries.length * 0.5));
+    toRemove.forEach(([key]) => map.delete(key));
+  };
+
+  clearHalf(requestFingerprints);
+  clearHalf(ipReputation);
+  clearHalf(circuitBreakers);
+  clearHalf(wsConnections);
+  
+  systemState.lastPowSolve.clear();
+  systemState.trustedClients.clear();
+  
+  if (global.gc) {
+    global.gc();
+    console.log('[EMERGENCY] Forced garbage collection');
+  }
+}
+
+function checkMemoryPressure() {
+  const now = Date.now();
+  if (now - memoryPressure.lastCheck < 5000) return memoryPressure.active;
+  memoryPressure.lastCheck = now;
+
+  const mem = getMemoryUsage();
+  const isHigh = mem.heapUsed > MEMORY_CRITICAL || mem.rss > MEMORY_THRESHOLD;
+  
+  if (mem.heapUsed > MEMORY_CRITICAL * 1.3) {
+    emergencyCleanup();
+  }
+
+  if (isHigh) {
+    memoryPressure.consecutiveHigh++;
+    if (memoryPressure.consecutiveHigh >= 3) {
+      memoryPressure.active = true;
+      if (global.gc && mem.heapUsed > MEMORY_CRITICAL * 1.1) {
+        global.gc();
+      }
+    }
+  } else {
+    memoryPressure.consecutiveHigh = 0;
+    memoryPressure.active = false;
+  }
+
+  return memoryPressure.active;
 }
 
 app.get('/ip', (req, res) => res.sendFile(path.join(__dirname, 'public/pages/other/roblox/ip.html')));
