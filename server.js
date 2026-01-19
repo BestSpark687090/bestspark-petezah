@@ -1242,6 +1242,20 @@ function cleanupOldEntries() {
     toRemove.forEach(([key]) => activeRequests.delete(key));
   }
 
+  if (botVerificationCache.size > MAX_BOT_CACHE) {
+    const entries = Array.from(botVerificationCache.entries());
+    entries.sort((a, b) => a[1].timestamp - b[1].timestamp);
+    const toRemove = entries.slice(0, Math.floor(MAX_BOT_CACHE * 0.3));
+    toRemove.forEach(([key]) => botVerificationCache.delete(key));
+  }
+
+  if (wsConnections.size > MAX_WS_CONNECTIONS) {
+    const entries = Array.from(wsConnections.entries());
+    entries.sort((a, b) => a[1] - b[1]);
+    const toRemove = entries.slice(0, Math.floor(MAX_WS_CONNECTIONS * 0.3));
+    toRemove.forEach(([key]) => wsConnections.delete(key));
+  }
+
   for (const [key, value] of requestFingerprints.entries()) {
     if (now - value.lastSeen > 300000) { // 5 minutes
       requestFingerprints.delete(key);
@@ -1265,6 +1279,8 @@ function cleanupOldEntries() {
       activeRequests.delete(reqId);
     }
   }
+
+  
 }
 
 setInterval(cleanupOldEntries, 30000); 
