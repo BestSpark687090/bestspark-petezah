@@ -79,22 +79,16 @@ let requestIdCounter = 0;
 async function minifyFiles() {
   if (minificationInProgress) return;
   minificationInProgress = true;
-
   console.log('Starting file minification...');
-
   const cssMinifier = new CleanCSS({ level: 2 });
   let minified = 0;
-
   async function minifyFile(filePath, type) {
     try {
       const content = fs.readFileSync(filePath, 'utf8');
       const stat = fs.statSync(filePath);
       const cacheKey = `${filePath}:${stat.mtimeMs}`;
-
       if (minificationCache.has(cacheKey)) return;
-
       originalFiles.set(filePath, content);
-
       let result;
       if (type === 'js') {
         const minResult = await minifyJS(content, { compress: true, mangle: true });
@@ -109,7 +103,6 @@ async function minifyFiles() {
           minifyJS: true
         });
       }
-
       if (result && result !== content) {
         wasMinified.set(filePath, false);
         fs.writeFileSync(filePath, result, 'utf8');
@@ -122,13 +115,11 @@ async function minifyFiles() {
       console.error(`Minification error for ${filePath}:`, err.message);
     }
   }
-
   function walkDir(dir, type) {
     if (!fs.existsSync(dir)) {
       console.log(`Directory not found: ${dir}`);
       return;
     }
-
     const files = fs.readdirSync(dir);
     for (const file of files) {
       const filePath = path.join(dir, file);
@@ -146,45 +137,41 @@ async function minifyFiles() {
       }
     }
   }
-
   const storageJsPath = path.join(__dirname, 'public', 'storage', 'js');
   if (fs.existsSync(storageJsPath)) {
     walkDir(storageJsPath, 'js');
   } else {
     console.log('public/storage/js directory not found, skipping...');
   }
-
   const storageCssPath = path.join(__dirname, 'public', 'storage', 'css');
   if (fs.existsSync(storageCssPath)) {
     walkDir(storageCssPath, 'css');
   } else {
     console.log('public/storage/css directory not found, skipping...');
   }
-
-  const indexPath = path.join(__dirname, 'public', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    await minifyFile(indexPath, 'html');
+  // Minify specific HTML files in public directory
+  const htmlFiles = ['index.html', 'search.html', 'iframe.html', 'newpage.html'];
+  for (const htmlFile of htmlFiles) {
+    const htmlPath = path.join(__dirname, 'public', htmlFile);
+    if (fs.existsSync(htmlPath)) {
+      await minifyFile(htmlPath, 'html');
+    }
   }
-
   const pagesPath = path.join(__dirname, 'public', 'pages');
   if (fs.existsSync(pagesPath)) {
     walkDir(pagesPath, 'html');
   } else {
     console.log('public/pages directory not found, skipping...');
   }
-
   console.log(`Minified ${minified} files`);
   minificationInProgress = false;
 }
-
 function restoreOriginalFiles() {
   console.log('Restoring original files...');
   let restored = 0;
-
   for (const [filePath, content] of originalFiles.entries()) {
     try {
       const shouldRestore = wasMinified.get(filePath) === false;
-
       if (shouldRestore) {
         fs.writeFileSync(filePath, content, 'utf8');
         restored++;
@@ -193,7 +180,6 @@ function restoreOriginalFiles() {
       console.error(`Failed to restore ${filePath}:`, err.message);
     }
   }
-
   console.log(`Restored ${restored} files to original state`);
   originalFiles.clear();
   wasMinified.clear();
