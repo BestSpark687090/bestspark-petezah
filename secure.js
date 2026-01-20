@@ -49,12 +49,12 @@ class DDoSShield {
       this.startupGracePeriod = false;
     }, 600000);
 
-    this.MAX_IP_TRACKING = 500;
+    this.MAX_IP_TRACKING = 50;
     this.MAX_BLOCKS_PER_IP = 20;
-    this.MAX_RECENT_BLOCKS = 500;
+    this.MAX_RECENT_BLOCKS = 50;
     this.MAX_ATTACK_PATTERNS = 50;
-    this.MAX_CHALLENGE_HITS = 200;
-    this.MAX_WS_HISTORY = 10;
+    this.MAX_CHALLENGE_HITS = 20;
+    this.MAX_WS_HISTORY = 5;
 
     this.ipBlocks = new Map();
     this.blockTypes = new Map();
