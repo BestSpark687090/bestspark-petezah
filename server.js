@@ -732,18 +732,6 @@ app.post('/api/bot-verify', express.json(), (req, res) => {
 const gateMiddleware = async (req, res, next) => {
   systemState.totalRequests++;
 
-  if (shield.criticalMode) {
-    const token = extractToken(req);
-    const tokenData = verifyToken(token, req);
-    const isTrusted = tokenData?.features?.http || req.session?.user;
-    
-    if (!isTrusted) {
-      const ip = toIPv4(null, req);
-      shield.incrementBlocked(ip, 'critical_mode');
-      return res.status(503).send('Service in critical mode');
-    }
-  }
-
   const ua = req.headers['user-agent'] || '';
   const ip = toIPv4(null, req);
   const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
@@ -1583,37 +1571,6 @@ app.get('/api/admin/stats', (req, res) => {
     res.status(200).json({ userCount, feedbackCount, changelogCount });
   } catch (error) {
     console.error('Admin stats error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/api/status', (req, res) => {
-  try {
-    const status = shield.getSystemStatus();
-    const blockRate = shield.getRecentBlockRate();
-    const cpuUsage = shield.getCpuUsage();
-    const mem = process.memoryUsage();
-    const { totalHits, uniqueIps } = shield.getChallengeSpike();
-
-    res.status(200).json({
-      status,
-      metrics: {
-        blockRate,
-        cpuUsage: parseFloat(cpuUsage.toFixed(2)),
-        memoryUsed: parseFloat((mem.heapUsed / 1024 / 1024 / 1024).toFixed(2)),
-        challengeHits: totalHits,
-        uniqueIps,
-        totalBlocks: shield.mitigatedCount,
-        isUnderAttack: shield.isUnderAttack,
-        isCritical: shield.criticalMode,
-        isKillSwitch: shield.killSwitchActive,
-        powDifficulty: systemState.currentPowDifficulty,
-        activeConnections: systemState.activeConnections
-      },
-      timestamp: Date.now()
-    });
-  } catch (error) {
-    console.error('Status error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
