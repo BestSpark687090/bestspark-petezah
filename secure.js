@@ -747,16 +747,19 @@ async performGracefulRestart() {
         const heapUsed = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
         const rss = (mem.rss / 1024 / 1024 / 1024).toFixed(2);
         const xdpBlockCount = 0;
-
+      
         const systemState = interaction.client.systemState || {};
         const powDifficulty = systemState.currentPowDifficulty || 16;
         const requestRate = systemState.requestRatePerMinute || 0;
-
+      
         let statusText = '🟩 Normal';
         let statusColor = '#00ff00';
 
         if (this.killSwitchActive) {
           statusText = '🔴 KILL SWITCH ACTIVE';
+          statusColor = '#ff0000';
+        } else if (this.criticalMode) {
+          statusText = '🚨 CRITICAL MODE';
           statusColor = '#ff0000';
         } else if (this.isUnderAttack) {
           statusText = '🟥 Under Attack';
@@ -765,7 +768,7 @@ async performGracefulRestart() {
           statusText = '🟡 Busy (High Legitimate Load)';
           statusColor = '#ffaa00';
         }
-
+      
         if (this.forceAttackMode) {
           statusText = '⚔️ Force Attack Mode';
           statusColor = '#ff0000';
@@ -791,7 +794,7 @@ async performGracefulRestart() {
           )
           .setColor(statusColor)
           .setTimestamp();
-
+      
         await interaction.reply({ embeds: [embed], ephemeral: true });
       }
 
