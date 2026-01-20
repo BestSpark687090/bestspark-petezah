@@ -44,7 +44,6 @@ class DDoSShield {
     this.startupGracePeriod = true;
     this.killSwitchActive = false;
     this.forceAttackMode = false;
-    this.criticalMode = false;
     this.scheduleDailyRestart();
     setTimeout(() => {
       this.startupGracePeriod = false;
@@ -644,32 +643,6 @@ class DDoSShield {
   setInterval(checkRestart, 60000);
 }
 
-setCriticalMode(active) {
-  this.criticalMode = active;
-  if (active) {
-    const embed = new EmbedBuilder()
-      .setTitle('🚨 CRITICAL MODE ACTIVATED')
-      .setDescription('Server is now in critical emergency mode.\nAll non-essential traffic will be rejected.')
-      .setColor('#ff0000')
-      .setTimestamp();
-    this.sendLog(null, embed);
-  } else {
-    const embed = new EmbedBuilder()
-      .setTitle('✅ Critical Mode Deactivated')
-      .setDescription('Server has returned to normal operations.')
-      .setColor('#00ff00')
-      .setTimestamp();
-    this.sendLog(null, embed);
-  }
-}
-
-getSystemStatus() {
-  if (this.criticalMode) return 'CRITICAL';
-  if (this.isUnderAttack) return 'ATTACK';
-  if (this.killSwitchActive) return 'SHUTDOWN';
-  return 'NORMAL';
-}
-
 async performGracefulRestart() {
   const embed = new EmbedBuilder()
     .setTitle('🔄 Graceful Restart Initiated')
@@ -700,9 +673,7 @@ async performGracefulRestart() {
         { name: 'force-cleanup', description: 'Force aggressive memory cleanup now' },
         { name: 'graceful-restart', description: 'Gracefully restart the server' },
         { name: 'attack-mode', description: 'Force attack mode activation' },
-        { name: 'attack-mode-off', description: 'Disable forced attack mode' },
-        { name: 'critical-mode', description: 'Activate critical emergency mode' },
-        { name: 'critical-mode-stop', description: 'Deactivate critical emergency mode' }
+        { name: 'attack-mode-off', description: 'Disable forced attack mode' }
       ];
 
       client.application.commands.set(commands);
@@ -747,19 +718,16 @@ async performGracefulRestart() {
         const heapUsed = (mem.heapUsed / 1024 / 1024 / 1024).toFixed(2);
         const rss = (mem.rss / 1024 / 1024 / 1024).toFixed(2);
         const xdpBlockCount = 0;
-      
+
         const systemState = interaction.client.systemState || {};
         const powDifficulty = systemState.currentPowDifficulty || 16;
         const requestRate = systemState.requestRatePerMinute || 0;
-      
+
         let statusText = '🟩 Normal';
         let statusColor = '#00ff00';
 
         if (this.killSwitchActive) {
           statusText = '🔴 KILL SWITCH ACTIVE';
-          statusColor = '#ff0000';
-        } else if (this.criticalMode) {
-          statusText = '🚨 CRITICAL MODE';
           statusColor = '#ff0000';
         } else if (this.isUnderAttack) {
           statusText = '🟥 Under Attack';
@@ -768,7 +736,7 @@ async performGracefulRestart() {
           statusText = '🟡 Busy (High Legitimate Load)';
           statusColor = '#ffaa00';
         }
-      
+
         if (this.forceAttackMode) {
           statusText = '⚔️ Force Attack Mode';
           statusColor = '#ff0000';
@@ -794,7 +762,7 @@ async performGracefulRestart() {
           )
           .setColor(statusColor)
           .setTimestamp();
-      
+
         await interaction.reply({ embeds: [embed], ephemeral: true });
       }
 
@@ -938,32 +906,6 @@ async performGracefulRestart() {
         if (this.isUnderAttack) {
           await this.endAttackAlert();
         }
-      }
-
-      if (interaction.commandName === 'critical-mode') {
-        this.setCriticalMode(true);
-        const embed = new EmbedBuilder()
-          .setTitle('🚨 Critical Mode Activated')
-          .setDescription('Server is now in CRITICAL mode.\nAll non-essential requests will be rejected.')
-          .setColor('#ff0000')
-          .setTimestamp();
-        await interaction.reply({ embeds: [embed] });
-      }
-      
-      if (interaction.commandName === 'critical-mode-stop') {
-        if (!this.criticalMode) {
-          return interaction.reply({ 
-            content: '✅ Critical mode is not active.', 
-            ephemeral: true 
-          });
-        }
-        this.setCriticalMode(false);
-        const embed = new EmbedBuilder()
-          .setTitle('✅ Critical Mode Deactivated')
-          .setDescription('Server has returned to normal operations.')
-          .setColor('#00ff00')
-          .setTimestamp();
-        await interaction.reply({ embeds: [embed] });
       }
     });
   }
