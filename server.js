@@ -1588,14 +1588,7 @@ app.get('/api/admin/stats', (req, res) => {
 });
 
 app.get('/api/status', (req, res) => {
-  if (!req.session.user) return res.status(401).json({ error: 'Unauthorized' });
-  
   try {
-    const user = db.prepare('SELECT is_admin, email FROM users WHERE id = ?').get(req.session.user.id);
-    if (!user || !((user.is_admin === 1 && user.email === process.env.ADMIN_EMAIL) || user.is_admin === 2 || user.is_admin === 3)) {
-      return res.status(403).json({ error: 'Admin access required' });
-    }
-
     const status = shield.getSystemStatus();
     const blockRate = shield.getRecentBlockRate();
     const cpuUsage = shield.getCpuUsage();
