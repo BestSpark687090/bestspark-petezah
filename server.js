@@ -149,7 +149,6 @@ async function minifyFiles() {
   } else {
     console.log('public/storage/css directory not found, skipping...');
   }
-  // Minify specific HTML files in public directory
   const htmlFiles = ['index.html', 'search.html', 'iframe.html', 'newpage.html'];
   for (const htmlFile of htmlFiles) {
     const htmlPath = path.join(__dirname, 'public', htmlFile);
@@ -295,8 +294,9 @@ const app = express();
 app.set("trust proxy", [
   "127.0.0.1",
   "::1",
-  "51.222.141.36"
+  "51.222.141.36" 
 ]);
+// if your self hosting u can change this
 
 
 const discordClient = new Client({
@@ -1705,7 +1705,8 @@ server.on('upgrade', (req, socket, head) => {
     else if (url.startsWith('/api/alt-wisp-2/')) req.url = '/wisp/' + url.slice(16);
     else if (url.startsWith('/api/alt-wisp-3/')) req.url = '/wisp/' + url.slice(16);
     else if (url.startsWith('/api/alt-wisp-4/')) req.url = '/wisp/' + url.slice(16);
-
+    // this is because in my caddyfile I rewrite these to go to my vpn servers
+    // if you are self hosting just ignore this
     try {
       wisp.routeRequest(req, socket, head);
     } catch (error) {
