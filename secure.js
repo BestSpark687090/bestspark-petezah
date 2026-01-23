@@ -25,8 +25,8 @@ const ALERT_COOLDOWN = 600000;
 const ATTACK_END_TIMEOUT = 300000;
 const WINDOW_SIZE = 10000;
 const CPU_THRESHOLD = 75;
-const MEMORY_THRESHOLD = 1024 * 1024 * 1024 * 2;
-const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
+const MEMORY_THRESHOLD = 1024 * 1024 * 1024 * 2.2;
+const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.8;
 const PATTERN_DETECTION_WINDOW = 30000;
 const ATTACK_PATTERN_THRESHOLD = 50;
 const RESTART_HOUR_ET = 0;
@@ -68,6 +68,7 @@ class DDoSShield {
     this.attackVector = null;
     this.mitigationActions = [];
     this.trustedFingerprints = new Set();
+    this.lastRSS = 0;
 
     this.cleanupInterval = setInterval(() => this.cleanupOldEntries(), 30000);
     this.memoryMonitorInterval = setInterval(() => this.monitorMemory(), 15000);
@@ -168,18 +169,21 @@ class DDoSShield {
     ipData.blocks.push(now);
     ipData.types[type] = (ipData.types[type] || 0) + 1;
 
-    if (ipData.blocks.length > this.MAX_BLOCKS_PER_IP) {
-      ipData.blocks = ipData.blocks.slice(-this.MAX_BLOCKS_PER_IP);
+    let writeIdx = 0;
+    for (let i = 0; i < ipData.blocks.length; i++) {
+      if (now - ipData.blocks[i] < 60000) {
+        ipData.blocks[writeIdx++] = ipData.blocks[i];
+      }
     }
+    ipData.blocks.length = Math.min(writeIdx, this.MAX_BLOCKS_PER_IP);
 
-    ipData.blocks = ipData.blocks.filter((t) => now - t < 60000);
     this.ipBlocks.set(ip, ipData);
 
     this.blockTypes.set(type, (this.blockTypes.get(type) || 0) + 1);
 
     this.recentBlocks.push(now);
     if (this.recentBlocks.length > this.MAX_RECENT_BLOCKS) {
-      this.recentBlocks = this.recentBlocks.slice(-this.MAX_RECENT_BLOCKS);
+      this.recentBlocks.length = this.MAX_RECENT_BLOCKS;
     }
 
     this.checkAttackConditions(ip);
@@ -195,25 +199,35 @@ class DDoSShield {
     const hits = this.challengeHits.get(ip) || [];
     hits.push(now);
     
-    const filtered = hits.filter((t) => now - t < 30000);
-    if (filtered.length > this.MAX_WS_HISTORY) {
-      this.challengeHits.set(ip, filtered.slice(-this.MAX_WS_HISTORY));
-    } else {
-      this.challengeHits.set(ip, filtered);
+    let writeIdx = 0;
+    for (let i = 0; i < hits.length; i++) {
+      if (now - hits[i] < 30000) {
+        hits[writeIdx++] = hits[i];
+      }
     }
+    hits.length = Math.min(writeIdx, this.MAX_WS_HISTORY);
+    
+    this.challengeHits.set(ip, hits);
   }
 
   getRecentBlocks(ip, windowMs = WINDOW_SIZE) {
     const ipData = this.ipBlocks.get(ip);
     if (!ipData) return 0;
     const now = Date.now();
-    return ipData.blocks.filter((t) => now - t < windowMs).length;
+    let count = 0;
+    for (let i = 0; i < ipData.blocks.length; i++) {
+      if (now - ipData.blocks[i] < windowMs) count++;
+    }
+    return count;
   }
 
   getRecentBlockRate() {
     const now = Date.now();
-    const blocksInLastMinute = this.recentBlocks.filter((t) => now - t < 60000).length;
-    return blocksInLastMinute;
+    let count = 0;
+    for (let i = 0; i < this.recentBlocks.length; i++) {
+      if (now - this.recentBlocks[i] < 60000) count++;
+    }
+    return count;
   }
 
   getTotalBlocks(ip) {
@@ -239,9 +253,12 @@ class DDoSShield {
     let uniqueIps = 0;
 
     for (const [ip, hits] of this.challengeHits.entries()) {
-      const recent = hits.filter((t) => now - t < 30000);
-      if (recent.length > 0) {
-        totalHits += recent.length;
+      let recentCount = 0;
+      for (let i = 0; i < hits.length; i++) {
+        if (now - hits[i] < 30000) recentCount++;
+      }
+      if (recentCount > 0) {
+        totalHits += recentCount;
         uniqueIps++;
       }
     }
@@ -380,38 +397,49 @@ class DDoSShield {
     const now = Date.now();
 
     for (const [ip, data] of this.ipBlocks.entries()) {
-      data.blocks = data.blocks.filter((t) => now - t < 60000);
+      let writeIdx = 0;
+      for (let i = 0; i < data.blocks.length; i++) {
+        if (now - data.blocks[i] < 60000) {
+          data.blocks[writeIdx++] = data.blocks[i];
+        }
+      }
+      data.blocks.length = writeIdx;
+      
       if (data.blocks.length === 0) {
         this.ipBlocks.delete(ip);
       }
     }
 
     for (const [ip, hits] of this.challengeHits.entries()) {
-      const recent = hits.filter((t) => now - t < 30000);
-      if (recent.length === 0) {
+      let writeIdx = 0;
+      for (let i = 0; i < hits.length; i++) {
+        if (now - hits[i] < 30000) {
+          hits[writeIdx++] = hits[i];
+        }
+      }
+      hits.length = writeIdx;
+      
+      if (hits.length === 0) {
         this.challengeHits.delete(ip);
-      } else {
-        this.challengeHits.set(ip, recent);
       }
     }
 
     for (const [ip, data] of this.ipRequests.entries()) {
       if (now - data.lastSeen > 60000) {
         this.ipRequests.delete(ip);
-      } else {
-        if (data.wsHistory) {
-          data.wsHistory = data.wsHistory.filter((t) => now - t < 60000);
-          if (data.wsHistory.length > this.MAX_WS_HISTORY) {
-            data.wsHistory = data.wsHistory.slice(-this.MAX_WS_HISTORY);
-          }
-        }
       }
     }
 
-    this.recentBlocks = this.recentBlocks.filter((t) => now - t < 60000);
+    let writeIdx = 0;
+    for (let i = 0; i < this.recentBlocks.length; i++) {
+      if (now - this.recentBlocks[i] < 60000) {
+        this.recentBlocks[writeIdx++] = this.recentBlocks[i];
+      }
+    }
+    this.recentBlocks.length = writeIdx;
 
     if (this.wsFlushHistory.length > 100) {
-      this.wsFlushHistory = this.wsFlushHistory.slice(-50);
+      this.wsFlushHistory.length = 50;
     }
 
     if (this.ipBlocks.size > this.MAX_IP_TRACKING) {
@@ -461,10 +489,6 @@ class DDoSShield {
         this.attackPatterns.delete(key);
       }
     });
-
-    if (global.gc && this.memoryStats.heapUsed > MEMORY_CRITICAL) {
-      global.gc();
-    }
   }
 
   trackRequest(ip) {
@@ -503,27 +527,9 @@ class DDoSShield {
     const current = existing?.ws || 0;
     const updated = Math.max(0, current + delta);
 
-    const data = existing || { count: 0, lastSeen: Date.now(), ws: 0, wsHistory: [] };
+    const data = existing || { count: 0, lastSeen: Date.now(), ws: 0 };
     data.ws = updated;
     data.lastSeen = Date.now();
-
-    if (!data.wsHistory) {
-      data.wsHistory = [];
-    }
-
-    if (delta > 0) {
-      data.wsHistory.push(Date.now());
-      data.wsHistory = data.wsHistory.filter((t) => Date.now() - t < 60000);
-
-      if (data.wsHistory.length > this.MAX_WS_HISTORY) {
-        data.wsHistory = data.wsHistory.slice(-this.MAX_WS_HISTORY);
-      }
-
-      if (data.wsHistory.length > 500) {
-        this.incrementBlocked(ip, 'ws_burst');
-        data.wsHistory = [];
-      }
-    }
 
     this.ipRequests.set(ip, data);
 
@@ -543,17 +549,27 @@ class DDoSShield {
     const rss = mem.rss;
     const active = heapUsed > MEMORY_CRITICAL || rss > MEMORY_THRESHOLD;
 
+    const previousActive = this.memoryStats.active;
     this.memoryStats = { heapUsed, rss, active, timestamp: Date.now() };
 
-    if (active && !this.memoryStats.active) {
+    if (active && !previousActive) {
       this.sendLog('🚨 Memory pressure detected!', null);
     }
 
-    if (heapUsed > MEMORY_THRESHOLD * 1.2) {
-      this.sendLog(`💀 CRITICAL: Memory usage at ${(heapUsed / 1024 / 1024 / 1024).toFixed(2)}GB`, null);
-      if (global.gc) {
-        global.gc();
-        this.sendLog('🧹 Forced garbage collection', null);
+    const delta = rss - this.lastRSS;
+    this.lastRSS = rss;
+
+    if (delta > 200 * 1024 * 1024 && !active) {
+      this.sendLog(`⚠️ RSS spike detected: +${(delta / 1024 / 1024).toFixed(2)}MB`, null);
+    }
+
+    if (heapUsed > MEMORY_THRESHOLD * 1.1 || rss > MEMORY_THRESHOLD * 1.1) {
+      this.sendLog(`💀 CRITICAL: Memory usage at ${(heapUsed / 1024 / 1024 / 1024).toFixed(2)}GB heap, ${(rss / 1024 / 1024 / 1024).toFixed(2)}GB RSS`, null);
+      
+      const uptime = process.uptime();
+      if (rss > MEMORY_THRESHOLD && uptime > 1800) {
+        this.sendLog('🔄 High RSS detected, restarting process...', null);
+        setTimeout(() => process.exit(0), 5000);
       }
     }
   }
@@ -566,18 +582,22 @@ class DDoSShield {
     for (const [ip, data] of this.ipBlocks.entries()) {
       if (count++ > 500) break;
 
-      const recent = data.blocks.filter((t) => now - t < PATTERN_DETECTION_WINDOW);
-      if (recent.length < ATTACK_PATTERN_THRESHOLD) continue;
+      let recentCount = 0;
+      for (let i = 0; i < data.blocks.length; i++) {
+        if (now - data.blocks[i] < PATTERN_DETECTION_WINDOW) recentCount++;
+      }
+      
+      if (recentCount < ATTACK_PATTERN_THRESHOLD) continue;
 
       const types = data.types;
       const topType = Object.entries(types).sort((a, b) => b[1] - a[1])[0]?.[0] || 'unknown';
 
-      const patternKey = `${topType}:${recent.length}`;
+      const patternKey = `${topType}:${recentCount}`;
       if (!patterns.has(patternKey)) {
         patterns.set(patternKey, { type: topType, count: 0, ips: [] });
       }
       const pattern = patterns.get(patternKey);
-      pattern.count += recent.length;
+      pattern.count += recentCount;
       pattern.ips.push(ip);
     }
 
@@ -630,36 +650,36 @@ class DDoSShield {
   }
 
   scheduleDailyRestart() {
-  const checkRestart = () => {
-    const etOffset = -5;
-    const now = new Date();
-    const etHour = (now.getUTCHours() + etOffset + 24) % 24;
+    const checkRestart = () => {
+      const etOffset = -5;
+      const now = new Date();
+      const etHour = (now.getUTCHours() + etOffset + 24) % 24;
+      
+      if (etHour === RESTART_HOUR_ET && now.getMinutes() === 0) {
+        this.performGracefulRestart();
+      }
+    };
     
-    if (etHour === RESTART_HOUR_ET && now.getMinutes() === 0) {
-      this.performGracefulRestart();
-    }
-  };
-  
-  setInterval(checkRestart, 60000);
-}
-
-async performGracefulRestart() {
-  const embed = new EmbedBuilder()
-    .setTitle('🔄 Graceful Restart Initiated')
-    .setDescription('Server is performing scheduled restart.\nAll connections will be gracefully terminated.')
-    .setColor('#ffaa00')
-    .setTimestamp();
-
-  await this.sendLog(null, embed);
-
-  if (this.client.ws) {
-    this.client.ws.destroy();
+    setInterval(checkRestart, 60000);
   }
 
-  setTimeout(() => {
-    process.exit(0);
-  }, 5000);
-}
+  async performGracefulRestart() {
+    const embed = new EmbedBuilder()
+      .setTitle('🔄 Graceful Restart Initiated')
+      .setDescription('Server is performing scheduled restart.\nAll connections will be gracefully terminated.')
+      .setColor('#ffaa00')
+      .setTimestamp();
+
+    await this.sendLog(null, embed);
+
+    if (this.client.ws) {
+      this.client.ws.destroy();
+    }
+
+    setTimeout(() => {
+      process.exit(0);
+    }, 5000);
+  }
 
   registerCommands(client) {
     client.once('ready', () => {
@@ -802,10 +822,6 @@ async performGracefulRestart() {
 
         this.aggressiveCleanup();
         this.cleanupOldEntries();
-
-        if (global.gc) {
-          global.gc();
-        }
 
         const afterMem = process.memoryUsage();
         const freed = ((beforeMem.heapUsed - afterMem.heapUsed) / 1024 / 1024).toFixed(2);
