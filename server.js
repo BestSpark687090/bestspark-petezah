@@ -212,7 +212,9 @@ function updateIPReputation(ip, score) {
   current.lastSeen = Date.now();
   if (score < 0) {
     current.violations.push({ time: Date.now(), score });
-    current.violations = current.violations.filter((v) => Date.now() - v.time < 3600000);
+    if (current.violations.length > 100) {
+      current.violations.shift();
+    }
   }
   ipReputation.set(ip, current);
 
@@ -1219,13 +1221,13 @@ function cleanupOldEntries() {
   }
 
   for (const [key, value] of requestFingerprints.entries()) {
-    if (now - value.lastSeen > 300000) { // 5 minutes
+    if (now - value.lastSeen > 300000) {
       requestFingerprints.delete(key);
     }
   }
 
   for (const [ip, rep] of ipReputation.entries()) {
-    if (now - rep.lastSeen > 3600000) { // 1 hour
+    if (now - rep.lastSeen > 3600000) {
       ipReputation.delete(ip);
     }
   }
@@ -1241,34 +1243,9 @@ function cleanupOldEntries() {
       activeRequests.delete(reqId);
     }
   }
-
-  
 }
 
 setInterval(cleanupOldEntries, 30000); 
-
-function emergencyCleanup() {
-  console.log('[EMERGENCY] Aggressive memory cleanup triggered');
-  
-  const clearHalf = (map) => {
-    const entries = Array.from(map.entries());
-    const toRemove = entries.slice(0, Math.floor(entries.length * 0.5));
-    toRemove.forEach(([key]) => map.delete(key));
-  };
-
-  clearHalf(requestFingerprints);
-  clearHalf(ipReputation);
-  clearHalf(circuitBreakers);
-  clearHalf(wsConnections);
-  
-  systemState.lastPowSolve.clear();
-  systemState.trustedClients.clear();
-  
-  if (global.gc) {
-    global.gc();
-    console.log('[EMERGENCY] Forced garbage collection');
-  }
-}
 
 function checkMemoryPressure() {
   const now = Date.now();
@@ -1278,17 +1255,16 @@ function checkMemoryPressure() {
   const mem = getMemoryUsage();
   const isHigh = mem.heapUsed > MEMORY_CRITICAL || mem.rss > MEMORY_THRESHOLD;
   
-  if (mem.heapUsed > MEMORY_CRITICAL * 1.3) {
-    emergencyCleanup();
+  if (mem.rss > MEMORY_THRESHOLD * 1.1 && process.uptime() > 1800) {
+    shield.sendLog('🚨 High RSS detected, restarting process...', null);
+    setTimeout(() => process.exit(0), 5000);
+    return true;
   }
 
   if (isHigh) {
     memoryPressure.consecutiveHigh++;
     if (memoryPressure.consecutiveHigh >= 3) {
       memoryPressure.active = true;
-      if (global.gc && mem.heapUsed > MEMORY_CRITICAL * 1.1) {
-        global.gc();
-      }
     }
   } else {
     memoryPressure.consecutiveHigh = 0;
@@ -1729,7 +1705,7 @@ let wsFlushPending = false;
 let memoryMonitorInterval = null;
 let cleanupInterval = null;
 
-function flushWebSockets() {
+unction flushWebSockets() {
   if (wsFlushPending || wsFlushSockets.size === 0) return;
 
   const mem = getMemoryUsage();
@@ -1753,10 +1729,6 @@ function flushWebSockets() {
 
   wsFlushSockets.clear();
   wsFlushPending = false;
-
-  if (global.gc && mem.heapUsed > MEMORY_CRITICAL) {
-    global.gc();
-  }
 
   shield.sendLog(`✅ WebSocket flush complete: ${flushed} connections closed`, null);
 }
@@ -1782,23 +1754,6 @@ function startMemoryMonitoring() {
 
     if (memoryPressure.active && systemState.totalWS > 1000 && systemState.state === 'ATTACK') {
       flushWebSockets();
-    }
-
-    if (mem.heapUsed > MEMORY_CRITICAL * 1.2) {
-      shield.sendLog('🚨 CRITICAL: Memory usage extremely high, forcing cleanup', null);
-      if (systemState.state === 'ATTACK') {
-        flushWebSockets();
-      }
-      if (global.gc) global.gc();
-
-      const now = Date.now();
-      for (const [key, value] of requestFingerprints.entries()) {
-        if (now - value.lastSeen > 300000) requestFingerprints.delete(key);
-      }
-
-      for (const [ip, solveTime] of systemState.lastPowSolve.entries()) {
-        if (now - solveTime > 86400000) systemState.lastPowSolve.delete(ip);
-      }
     }
   }, 5000);
 }
