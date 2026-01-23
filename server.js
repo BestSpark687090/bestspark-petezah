@@ -26,7 +26,6 @@ import { performance } from 'perf_hooks';
 import process from 'process';
 import { minify as minifyJS } from 'terser';
 import v8 from 'v8';
-import { blockIPKernel, getXDPStats, getXDPBlockCount } from './xdp-integration.js';
 import { ddosShield } from './secure.js';
 import { adminUserActionHandler } from './server/api/admin-user-action.js';
 import { addCommentHandler, getCommentsHandler } from './server/api/comments.js';
@@ -34,6 +33,7 @@ import { getLikesHandler, likeHandler } from './server/api/likes.js';
 import { signinHandler } from './server/api/signin.js';
 import { signupHandler } from './server/api/signup.js';
 import db from './server/db.js';
+import { blockIPKernel } from './xdp-integration.js';
 
 const { createBareServer } = bareServerPkg;
 
@@ -62,10 +62,10 @@ const MEMORY_CRITICAL = 1024 * 1024 * 1024 * 1.5;
 const REQUEST_TIMEOUT = 60000;
 const PAYLOAD_TIMEOUT = 30000;
 const CPU_THRESHOLD = 75;
-const MAX_FINGERPRINTS = 10000;  
-const MAX_IP_REPUTATION = 5000;   
-const MAX_CIRCUIT_BREAKERS = 1000; 
-const MAX_ACTIVE_REQUESTS = 5000; 
+const MAX_FINGERPRINTS = 10000;
+const MAX_IP_REPUTATION = 5000;
+const MAX_CIRCUIT_BREAKERS = 1000;
+const MAX_ACTIVE_REQUESTS = 5000;
 const MAX_BOT_CACHE = 1000;
 const MAX_WS_CONNECTIONS = 5000;
 
@@ -226,31 +226,28 @@ function updateIPReputation(ip, score) {
 function checkCircuitBreaker(ip) {
   const breaker = circuitBreakers.get(ip);
   if (!breaker) return false;
-  
+
   if (breaker.open && Date.now() > breaker.until) {
     circuitBreakers.delete(ip);
     return false;
   }
-  
-  const shouldXDPBlock = 
-    breaker.open && 
-    !breaker.xdpBlocked && 
-    breaker.violations > 100 &&  
-    systemState.state === 'ATTACK' &&  
-    !systemState.cpuHigh;  
-  
+
+  const shouldXDPBlock = breaker.open && !breaker.xdpBlocked && breaker.violations > 100 && systemState.state === 'ATTACK' && !systemState.cpuHigh;
+
   if (shouldXDPBlock) {
     breaker.xdpBlocked = true;
-    
-    blockIPKernel(ip, shield).then((success) => {
-      if (success) {
-        shield.sendLog(`🛡️ **XDP ENGAGED**: ${ip} (${breaker.violations} violations)`, null);
-      }
-    }).catch(err => {
-      console.error('[XDP] Block failed:', err);
-    });
+
+    blockIPKernel(ip, shield)
+      .then((success) => {
+        if (success) {
+          shield.sendLog(`🛡️ **XDP ENGAGED**: ${ip} (${breaker.violations} violations)`, null);
+        }
+      })
+      .catch((err) => {
+        console.error('[XDP] Block failed:', err);
+      });
   }
-  
+
   return breaker.open;
 }
 
@@ -293,13 +290,8 @@ const barePremium = createBareServer('/api/bare-premium/', {
 
 const app = express();
 
-app.set("trust proxy", [
-  "127.0.0.1",
-  "::1",
-  "51.222.141.36" 
-]);
+app.set('trust proxy', ['127.0.0.1', '::1', '51.222.141.36']);
 // if your self hosting u can change this
-
 
 const discordClient = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -1245,7 +1237,7 @@ function cleanupOldEntries() {
   }
 }
 
-setInterval(cleanupOldEntries, 30000); 
+setInterval(cleanupOldEntries, 30000);
 
 function checkMemoryPressure() {
   const now = Date.now();
@@ -1254,7 +1246,7 @@ function checkMemoryPressure() {
 
   const mem = getMemoryUsage();
   const isHigh = mem.heapUsed > MEMORY_CRITICAL || mem.rss > MEMORY_THRESHOLD;
-  
+
   if (mem.rss > MEMORY_THRESHOLD * 1.1 && process.uptime() > 1800) {
     shield.sendLog('🚨 High RSS detected, restarting process...', null);
     setTimeout(() => process.exit(0), 5000);
@@ -1705,7 +1697,7 @@ let wsFlushPending = false;
 let memoryMonitorInterval = null;
 let cleanupInterval = null;
 
-unction flushWebSockets() {
+function flushWebSockets() {
   if (wsFlushPending || wsFlushSockets.size === 0) return;
 
   const mem = getMemoryUsage();
