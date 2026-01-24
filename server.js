@@ -16,6 +16,7 @@ import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import session from 'express-session';
 import fs from 'fs';
 import { minify as minifyHTML } from 'html-minifier-terser';
+import compression from 'compression';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import fetch from 'node-fetch';
 import { createServer } from 'node:http';
@@ -636,6 +637,85 @@ function extractToken(req) {
 }
 
 app.use(cookieParser());
+app.use(compression({ level: 6, threshold: 1024 }));
+
+const fileManifest = new Map();
+const processedHtmlCache = new Map();
+
+const MAX_HTML_CACHE = 100;
+const MAX_FILE_MANIFEST = 1000;
+
+function generateObfuscatedPath(originalPath) {
+  if (!originalPath.startsWith('/storage/js/') && !originalPath.startsWith('/storage/css/')) {
+    return originalPath;
+  }
+  
+  if (fileManifest.has(originalPath)) return fileManifest.get(originalPath);
+  
+  if (fileManifest.size > MAX_FILE_MANIFEST) {
+    const firstKey = fileManifest.keys().next().value;
+    fileManifest.delete(firstKey);
+  }
+  
+  const hash = createHash('sha256').update(originalPath + TOKEN_SECRET).digest('hex').slice(0, 16);
+  const ext = path.extname(originalPath);
+  const dir = path.dirname(originalPath);
+  const obfuscated = `${dir}/${hash}${ext}`;
+  
+  fileManifest.set(originalPath, obfuscated);
+  fileManifest.set(obfuscated, originalPath);
+  
+  return obfuscated;
+}
+
+app.use((req, res, next) => {
+  const original = fileManifest.get(req.path);
+  if (original) {
+    req.url = original;
+  }
+  next();
+});
+
+app.use((req, res, next) => {
+  let filePath;
+  
+  if (req.path === '/' || req.path === '') {
+    filePath = path.join(__dirname, publicPath, 'index.html');
+  } else if (req.path.endsWith('.html')) {
+    filePath = path.join(__dirname, publicPath, req.path);
+  } else {
+    return next();
+  }
+  
+  if (!fs.existsSync(filePath)) return next();
+  
+  const stat = fs.statSync(filePath);
+  const cacheKey = `${filePath}:${stat.mtimeMs}`;
+  
+  if (processedHtmlCache.has(cacheKey)) {
+    return res.type('html').send(processedHtmlCache.get(cacheKey));
+  }
+  
+  if (processedHtmlCache.size > MAX_HTML_CACHE) {
+    const firstKey = processedHtmlCache.keys().next().value;
+    processedHtmlCache.delete(firstKey);
+  }
+  
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) return next();
+    
+    const processed = data.replace(/\/?storage\/(js|css)\/([^"'\s<>]+\.(js|css))/g, (match, type, file) => {
+      const fullPath = `/storage/${type}/${file}`;
+      return generateObfuscatedPath(fullPath);
+    });
+    
+    processedHtmlCache.set(cacheKey, processed);
+    res.type('html').send(processed);
+  });
+});
+
+console.log('[OBFUSCATION] Middleware loaded');
+
 app.use(express.static(publicPath));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 app.use(
@@ -1154,7 +1234,7 @@ app.use(
 );
 
 const wsConnections = new Map();
-const MAX_WS_PER_IP = 1000;
+const MAX_WS_PER_IP = 5000;
 const MAX_TOTAL_WS = 2000000;
 
 function cleanupWS(ip, req = null) {
