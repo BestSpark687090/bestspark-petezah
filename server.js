@@ -1051,7 +1051,7 @@ const memoryProtection = (req, res, next) => {
 
 const readOnlyLimiter = rateLimit({
   windowMs: 60000,
-  max: 300,
+  max: 1000,
   keyGenerator: (req) => {
     if (req.session?.user?.id) return `user:${req.session.user.id}`;
     return toIPv4(null, req);
@@ -1157,7 +1157,7 @@ app.use(conditionalGate);
 
 const authLimiter = rateLimit({
   windowMs: 60000,
-  max: 20,
+  max: 500,
   keyGenerator: (req) => toIPv4(null, req),
   standardHeaders: true,
   legacyHeaders: false,
@@ -1181,7 +1181,7 @@ const apiLimiter = rateLimit({
     const reputation = ipReputation.get(ip);
     if (reputation && reputation.score < -50) return 30;
     if (authPaths.has(req.path)) return 100; 
-    return verifyToken(token, req) ? 500 : 200; 
+    return verifyToken(token, req) ? 2000 : 500; 
   },
   keyGenerator: (req) => {
     const token = extractToken(req);
