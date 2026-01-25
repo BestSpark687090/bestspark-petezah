@@ -1,42 +1,95 @@
 import Redis from 'ioredis';
 
-const REDIS_HOST = process.env.REDIS_HOST || '127.0.0.1';
-const REDIS_PASSWORD = process.env.REDIS_PASSWORD;
+const redis = new Redis({
+  host: process.env.REDIS_HOST || '127.0.0.1',
+  port: 6379,
+  password: process.env.REDIS_PASSWORD,
+  maxRetriesPerRequest: 3,
+  retryStrategy: (times) => Math.min(times * 50, 2000),
+  enableOfflineQueue: false
+});
 
-if (!REDIS_PASSWORD) {
-  throw new Error('REDIS_PASSWORD environment variable must be set');
+const redisSub = redis.duplicate();
+
+redis.on('connect', () => console.log(`[Redis] Connected to ${process.env.REDIS_HOST}`));
+redis.on('error', (err) => console.error('[Redis] Error:', err.message));
+
+const SERVER_ID = process.env.SERVER_ID || 'main';
+
+async function publishHeartbeat() {
+  const health = {
+    serverId: SERVER_ID,
+    timestamp: Date.now(),
+    cpu: shield.getCpuUsage(),
+    memory: process.memoryUsage().heapUsed / 1024 / 1024 / 1024,
+    activeConnections: systemState.activeConnections,
+    state: systemState.state,
+    isUnderAttack: shield.isUnderAttack
+  };
+  await redis.setex(`health:${SERVER_ID}`, 30, JSON.stringify(health));
 }
 
-export const redis = new Redis({
-  host: REDIS_HOST,
-  port: 6379,
-  password: REDIS_PASSWORD,
-  maxRetriesPerRequest: 3,
-  retryStrategy: (times) => {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  enableOfflineQueue: false,
-  lazyConnect: false
+setInterval(publishHeartbeat, 5000);
+
+async function banIPCluster(ip, reason, duration = 3600) {
+  await redis.setex(`ban:${ip}`, duration, JSON.stringify({
+    open: true,
+    until: Date.now() + (duration * 1000),
+    reason,
+    bannedBy: SERVER_ID
+  }));
+  await redis.publish('cluster:ban', JSON.stringify({ ip, reason, duration, server: SERVER_ID }));
+}
+
+async function checkClusterBan(ip) {
+  const ban = await redis.get(`ban:${ip}`);
+  if (!ban) return false;
+  const data = JSON.parse(ban);
+  return Date.now() < data.until;
+}
+
+redisSub.subscribe('cluster:ban', 'cluster:attack');
+redisSub.on('message', (channel, message) => {
+  const data = JSON.parse(message);
+  
+  if (channel === 'cluster:ban') {
+    circuitBreakers.set(data.ip, {
+      open: true,
+      until: Date.now() + (data.duration * 1000),
+      violations: 100
+    });
+    console.log(`[CLUSTER] Banned ${data.ip}: ${data.reason}`);
+  }
+  
+  if (channel === 'cluster:attack') {
+    console.log(`[CLUSTER] ${data.server} under attack!`);
+    systemState.currentPowDifficulty = MAX_POW_DIFFICULTY;
+    systemState.state = 'ATTACK';
+    
+    for (const abuser of data.metrics.topAbusers || []) {
+      banIPCluster(abuser.ip, `coordinated_attack`, 7200);
+    }
+  }
 });
 
-export const redisSub = redis.duplicate();
+async function updateIPReputationRedis(ip, score) {
+  const key = `rep:${ip}`;
+  const newScore = await redis.hincrby(key, 'score', score);
+  await redis.hset(key, 'lastSeen', Date.now());
+  await redis.expire(key, 86400);
+  
+  if (newScore < -150) {
+    await banIPCluster(ip, 'reputation_threshold', 7200);
+  }
+  
+  return newScore;
+}
 
-redis.on('connect', () => {
-  console.log(`[Redis] Connected to ${REDIS_HOST}:6379`);
-});
+async function checkClusterRateLimit(ip, limit = 200, window = 60) {
+  const key = `ratelimit:${ip}`;
+  const current = await redis.incr(key);
+  if (current === 1) await redis.expire(key, window);
+  return current <= limit;
+}
 
-redis.on('error', (err) => {
-  console.error('[Redis] Error:', err.message);
-});
-
-redis.on('ready', () => {
-  console.log('[Redis] Ready to accept commands');
-});
-
-redis.ping().then(() => {
-  console.log('[Redis] PONG - Connection successful');
-}).catch((err) => {
-  console.error('[Redis] PING failed:', err.message);
-  process.exit(1);
-});
+export { redis, banIPCluster, checkClusterBan, updateIPReputationRedis, checkClusterRateLimit };
