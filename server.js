@@ -35,7 +35,6 @@ import { signinHandler } from './server/api/signin.js';
 import { signupHandler } from './server/api/signup.js';
 import db from './server/db.js';
 import { blockIPKernel } from './xdp-integration.js';
-import { redis, banIPCluster, checkClusterBan, updateIPReputationRedis, checkClusterRateLimit } from './redis-client.js';
 
 const { createBareServer } = bareServerPkg;
 
@@ -208,36 +207,26 @@ function createFingerprint(req) {
   return createHash('sha256').update(data).digest('hex').slice(0, 32);
 }
 
-async function updateIPReputation(ip, score) {
+function updateIPReputation(ip, score) {
   const current = ipReputation.get(ip) || { score: 0, lastSeen: 0, violations: [] };
   current.score += score;
   current.lastSeen = Date.now();
-  
   if (score < 0) {
     current.violations.push({ time: Date.now(), score });
-    if (current.violations.length > 100) current.violations.shift();
+    if (current.violations.length > 100) {
+      current.violations.shift();
+    }
   }
-  
   ipReputation.set(ip, current);
-  
-  try {
-    await updateIPReputationRedis(ip, score);
-  } catch {}
-  
+
   if (current.score < -100) {
     circuitBreakers.set(ip, { open: true, until: Date.now() + 3600000, violations: current.violations.length });
   }
 }
 
-async function checkCircuitBreaker(ip) {
+function checkCircuitBreaker(ip) {
   const breaker = circuitBreakers.get(ip);
-  if (!breaker) {
-    try {
-      return await checkClusterBan(ip);
-    } catch {
-      return false;
-    }
-  }
+  if (!breaker) return false;
 
   if (breaker.open && Date.now() > breaker.until) {
     circuitBreakers.delete(ip);
@@ -750,17 +739,6 @@ app.get('/scramjet.sync.js', (req, res) => res.sendFile(path.join(scramjetPath, 
 app.get('/scramjet.wasm.wasm', (req, res) => res.sendFile(path.join(scramjetPath, 'scramjet.wasm.wasm')));
 app.get('/scramjet.all.js.map', (req, res) => res.sendFile(path.join(scramjetPath, 'scramjet.all.js.map')));
 
-app.get('/health', async (req, res) => {
-  const cpu = shield.getCpuUsage();
-  const mem = process.memoryUsage().heapUsed / 1024 / 1024 / 1024;
-  
-  if (cpu > 75 || mem > 40 || systemState.state === 'ATTACK') {
-    return res.status(503).json({ status: 'degraded', cpu, memory: mem, state: systemState.state });
-  }
-  
-  res.status(200).json({ status: 'healthy', cpu, memory: mem });
-});
-
 app.use('/baremux/', express.static(baremuxPath));
 app.use('/epoxy/', express.static(epoxyPath));
 
@@ -827,18 +805,9 @@ app.post('/api/bot-verify', express.json(), (req, res) => {
 
 const gateMiddleware = async (req, res, next) => {
   systemState.totalRequests++;
-  
-  const ip = toIPv4(null, req);
-  
-  try {
-    const allowed = await checkClusterRateLimit(ip, 200, 60);
-    if (!allowed) {
-      shield.incrementBlocked(ip, 'cluster_ratelimit');
-      return res.status(429).send('Too many requests');
-    }
-  } catch {}
 
   const ua = req.headers['user-agent'] || '';
+  const ip = toIPv4(null, req);
   const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
 
   const goodBots = [
