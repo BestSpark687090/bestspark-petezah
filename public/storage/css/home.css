@@ -390,27 +390,29 @@ h1 {
   position: fixed;
   bottom: 20px;
   left: 20px;
-  background-color: #1e1e2d;
+  background-color: rgba(30, 30, 45, 0.85);
   color: #fff;
-  padding: 8px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   z-index: 999;
   font-size: 12px;
-  width: 103px;
+  width: auto;
 }
-.info-row {
+.legal-links {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
+  gap: 12px;
+  margin-top: 8px;
+  font-size: 11px;
+  justify-content: center;
 }
-#battery-display {
-  display: flex;
-  align-items: center;
+.legal-links a {
+  color: #9ba8c0;
+  text-decoration: none;
+  transition: color 0.2s;
 }
-#fps {
-  font-size: 12px;
+.legal-links a:hover {
+  color: #d0d8e8;
 }
 .discord-btn-two {
   display: block;
