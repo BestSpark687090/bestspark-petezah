@@ -230,15 +230,19 @@ async function updateIPReputation(ip, score) {
 }
 
 async function checkCircuitBreaker(ip) {
-  const local = circuitBreakers.get(ip);
-  if (local?.open && Date.now() < local.until) return true;
-  
-  try {
-    return await checkClusterBan(ip);
-  } catch {
+  const breaker = circuitBreakers.get(ip);
+  if (!breaker) {
+    try {
+      return await checkClusterBan(ip);
+    } catch {
+      return false;
+    }
+  }
+
+  if (breaker.open && Date.now() > breaker.until) {
+    circuitBreakers.delete(ip);
     return false;
   }
-}
 
   const shouldXDPBlock = breaker.open && !breaker.xdpBlocked && breaker.violations > 100 && systemState.state === 'ATTACK' && !systemState.cpuHigh;
 
@@ -835,7 +839,6 @@ const gateMiddleware = async (req, res, next) => {
   } catch {}
 
   const ua = req.headers['user-agent'] || '';
-  const ip = toIPv4(null, req);
   const isBrowser = /Mozilla|Chrome|Safari|Firefox|Edge/i.test(ua);
 
   const goodBots = [
