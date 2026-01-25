@@ -834,7 +834,7 @@ const gateMiddleware = async (req, res, next) => {
   const ip = toIPv4(null, req);
   
   try {
-    const allowed = await checkClusterRateLimit(ip, 200, 60);
+    const allowed = await checkClusterRateLimit(ip, 1000, 60);  
     if (!allowed) {
       shield.incrementBlocked(ip, 'cluster_ratelimit');
       return res.status(429).send('Too many requests');
