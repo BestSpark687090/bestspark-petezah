@@ -1,7 +1,3 @@
-Your redis-client.js is missing the publishHeartbeat export! Check if you created that file correctly:
-bashcat redis-client.js
-If the file doesn't have publishHeartbeat in the exports at the bottom, replace it with this:
-bashcat > redis-client.js << 'EOF'
 import Redis from 'ioredis';
 
 const redis = new Redis({
