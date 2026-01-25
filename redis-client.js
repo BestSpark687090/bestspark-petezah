@@ -16,20 +16,7 @@ redis.on('error', (err) => console.error('[Redis] Error:', err.message));
 
 const SERVER_ID = process.env.SERVER_ID || 'main';
 
-async function publishHeartbeat() {
-  const health = {
-    serverId: SERVER_ID,
-    timestamp: Date.now(),
-    cpu: shield.getCpuUsage(),
-    memory: process.memoryUsage().heapUsed / 1024 / 1024 / 1024,
-    activeConnections: systemState.activeConnections,
-    state: systemState.state,
-    isUnderAttack: shield.isUnderAttack
-  };
-  await redis.setex(`health:${SERVER_ID}`, 30, JSON.stringify(health));
-}
-
-setInterval(publishHeartbeat, 5000);
+// REMOVE the publishHeartbeat and setInterval - move it to server.js instead
 
 async function banIPCluster(ip, reason, duration = 3600) {
   await redis.setex(`ban:${ip}`, duration, JSON.stringify({
@@ -47,30 +34,6 @@ async function checkClusterBan(ip) {
   const data = JSON.parse(ban);
   return Date.now() < data.until;
 }
-
-redisSub.subscribe('cluster:ban', 'cluster:attack');
-redisSub.on('message', (channel, message) => {
-  const data = JSON.parse(message);
-  
-  if (channel === 'cluster:ban') {
-    circuitBreakers.set(data.ip, {
-      open: true,
-      until: Date.now() + (data.duration * 1000),
-      violations: 100
-    });
-    console.log(`[CLUSTER] Banned ${data.ip}: ${data.reason}`);
-  }
-  
-  if (channel === 'cluster:attack') {
-    console.log(`[CLUSTER] ${data.server} under attack!`);
-    systemState.currentPowDifficulty = MAX_POW_DIFFICULTY;
-    systemState.state = 'ATTACK';
-    
-    for (const abuser of data.metrics.topAbusers || []) {
-      banIPCluster(abuser.ip, `coordinated_attack`, 7200);
-    }
-  }
-});
 
 async function updateIPReputationRedis(ip, score) {
   const key = `rep:${ip}`;
@@ -92,4 +55,52 @@ async function checkClusterRateLimit(ip, limit = 200, window = 60) {
   return current <= limit;
 }
 
-export { redis, banIPCluster, checkClusterBan, updateIPReputationRedis, checkClusterRateLimit };
+function setupClusterListeners(shield, systemState, circuitBreakers) {
+  redisSub.subscribe('cluster:ban', 'cluster:attack');
+  
+  redisSub.on('message', (channel, message) => {
+    const data = JSON.parse(message);
+    
+    if (channel === 'cluster:ban') {
+      circuitBreakers.set(data.ip, {
+        open: true,
+        until: Date.now() + (data.duration * 1000),
+        violations: 100
+      });
+      console.log(`[CLUSTER] Banned ${data.ip}: ${data.reason}`);
+    }
+    
+    if (channel === 'cluster:attack') {
+      console.log(`[CLUSTER] ${data.server} under attack!`);
+      systemState.currentPowDifficulty = 22;
+      systemState.state = 'ATTACK';
+      
+      for (const abuser of data.metrics.topAbusers || []) {
+        banIPCluster(abuser.ip, `coordinated_attack`, 7200);
+      }
+    }
+  });
+}
+
+async function publishHeartbeat(shield, systemState) {
+  const health = {
+    serverId: SERVER_ID,
+    timestamp: Date.now(),
+    cpu: shield.getCpuUsage(),
+    memory: process.memoryUsage().heapUsed / 1024 / 1024 / 1024,
+    activeConnections: systemState.activeConnections,
+    state: systemState.state,
+    isUnderAttack: shield.isUnderAttack
+  };
+  await redis.setex(`health:${SERVER_ID}`, 30, JSON.stringify(health));
+}
+
+export { 
+  redis, 
+  banIPCluster, 
+  checkClusterBan, 
+  updateIPReputationRedis, 
+  checkClusterRateLimit,
+  setupClusterListeners,
+  publishHeartbeat
+};
