@@ -1,3 +1,7 @@
+Your redis-client.js is missing the publishHeartbeat export! Check if you created that file correctly:
+bashcat redis-client.js
+If the file doesn't have publishHeartbeat in the exports at the bottom, replace it with this:
+bashcat > redis-client.js << 'EOF'
 import Redis from 'ioredis';
 
 const redis = new Redis({
@@ -11,12 +15,10 @@ const redis = new Redis({
 
 const redisSub = redis.duplicate();
 
-redis.on('connect', () => console.log(`[Redis] Connected to ${process.env.REDIS_HOST}`));
+redis.on('connect', () => console.log(`[Redis] Connected to ${process.env.REDIS_HOST || '127.0.0.1'}`));
 redis.on('error', (err) => console.error('[Redis] Error:', err.message));
 
 const SERVER_ID = process.env.SERVER_ID || 'main';
-
-// REMOVE the publishHeartbeat and setInterval - move it to server.js instead
 
 async function banIPCluster(ip, reason, duration = 3600) {
   await redis.setex(`ban:${ip}`, duration, JSON.stringify({
@@ -76,7 +78,7 @@ function setupClusterListeners(shield, systemState, circuitBreakers) {
       systemState.state = 'ATTACK';
       
       for (const abuser of data.metrics.topAbusers || []) {
-        banIPCluster(abuser.ip, `coordinated_attack`, 7200);
+        banIPCluster(abuser.ip, 'coordinated_attack', 7200);
       }
     }
   });
