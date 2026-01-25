@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.production' });
+
 import Redis from 'ioredis';
 
 const redis = new Redis({
