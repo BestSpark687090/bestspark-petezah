@@ -7,6 +7,7 @@ const sidebar = document.querySelector('.sidebar'),
   widgetButton = document.querySelector('.widget-button'),
   widgetPopup = document.querySelector('.widget-popup'),
   widgetOptions = document.querySelectorAll('.widget-option');
+
 if ((location.pathname.endsWith('index.html') && '#blank' === location.hash) || location.href.endsWith('#blank')) {
   const e = window.open(),
     t = e.document.createElement('iframe');
@@ -18,24 +19,47 @@ if ((location.pathname.endsWith('index.html') && '#blank' === location.hash) || 
     e.document.body.appendChild(t),
     (window.location = 'about:blank'));
 }
-(sidebar.classList.add('collapsed'),
-  mainContent.classList.remove('sidebar-expanded'),
-  sidebarToggler.addEventListener('click', () => {
-    (sidebar.classList.toggle('collapsed'), mainContent.classList.toggle('sidebar-expanded'));
-  }));
-const collapsedSidebarHeight = '56px',
-  fullSidebarHeight = 'calc(100vh - 32px)',
-  toggleMenu = (e) => {
-    ((sidebar.style.height = e ? `${sidebar.scrollHeight}px` : '56px'), (menuToggler.querySelector('span').innerText = e ? 'close' : 'menu'));
-  };
-(menuToggler.addEventListener('click', () => {
-  toggleMenu(sidebar.classList.toggle('menu-active'));
-}),
-  window.addEventListener('resize', () => {
-    window.innerWidth >= 1024
-      ? (sidebar.style.height = fullSidebarHeight)
-      : (sidebar.classList.remove('collapsed'), (sidebar.style.height = 'auto'), toggleMenu(sidebar.classList.contains('menu-active')));
-  }));
+
+sidebar.classList.add('collapsed');
+mainContent.classList.remove('sidebar-expanded');
+
+sidebarToggler.addEventListener('click', () => {
+  sidebar.classList.toggle('collapsed');
+  mainContent.classList.toggle('sidebar-expanded');
+});
+
+function updateActiveNavLink(src) {
+  navLinks.forEach((link) => {
+    const linkSrc = link.getAttribute('data-src');
+    if (linkSrc === src) {
+      link.classList.add('active');
+    } else {
+      link.classList.remove('active');
+    }
+  });
+}
+
+const observer = new MutationObserver((mutations) => {
+  mutations.forEach((mutation) => {
+    if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
+      updateActiveNavLink(mainFrame.src.replace(window.location.origin, ''));
+    }
+  });
+});
+
+observer.observe(mainFrame, {
+  attributes: true,
+  attributeFilter: ['src']
+});
+
+mainFrame.addEventListener('load', () => {
+  try {
+    const iframeSrc = mainFrame.src.replace(window.location.origin, '');
+    updateActiveNavLink(iframeSrc);
+  } catch (e) {
+  }
+});
+
 class TxtType {
   constructor(e, t, i) {
     ((this.toRotate = t),
@@ -59,7 +83,8 @@ class TxtType {
       setTimeout(() => this.tick(), i));
   }
 }
-(document.addEventListener('DOMContentLoaded', () => {
+
+document.addEventListener('DOMContentLoaded', () => {
   const e = document.getElementsByClassName('typewrite');
   for (let t = 0; t < e.length; t++) {
     const i = e[t].getAttribute('data-type'),
@@ -70,28 +95,41 @@ class TxtType {
   ((t.innerHTML = '.typewrite > .wrap { border-right: 0.06em solid #a04cff}'),
     document.body.appendChild(t),
     navLinks.length > 0 && navLinks[0].classList.add('active'));
-}),
-  navLinks.forEach((e) => {
-    e.addEventListener('click', (t) => {
-      t.preventDefault();
-      const i = e.getAttribute('data-src');
-      (i && (mainFrame.src = i), navLinks.forEach((e) => e.classList.remove('active')), e.classList.add('active'));
-    });
-  }),
-  widgetButton.addEventListener('click', () => {
-    widgetPopup.classList.toggle('show');
-  }),
-  widgetOptions.forEach((e) => {
-    e.addEventListener('click', () => {
-      const t = e.getAttribute('data-src');
-      (t && (mainFrame.src = t), widgetPopup.classList.remove('show'));
-    });
-  }),
-  document.addEventListener('click', (e) => {
-    widgetButton.contains(e.target) || widgetPopup.contains(e.target) || widgetPopup.classList.remove('show');
-  }),
-  window.addEventListener('message', (e) => {
-    e.origin === window.location.origin &&
-      (('login_success' !== e.data.type && 'signup_success' !== e.data.type) || (mainFrame.src = 'pages/settings/p2.html'),
-      'logout' === e.data.type && (mainFrame.src = 'pages/settings/p.html'));
-  }));
+});
+
+navLinks.forEach((e) => {
+  e.addEventListener('click', (t) => {
+    t.preventDefault();
+    const i = e.getAttribute('data-src');
+    if (i) {
+      mainFrame.src = i;
+      navLinks.forEach((link) => link.classList.remove('active'));
+      e.classList.add('active');
+    }
+  });
+});
+
+widgetButton.addEventListener('click', () => {
+  widgetPopup.classList.toggle('show');
+});
+
+widgetOptions.forEach((e) => {
+  e.addEventListener('click', () => {
+    const t = e.getAttribute('data-src');
+    if (t) {
+      mainFrame.src = t;
+      updateActiveNavLink(t);
+    }
+    widgetPopup.classList.remove('show');
+  });
+});
+
+document.addEventListener('click', (e) => {
+  widgetButton.contains(e.target) || widgetPopup.contains(e.target) || widgetPopup.classList.remove('show');
+});
+
+window.addEventListener('message', (e) => {
+  e.origin === window.location.origin &&
+    (('login_success' !== e.data.type && 'signup_success' !== e.data.type) || (mainFrame.src = 'pages/settings/p2.html'),
+    'logout' === e.data.type && (mainFrame.src = 'pages/settings/p.html'));
+});
