@@ -57,7 +57,15 @@ async function checkClusterRateLimit(ip, limit = 200, window = 60) {
 }
 
 function setupClusterListeners(shield, systemState, circuitBreakers) {
-  redisSub.subscribe('cluster:ban', 'cluster:attack');
+  redisSub.on('ready', () => {
+    redisSub.subscribe('cluster:ban', 'cluster:attack', (err) => {
+      if (err) {
+        console.error('[Redis] Subscribe failed:', err.message);
+      } else {
+        console.log('[CLUSTER] Subscribed to cluster channels');
+      }
+    });
+  });
   
   redisSub.on('message', (channel, message) => {
     const data = JSON.parse(message);
