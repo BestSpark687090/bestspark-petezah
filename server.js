@@ -746,6 +746,17 @@ app.get('/scramjet.sync.js', (req, res) => res.sendFile(path.join(scramjetPath, 
 app.get('/scramjet.wasm.wasm', (req, res) => res.sendFile(path.join(scramjetPath, 'scramjet.wasm.wasm')));
 app.get('/scramjet.all.js.map', (req, res) => res.sendFile(path.join(scramjetPath, 'scramjet.all.js.map')));
 
+app.get('/health', async (req, res) => {
+  const cpu = shield.getCpuUsage();
+  const mem = process.memoryUsage().heapUsed / 1024 / 1024 / 1024;
+  
+  if (cpu > 75 || mem > 40 || systemState.state === 'ATTACK') {
+    return res.status(503).json({ status: 'degraded', cpu, memory: mem, state: systemState.state });
+  }
+  
+  res.status(200).json({ status: 'healthy', cpu, memory: mem });
+});
+
 app.use('/baremux/', express.static(baremuxPath));
 app.use('/epoxy/', express.static(epoxyPath));
 
