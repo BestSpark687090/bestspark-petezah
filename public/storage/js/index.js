@@ -29,36 +29,26 @@ sidebarToggler.addEventListener('click', () => {
 });
 
 function updateActiveNavLink(src) {
+  let found = false;
   navLinks.forEach((link) => {
     const linkSrc = link.getAttribute('data-src');
-    if (linkSrc === src) {
+    if (src.includes(linkSrc) || linkSrc === src) {
       link.classList.add('active');
+      found = true;
     } else {
       link.classList.remove('active');
     }
   });
 }
 
-const observer = new MutationObserver((mutations) => {
-  mutations.forEach((mutation) => {
-    if (mutation.type === 'attributes' && mutation.attributeName === 'src') {
-      updateActiveNavLink(mainFrame.src.replace(window.location.origin, ''));
+if (mainFrame) {
+  mainFrame.addEventListener('load', () => {
+    const currentSrc = mainFrame.getAttribute('src');
+    if (currentSrc) {
+      updateActiveNavLink(currentSrc);
     }
   });
-});
-
-observer.observe(mainFrame, {
-  attributes: true,
-  attributeFilter: ['src']
-});
-
-mainFrame.addEventListener('load', () => {
-  try {
-    const iframeSrc = mainFrame.src.replace(window.location.origin, '');
-    updateActiveNavLink(iframeSrc);
-  } catch (e) {
-  }
-});
+}
 
 class TxtType {
   constructor(e, t, i) {
@@ -92,9 +82,17 @@ document.addEventListener('DOMContentLoaded', () => {
     i && new TxtType(e[t], JSON.parse(i), s);
   }
   const t = document.createElement('style');
-  ((t.innerHTML = '.typewrite > .wrap { border-right: 0.06em solid #a04cff}'),
-    document.body.appendChild(t),
-    navLinks.length > 0 && navLinks[0].classList.add('active'));
+  t.innerHTML = '.typewrite > .wrap { border-right: 0.06em solid #a04cff}';
+  document.body.appendChild(t);
+  
+  if (navLinks.length > 0) {
+    const initialSrc = mainFrame.getAttribute('src');
+    if (initialSrc) {
+      updateActiveNavLink(initialSrc);
+    } else {
+      navLinks[0].classList.add('active');
+    }
+  }
 });
 
 navLinks.forEach((e) => {
@@ -118,7 +116,6 @@ widgetOptions.forEach((e) => {
     const t = e.getAttribute('data-src');
     if (t) {
       mainFrame.src = t;
-      updateActiveNavLink(t);
     }
     widgetPopup.classList.remove('show');
   });
