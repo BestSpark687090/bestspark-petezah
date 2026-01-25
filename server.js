@@ -1015,6 +1015,22 @@ const memoryProtection = (req, res, next) => {
   next();
 };
 
+const readOnlyLimiter = rateLimit({
+  windowMs: 60000,
+  max: 300,
+  keyGenerator: (req) => {
+    if (req.session?.user?.id) return `user:${req.session.user.id}`;
+    return toIPv4(null, req);
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use('/api/comments', readOnlyLimiter);
+app.use('/api/likes', readOnlyLimiter);
+app.use('/api/changelog', readOnlyLimiter);
+app.use('/api/feedback', readOnlyLimiter);
+
 const assetExtensions = new Set([
   '.js',
   '.css',
@@ -1087,10 +1103,6 @@ const conditionalGate = (req, res, next) => {
     return res.status(429).json({ error: 'Too many requests' });
   }
 
-  if (apiPaths.has(req.path)) {
-    return next();
-  }
-
   if (req.path.startsWith('/api/')) {
     return next();
   }
@@ -1128,14 +1140,14 @@ const authLimiter = rateLimit({
 });
 
 const apiLimiter = rateLimit({
-  windowMs: 15000,
+  windowMs: 60000,
   max: (req) => {
     const token = extractToken(req);
     const ip = toIPv4(null, req);
     const reputation = ipReputation.get(ip);
-    if (reputation && reputation.score < -50) return 10;
-    if (authPaths.has(req.path)) return 20;
-    return verifyToken(token, req) ? 200 : 50;
+    if (reputation && reputation.score < -50) return 30;
+    if (authPaths.has(req.path)) return 100; 
+    return verifyToken(token, req) ? 500 : 200; 
   },
   keyGenerator: (req) => {
     const token = extractToken(req);
@@ -1146,7 +1158,10 @@ const apiLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => false,
+  skip: (req) => {
+    const readOnlyPaths = ['/api/comments', '/api/likes', '/api/changelog', '/api/feedback'];
+    return readOnlyPaths.some(path => req.path.startsWith(path));
+  },
   handler: (req, res) => {
     const ip = toIPv4(null, req);
     updateIPReputation(ip, -3);
@@ -1156,7 +1171,13 @@ const apiLimiter = rateLimit({
 });
 
 app.use('/bare/', apiLimiter);
+
 app.use('/api/', (req, res, next) => {
+  const readOnlyPaths = ['/api/comments', '/api/likes', '/api/changelog', '/api/feedback'];
+  if (readOnlyPaths.some(path => req.path.startsWith(path))) {
+    return next(); 
+  }
+  
   if (authPaths.has(req.path)) {
     return authLimiter(req, res, next);
   }
