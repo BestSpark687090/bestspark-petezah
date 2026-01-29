@@ -1,0 +1,1 @@
+( )*<!-- Google tag \(gtag.js\) -->\n( )*<script async src="https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=G-[A-Z0-9]*"><\/script>\n( )*<script>\n( )*window\.dataLayer = window\.dataLayer \|\| \[\];\n( )*function gtag\(\)( )*{(\n| )*dataLayer.push\(arguments\);( |\n)*}\n( )*gtag\('js', new Date\(\)\);\n\n( )*gtag\('config', 'G-[A-Z0-9]*'\);\n( )*<\/script>
